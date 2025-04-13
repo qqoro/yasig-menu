@@ -1,0 +1,40 @@
+{
+  "appId": "com.yasig.menu.app",
+  "productName": "야식메뉴판",
+  "directories": {
+    "output": "dist",
+    "buildResources": "src/main/static"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "shortcutName": "Electron App"
+  },
+  "win": {
+    "target": "nsis"
+  },
+  "linux": {
+    "target": ["snap"]
+  },
+  "files": [
+    {
+      "from": "build/main",
+      "to": "main",
+      "filter": ["**/*"]
+    },
+    {
+      "from": "build/renderer",
+      "to": "renderer",
+      "filter": ["**/*"]
+    },
+    {
+      "from": "src/main/static",
+      "to": "static",
+      "filter": ["**/*"]
+    },
+    "!build",
+    "!dist",
+    "!scripts"
+  ]
+}

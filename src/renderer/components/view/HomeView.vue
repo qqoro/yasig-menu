@@ -1,0 +1,96 @@
+<script setup lang="ts">
+import { Icon } from "@iconify/vue";
+import { computed, onMounted, ref } from "vue";
+import { useApi } from "../../composable/useApi";
+import { useEvent } from "../../composable/useEvent";
+import { useWindowEvent } from "../../composable/useWindowEvent";
+import { IpcMainSend, IpcRendererSend } from "../../events";
+import { cn } from "../../lib/utils";
+import { useSetting } from "../../store/setting-store";
+import GameCard from "../GameCard.vue";
+import PageTitle from "../PageTitle.vue";
+
+const api = useApi();
+const setting = useSetting();
+const loading = ref(true);
+const list = ref<{ path: string; title: string; thumbnail?: string }[]>([]);
+
+useEvent(
+  IpcMainSend.LoadedList,
+  (e, data: { path: string; title: string; thumbnail?: string }[]) => {
+    loading.value = false;
+    list.value = data;
+  }
+);
+
+useEvent(IpcMainSend.ThumbnailDone, () => {
+  console.warn("called done!");
+  api.send(
+    IpcRendererSend.LoadList,
+    [...setting.sources],
+    [...setting.exclude]
+  );
+});
+
+onMounted(() => {
+  loading.value = true;
+  console.warn("mount!", IpcRendererSend.LoadList);
+  api.send(
+    IpcRendererSend.LoadList,
+    [...setting.sources],
+    [...setting.exclude]
+  );
+});
+
+useWindowEvent("focus", () => {
+  console.warn("focus!", IpcRendererSend.LoadList);
+  api.send(
+    IpcRendererSend.LoadList,
+    [...setting.sources],
+    [...setting.exclude]
+  );
+});
+
+const gameExist = computed(
+  () => !(setting.sources.length === 0 || list.value.length === 0)
+);
+</script>
+
+<template>
+  <main class="flex flex-col gap-4">
+    <PageTitle>게임 목록</PageTitle>
+    <div
+      :class="
+        cn({
+          'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 mx-auto w-full':
+            gameExist,
+          'flex justify-center items-center h-[calc(100dvh-200px)]': !gameExist,
+        })
+      "
+    >
+      <div
+        v-if="!gameExist"
+        class="flex justify-center items-center w-full h-full py-10"
+      >
+        <span v-if="setting.sources.length === 0">
+          게임 폴더 경로가 설정되지 않았습니다! 설정에서 경로를 지정해주세요.
+        </span>
+        <span v-else-if="loading">
+          <Icon icon="svg-spinners:ring-resize" class="m-8 size-20" />
+        </span>
+        <span v-else-if="list.length === 0">
+          지정한 경로에서 게임을 찾지 못했습니다.
+        </span>
+      </div>
+
+      <GameCard
+        v-else
+        v-for="({ path, title, thumbnail }, index) in list"
+        :key="path + index"
+        :path="path"
+        :title="title"
+        :thumbnail="thumbnail"
+      />
+    </div>
+  </main>
+</template>
