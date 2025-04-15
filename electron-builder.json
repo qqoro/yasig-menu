@@ -9,7 +9,7 @@
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
-    "shortcutName": "Electron App"
+    "shortcutName": "야식메뉴판"
   },
   "win": {
     "target": "nsis"

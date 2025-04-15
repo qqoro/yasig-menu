@@ -1,0 +1,80 @@
+name: Build & Release
+
+on:
+  push:
+    branches:
+      - dev
+    tags:
+      - "v*" # v1.0.0 같은 태그 푸시 시 실행
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    name: Build on ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10.4.1
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build app
+        run: |
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            pnpm run build:linux
+          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            pnpm run build:win
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            pnpm run build:mac
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.os }}
+          path: |
+            dist/
+            release/
+            out/
+            build/
+            *.dmg
+            *.exe
+            *.AppImage
+            *.zip
+            *.tar.gz
+          if-no-files-found: ignore
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            자동 빌드 및 릴리즈입니다.
+          files: |
+            artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
