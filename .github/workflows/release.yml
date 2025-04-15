@@ -13,8 +13,13 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        build_cmd: [build:win, build:port:win]
-    name: Build on windows (${{ matrix.build_cmd }})
+        include:
+          - name: build_win
+            cmd: build:win
+          - name: build_port_win
+            cmd: build:port:win
+
+    name: Build on windows (${{ matrix.cmd  }})
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,12 +37,12 @@ jobs:
         run: pnpm install
 
       - name: Build app
-        run: pnpm run ${{ matrix.build_cmd }}
+        run: pnpm run ${{ matrix.cmd  }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.build_cmd }}
+          name: ${{ matrix.cmd  }}
           path: |
             dist/
           if-no-files-found: ignore
