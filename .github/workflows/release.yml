@@ -42,7 +42,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.cmd  }}
+          name: ${{ matrix.name  }}
           path: |
             dist/
           if-no-files-found: ignore
