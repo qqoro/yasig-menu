@@ -2,8 +2,6 @@ name: Build & Release
 
 on:
   push:
-    branches:
-      - dev
     tags:
       - "v*"
 
@@ -12,11 +10,11 @@ permissions:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
     strategy:
       matrix:
-        os: [windows-latest]
-    name: Build on ${{ matrix.os }}
+        build_cmd: [build:win, build:port:win]
+    name: Build on windows (${{ matrix.build_cmd }})
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,24 +32,14 @@ jobs:
         run: pnpm install
 
       - name: Build app
-        run: |
-          pnpm run build:win
-          pnpm run build:port:win
+        run: pnpm run ${{ matrix.build_cmd }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: dist-${{ matrix.os }}
+          name: ${{ matrix.build_cmd }}
           path: |
             dist/
-            release/
-            out/
-            build/
-            *.dmg
-            *.exe
-            *.AppImage
-            *.zip
-            *.tar.gz
           if-no-files-found: ignore
 
   release:
@@ -63,14 +51,24 @@ jobs:
         with:
           path: artifacts
 
+      - name: Prepare files for release
+        run: |
+          mkdir -p installer
+          cp -R artifacts/build_win/* installer/ || true
+          cd installer
+          zip -r ../yasig-menu-installer-${{ github.ref_name }}.zip .
+          cd ..
+
+          mkdir -p portable
+          cp artifacts/build_port_win/*.exe portable/yasig-menu-portable-${{ github.ref_name }}.exe || true
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
-          body: |
-            자동 빌드 및 릴리즈입니다.
           files: |
-            artifacts/**/*
+            yasig-menu-installer*.zip
+            portable/yasig-menu-portable*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
