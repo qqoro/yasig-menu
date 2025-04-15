@@ -5,11 +5,11 @@ on:
     branches:
       - dev
     tags:
-      - "v*" # v1.0.0 같은 태그 푸시 시 실행
+      - "v*"
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -36,6 +36,7 @@ jobs:
             pnpm run build:linux
           elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             pnpm run build:win
+            pnpm run build:port:win
           elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
             pnpm run build:mac
           fi
