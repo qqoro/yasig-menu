@@ -29,7 +29,10 @@ ipcMain.on(
       console.log("params", params);
       console.log("q", params.get("q"));
 
-      browser ??= await puppeteer.launch({ headless: true });
+      browser ??= await puppeteer.launch({
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      });
 
       await browser.setCookie({
         name: "NID",

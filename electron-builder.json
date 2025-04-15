@@ -17,6 +17,7 @@
   "linux": {
     "target": ["snap"]
   },
+  "asarUnpack": ["node_modules/puppeteer/.local-chromium"],
   "files": [
     {
       "from": "build/main",
