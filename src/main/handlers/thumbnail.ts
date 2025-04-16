@@ -1,7 +1,8 @@
+import * as chromeLauncher from "chrome-launcher";
 import { app, ipcMain } from "electron";
 import { rm, stat, writeFile } from "fs/promises";
 import { basename, extname, join } from "path";
-import puppeteer, { Browser } from "puppeteer";
+import puppeteer, { Browser } from "puppeteer-core";
 import { IpcMainSend, IpcRendererSend } from "../events.js";
 import { send } from "../main.js";
 
@@ -29,23 +30,33 @@ ipcMain.on(
       console.log("params", params);
       console.log("q", params.get("q"));
 
-      const executablePath =
-        process.env.NODE_ENV === "production"
-          ? join(
-              import.meta.dirname,
-              "node_modules/puppeteer-core/.local-chromium"
-            )
-          : puppeteer.executablePath();
-      console.log("executablePath:", executablePath);
-      send(IpcMainSend.Message, {
-        type: "info",
-        message: executablePath,
-      });
-      browser ??= await puppeteer.launch({
-        headless: true,
-        executablePath,
-        args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      });
+      if (!browser) {
+        const list = chromeLauncher.Launcher.getInstallations();
+        for (const path of list) {
+          console.log("executablePath:", process.env.NODE_ENV, path);
+          send(IpcMainSend.Message, {
+            type: "info",
+            message: process.env.NODE_ENV + " " + path,
+          });
+          browser ??= await puppeteer.launch({
+            headless: true,
+            executablePath: path,
+            args: ["--no-sandbox", "--disable-setuid-sandbox"],
+          });
+          if (browser.connected) {
+            break;
+          }
+        }
+      }
+
+      if (!browser) {
+        send(IpcMainSend.Message, {
+          type: "error",
+          message:
+            "컴퓨터에 크롬이 설치되어 있지 않거나, 경로를 찾지 못했습니다. 크롬을 설치한 후 앱을 다시 실행해주세요.",
+        });
+        return;
+      }
 
       await browser.setCookie({
         name: "NID",

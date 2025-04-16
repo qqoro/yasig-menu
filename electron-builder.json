@@ -18,7 +18,6 @@
     "target": ["snap"]
   },
   "asar": true,
-  "asarUnpack": ["node_modules/puppeteer-core/.local-chromium/**"],
   "files": [
     {
       "from": "build/main",
