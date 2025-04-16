@@ -29,8 +29,21 @@ ipcMain.on(
       console.log("params", params);
       console.log("q", params.get("q"));
 
+      const executablePath =
+        process.env.NODE_ENV === "production"
+          ? join(
+              import.meta.dirname,
+              "node_modules/puppeteer-core/.local-chromium"
+            )
+          : puppeteer.executablePath();
+      console.log("executablePath:", executablePath);
+      send(IpcMainSend.Message, {
+        type: "info",
+        message: executablePath,
+      });
       browser ??= await puppeteer.launch({
         headless: true,
+        executablePath,
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
       });
 
