@@ -2,6 +2,8 @@ name: Build & Release
 
 on:
   push:
+    branches:
+      - dev
     tags:
       - "v*"
 
@@ -48,6 +50,7 @@ jobs:
           if-no-files-found: ignore
 
   release:
+    if: ${{ github.ref_type == 'tag' }}
     needs: build
     runs-on: ubuntu-latest
     steps:
