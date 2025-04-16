@@ -34,10 +34,6 @@ ipcMain.on(
         const list = chromeLauncher.Launcher.getInstallations();
         for (const path of list) {
           console.log("executablePath:", process.env.NODE_ENV, path);
-          send(IpcMainSend.Message, {
-            type: "info",
-            message: process.env.NODE_ENV + " " + path,
-          });
           browser ??= await puppeteer.launch({
             headless: true,
             executablePath: path,
