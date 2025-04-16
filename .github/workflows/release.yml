@@ -59,24 +59,15 @@ jobs:
         with:
           path: artifacts
 
-      - name: Prepare files for release
-        run: |
-          mkdir -p installer
-          cp -R artifacts/build_win/* installer/ || true
-          cd installer
-          zip -r ../yasig-menu-installer-${{ github.ref_name }}.zip .
-          cd ..
-
-          mkdir -p portable
-          cp artifacts/build_port_win/*.exe portable/yasig-menu-portable-${{ github.ref_name }}.exe || true
-
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
           files: |
-            yasig-menu-installer*.zip
-            portable/yasig-menu-portable*.exe
+            artifacts/build_win/*.exe 
+            artifacts/build_win/*.blockmap 
+            artifacts/build_win/latest.yml
+            artifacts/build_port_win/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

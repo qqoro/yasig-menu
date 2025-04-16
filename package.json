@@ -10,10 +10,8 @@
   },
   "scripts": {
     "dev": "node scripts/dev-server.js",
-    "build:win": "node scripts/build.js && electron-builder --win --publish=never",
-    "build:port:win": "node scripts/build.js && electron-builder --win portable --publish=never",
-    "build:mac": "node scripts/build.js && electron-builder --mac",
-    "build:linux": "node scripts/build.js && electron-builder --linux"
+    "build:win": "tsc --noEmit && node scripts/build.js && electron-builder --win --publish=never",
+    "build:port:win": "tsc --noEmit && node scripts/build.js && electron-builder --win portable --publish=never"
   },
   "type": "module",
   "devDependencies": {
