@@ -98,6 +98,7 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
     </CardHeader>
     <CardContent
       class="p-0 m-2 text-ellipsis text-nowrap overflow-hidden max-md:text-sm"
+      :title="title"
     >
       {{ title }}
     </CardContent>
