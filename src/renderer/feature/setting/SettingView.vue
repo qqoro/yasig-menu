@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
-import { reactive, ref } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import { toast } from "vue-sonner";
-import { useSetting } from "../../store/setting-store";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader } from "../ui/card";
+import PageTitle from "../../components/PageTitle.vue";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent, CardHeader } from "../../components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -12,9 +12,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/dialog";
-import { Input } from "../ui/input";
-import { Switch } from "../ui/switch";
+} from "../../components/ui/dialog";
+import { Input } from "../../components/ui/input";
+import { Switch } from "../../components/ui/switch";
+import { useApi } from "../../composable/useApi";
+import { useEvent } from "../../composable/useEvent";
+import { IpcMainSend, IpcRendererSend } from "../../events";
+import { useSetting } from "../../store/setting-store";
 
 import img1 from "@/assets/1.jpg";
 import img2 from "@/assets/2.jpg";
@@ -23,9 +27,12 @@ import img4 from "@/assets/4.jpg";
 import img5 from "@/assets/5.jpg";
 import img6 from "@/assets/6.jpg";
 import img7 from "@/assets/7.jpg";
-import PageTitle from "../PageTitle.vue";
+
+import log from "electron-log";
+const console = log;
 
 const setting = useSetting();
+const api = useApi();
 
 const sources = reactive([...setting.sources]);
 const blur = ref(setting.blur);
@@ -33,6 +40,7 @@ const dark = ref(setting.dark);
 const cookie = ref(setting.cookie);
 const exclude = ref(setting.exclude);
 const search = ref(setting.search);
+const appVersion = ref("");
 
 const add = () => {
   sources.push("");
@@ -73,6 +81,20 @@ const copy = async () => {
   await window.navigator.clipboard.writeText("https://www.google.com");
   toast.success("주소가 복사되었습니다.");
 };
+
+const updateCheck = () => {
+  api.send(IpcRendererSend.UpdateCheck);
+};
+useEvent(IpcMainSend.UpdateChecked, (e, y: boolean) => {
+  console.log(e, y);
+});
+
+onMounted(() => {
+  api.send(IpcRendererSend.VersionCheck);
+});
+useEvent(IpcMainSend.VersionChecked, (e, version: string) => {
+  appVersion.value = version;
+});
 </script>
 
 <template>
@@ -254,7 +276,33 @@ const copy = async () => {
         </div>
       </CardContent>
     </Card>
+    <Card>
+      <CardHeader class="flex justify-between items-center">
+        <div class="text-lg">앱 정보</div>
+      </CardHeader>
+      <CardContent class="flex flex-col gap-2">
+        <p>앱 버전 : {{ appVersion }}</p>
+        <Button as-child variant="outline">
+          <a
+            href="https://github.com/qqoro/yasig-menu"
+            target="_blank"
+            referrerpolicy="no-referrer"
+          >
+            <Icon icon="mdi:github" />
+            깃허브 방문하기
+          </a>
+        </Button>
+        <!-- <Button variant="outline" @click="updateCheck">업데이트 확인</Button> -->
+        <Button
+          variant="outline"
+          @click="api.send(IpcRendererSend.ToggleDevTools)"
+          >개발자 도구 토글</Button
+        >
+      </CardContent>
+    </Card>
 
+    <!-- <Button @click="save">JSON으로 내보내기</Button> -->
+    <!-- <Button @click="save">JSON으로 불러오기</Button> -->
     <Button @click="save">저장</Button>
   </main>
 </template>

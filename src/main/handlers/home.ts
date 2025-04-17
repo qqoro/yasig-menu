@@ -70,7 +70,7 @@ ipcMain.on(
       thumbnail?: string;
     }[] = [];
 
-    for await (const parent of pathList) {
+    for (const parent of pathList) {
       try {
         const child = (await readdir(parent, { withFileTypes: true })).filter(
           (path) => !exclude.includes(join(path.parentPath, path.name))
@@ -122,7 +122,7 @@ ipcMain.on(IpcRendererSend.Play, async (e, filePath: string) => {
     console.error("error!", error);
     send(IpcMainSend.Message, {
       type: "warning",
-      message: (error as Error).stack,
+      message: (error as Error).stack ?? "",
     });
   }
 });

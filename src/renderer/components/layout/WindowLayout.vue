@@ -32,7 +32,6 @@ useEvent(
   }
 );
 useEvent(IpcMainSend.WindowStatusChange, (e, isMax) => {
-  console.log(isMax);
   isMaximized.value = isMax;
 });
 </script>

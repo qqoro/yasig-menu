@@ -6,6 +6,9 @@ import puppeteer, { Browser, Page } from "puppeteer-core";
 import { IpcMainSend, IpcRendererSend } from "../events.js";
 import { send } from "../main.js";
 
+import log from "electron-log";
+const console = log;
+
 let browser: Browser | undefined;
 
 app.on("window-all-closed", async function () {
@@ -162,34 +165,6 @@ async function getFromGoogle({ page, query }: { page: Page; query: string }) {
   );
 
   return src;
-
-  // if (src) {
-  //   const info = await stat(filePath);
-  //   info.isFile();
-  //   const ext = src.substring(src.indexOf("/") + 1, src.indexOf(";"));
-  //   const thumbnailFileName = [
-  //     info.isFile()
-  //       ? join(
-  //           filePath.substring(0, filePath.length - baseName.length),
-  //           fileName
-  //         )
-  //       : filePath,
-  //     ext,
-  //   ].join(".");
-  //   console.log("thumbnailFileName", thumbnailFileName);
-  //   await writeFile(thumbnailFileName, src.substring(src.indexOf(",") + 1), {
-  //     encoding: "base64",
-  //   });
-  //   send(IpcMainSend.Message, {
-  //     type: "success",
-  //     message: `${baseName}의 썸네일을 다운로드했습니다.`,
-  //   });
-  // } else {
-  //   send(IpcMainSend.Message, {
-  //     type: "error",
-  //     message: `${baseName}의 썸네일을 찾지 못했습니다.`,
-  //   });
-  // }
 }
 
 async function getFromDLSite({ page, rjCode }: { page: Page; rjCode: string }) {

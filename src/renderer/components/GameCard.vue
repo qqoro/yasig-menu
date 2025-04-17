@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
+import log from "electron-log";
 import { ref } from "vue";
 import { toast } from "vue-sonner";
 import { useApi } from "../composable/useApi";
@@ -17,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+const console = log;
 
 const props = defineProps<GameData>();
 const setting = useSetting();

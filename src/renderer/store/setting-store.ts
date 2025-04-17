@@ -1,6 +1,8 @@
+import log from "electron-log";
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import Data from "../lib/data";
+const console = log;
 
 export const useSetting = defineStore("setting", () => {
   const sources = ref<string[]>(Data.getJSON("sources") ?? []);

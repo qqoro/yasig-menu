@@ -10,6 +10,7 @@
   },
   "scripts": {
     "dev": "node scripts/dev-server.js",
+    "build": "tsc --noEmit && node scripts/build.js && electron-builder --win --publish=never",
     "build:win": "tsc --noEmit && node scripts/build.js && electron-builder --win --publish=never",
     "build:port:win": "tsc --noEmit && node scripts/build.js && electron-builder --win portable --publish=never"
   },
@@ -32,6 +33,8 @@
     "chrome-launcher": "^1.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "electron-log": "^5.3.3",
+    "electron-updater": "^6.6.2",
     "lucide-vue-next": "^0.488.0",
     "pinia": "^3.0.2",
     "pretendard": "^1.3.9",

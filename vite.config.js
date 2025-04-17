@@ -8,20 +8,20 @@ import { defineConfig } from "vite";
  * https://vitejs.dev/config
  */
 const config = defineConfig({
-  root: join(__dirname, "src", "renderer/"),
+  root: join(__dirname, "src/renderer/"),
   publicDir: "public",
   server: {
     port: 8080,
   },
   open: false,
   build: {
-    outDir: join(import.meta.dirname, "build", "renderer"),
+    outDir: join(import.meta.dirname, "build/renderer"),
     emptyOutDir: true,
   },
   plugins: [vuePlugin(), tailwind()],
   resolve: {
     alias: {
-      "@": join(import.meta.dirname, "src", "renderer/"),
+      "@": join(import.meta.dirname, "src/renderer/"),
     },
   },
 });
