@@ -4,7 +4,12 @@ import { onMounted, reactive, ref } from "vue";
 import { toast } from "vue-sonner";
 import PageTitle from "../../components/PageTitle.vue";
 import { Button } from "../../components/ui/button";
-import { Card, CardContent, CardHeader } from "../../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "../../components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -85,9 +90,6 @@ const copy = async () => {
 const updateCheck = () => {
   api.send(IpcRendererSend.UpdateCheck);
 };
-useEvent(IpcMainSend.UpdateChecked, (e, y: boolean) => {
-  console.log(e, y);
-});
 
 onMounted(() => {
   api.send(IpcRendererSend.VersionCheck);
@@ -280,8 +282,10 @@ useEvent(IpcMainSend.VersionChecked, (e, version: string) => {
       <CardHeader class="flex justify-between items-center">
         <div class="text-lg">앱 정보</div>
       </CardHeader>
-      <CardContent class="flex flex-col gap-2">
+      <CardContent class="flex flex-col gap-2 text-sm">
         <p>앱 버전 : {{ appVersion }}</p>
+      </CardContent>
+      <CardFooter class="flex justify-start items-center gap-2 flex-wrap">
         <Button as-child variant="outline">
           <a
             href="https://github.com/qqoro/yasig-menu"
@@ -292,13 +296,18 @@ useEvent(IpcMainSend.VersionChecked, (e, version: string) => {
             깃허브 방문하기
           </a>
         </Button>
-        <!-- <Button variant="outline" @click="updateCheck">업데이트 확인</Button> -->
         <Button
           variant="outline"
           @click="api.send(IpcRendererSend.ToggleDevTools)"
-          >개발자 도구 토글</Button
         >
-      </CardContent>
+          <Icon icon="solar:programming-bold-duotone" />
+          개발자 도구 토글
+        </Button>
+        <Button variant="outline" @click="updateCheck">
+          <Icon icon="solar:refresh-circle-bold-duotone" />
+          업데이트 확인
+        </Button>
+      </CardFooter>
     </Card>
 
     <!-- <Button @click="save">JSON으로 내보내기</Button> -->

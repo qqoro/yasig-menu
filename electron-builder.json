@@ -5,14 +5,18 @@
     "output": "dist",
     "buildResources": "src/main/static"
   },
+  "win": {
+    "target": ["nsis", "portable"]
+  },
   "nsis": {
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
+    "artifactName": "yasig-menu-setup-${version}.${ext}",
     "shortcutName": "야식메뉴판"
   },
-  "win": {
-    "target": "nsis"
+  "portable": {
+    "artifactName": "yasig-menu-${version}.${ext}"
   },
   "linux": {
     "target": ["snap"]
