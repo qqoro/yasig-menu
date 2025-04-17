@@ -16,7 +16,7 @@
     "shortcutName": "야식메뉴판"
   },
   "portable": {
-    "artifactName": "yasig-menu-${version}.${ext}"
+    "artifactName": "yasig-menu-portable-${version}.${ext}"
   },
   "linux": {
     "target": ["snap"]

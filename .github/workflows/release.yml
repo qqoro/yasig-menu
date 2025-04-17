@@ -65,9 +65,9 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
           files: |
-            artifacts/build_win/*.exe 
-            artifacts/build_win/*.blockmap 
+            artifacts/build_win/yasig-menu-setup-*.exe
+            artifacts/build_win/*.blockmap
             artifacts/build_win/latest.yml
-            artifacts/build_port_win/*.exe
+            artifacts/build_port_win/yasig-menu-portable-*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
