@@ -18,6 +18,11 @@
     "target": ["snap"]
   },
   "asar": true,
+  "publish": {
+    "provider": "github",
+    "owner": "qqoro",
+    "repo": "yasig-menu"
+  },
   "files": [
     {
       "from": "build/main",

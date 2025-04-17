@@ -1,18 +1,43 @@
+type EnforceAllKeys<T extends Record<keyof typeof IpcMainSend, any[]>> = T;
+
 export enum IpcMainSend {
   WindowStatusChange = "WindowStatusChange",
+  UpdateChecked = "UpdateChecked",
+  VersionChecked = "VersionChecked",
 
-  SourceSaved = "SourceSaved",
   LoadedList = "LoadedList",
   Message = "Message",
 
-  ThumbnailDownloaded = "ThumbnailDownloaded",
   ThumbnailDone = "ThumbnailDone",
 }
+
+export interface IpcMainEventMap
+  extends EnforceAllKeys<{
+    [IpcMainSend.WindowStatusChange]: [boolean];
+    [IpcMainSend.UpdateChecked]: [boolean];
+    [IpcMainSend.VersionChecked]: [string];
+
+    [IpcMainSend.LoadedList]: [
+      { path: string; title: string; thumbnail?: string }[]
+    ];
+    [IpcMainSend.Message]: [
+      {
+        type: "info" | "success" | "warning" | "error";
+        message: string;
+        description?: string;
+      }
+    ];
+
+    [IpcMainSend.ThumbnailDone]: [string];
+  }> {}
 
 export enum IpcRendererSend {
   WindowMinimize = "WindowMinimize",
   WindowMaximizeToggle = "WindowMaximizeToggle",
   WindowClose = "WindowClose",
+  UpdateCheck = "UpdateCheck",
+  VersionCheck = "VersionCheck",
+  ToggleDevTools = "ToggleDevTools",
 
   SourceSave = "SourceSave",
   LoadList = "LoadList",
