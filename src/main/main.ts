@@ -1,13 +1,11 @@
-import { app, BrowserWindow, ipcMain, session, shell } from "electron";
-import * as ElectronUpdater from "electron-updater";
+import { app, BrowserWindow, session, shell } from "electron";
 import { join } from "path";
-import { IpcMainEventMap, IpcMainSend, IpcRendererSend } from "./events.js";
-const { autoUpdater } = (ElectronUpdater as any)
-  .default as typeof ElectronUpdater;
+import { IpcMainEventMap, IpcMainSend } from "./events.js";
+import windowsInit from "./handlers/windows.js";
 
 import log from "electron-log";
 log.initialize();
-const console = log;
+export const console = log;
 
 let mainWindow: BrowserWindow;
 
@@ -56,6 +54,8 @@ function createWindow() {
     // Electron 내부 창 생성 차단
     return { action: "deny" };
   });
+
+  windowsInit(mainWindow);
 }
 
 app.whenReady().then(() => {
@@ -95,36 +95,4 @@ export function send<T extends IpcMainSend>(
 
 import "./handlers/home.js";
 import "./handlers/thumbnail.js";
-
-ipcMain.on(IpcRendererSend.WindowMinimize, () => {
-  console.log("main send!", IpcRendererSend.WindowMinimize);
-  mainWindow.minimize();
-});
-
-ipcMain.on(IpcRendererSend.WindowMaximizeToggle, () => {
-  console.log("main send!", IpcRendererSend.WindowMaximizeToggle);
-  if (mainWindow.isMaximized()) {
-    mainWindow.restore();
-  } else {
-    mainWindow.maximize();
-  }
-});
-
-ipcMain.on(IpcRendererSend.WindowClose, () => {
-  console.log("main send!", IpcRendererSend.WindowClose);
-  mainWindow.close();
-});
-
-ipcMain.on(IpcRendererSend.UpdateCheck, async () => {
-  console.log("autoUpdater", autoUpdater, ElectronUpdater);
-  const r = await autoUpdater.checkForUpdates();
-  console.log(r);
-});
-
-ipcMain.on(IpcRendererSend.VersionCheck, () => {
-  send(IpcMainSend.VersionChecked, app.getVersion());
-});
-
-ipcMain.on(IpcRendererSend.ToggleDevTools, () => {
-  mainWindow.webContents.toggleDevTools();
-});
+import "./handlers/update.js";
