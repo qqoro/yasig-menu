@@ -62,11 +62,12 @@ const gameExist = computed(
     <div
       :class="
         cn({
-          'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 mx-auto w-full':
+          'inline-flex gap-4 mx-auto w-fit flex-wrap justify-center  items-start':
             gameExist,
           'flex justify-center items-center h-[calc(100dvh-200px)]': !gameExist,
         })
       "
+      :style="{ zoom: setting.zoom * 0.02 }"
     >
       <div
         v-if="!gameExist"

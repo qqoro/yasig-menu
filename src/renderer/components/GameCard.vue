@@ -69,7 +69,7 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
 
 <template>
   <Card
-    class="p-0 overflow-hidden w-full hover:bg-green-50 transition-colors gap-1"
+    class="p-0 overflow-hidden hover:bg-green-50 transition-colors gap-1 w-96"
   >
     <CardHeader
       class="p-0 w-full aspect-video overflow-hidden flex justify-center items-center"
