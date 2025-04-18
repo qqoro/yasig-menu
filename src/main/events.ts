@@ -3,6 +3,7 @@ type EnforceAllKeys<T extends Record<keyof typeof IpcMainSend, any[]>> = T;
 export enum IpcMainSend {
   WindowStatusChange = "WindowStatusChange",
   UpdateChecked = "UpdateChecked",
+  UpdateDownloadProgress = "UpdateDownloadProgress",
   VersionChecked = "VersionChecked",
 
   LoadedList = "LoadedList",
@@ -15,6 +16,7 @@ export interface IpcMainEventMap
   extends EnforceAllKeys<{
     [IpcMainSend.WindowStatusChange]: [boolean];
     [IpcMainSend.UpdateChecked]: [boolean];
+    [IpcMainSend.UpdateDownloadProgress]: [number];
     [IpcMainSend.VersionChecked]: [string];
 
     [IpcMainSend.LoadedList]: [
@@ -39,6 +41,7 @@ export enum IpcRendererSend {
   VersionCheck = "VersionCheck",
   ToggleDevTools = "ToggleDevTools",
   OpenLogFolder = "OpenLogFolder",
+  Restart = "Restart",
 
   SourceSave = "SourceSave",
   LoadList = "LoadList",

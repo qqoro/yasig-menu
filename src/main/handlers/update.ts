@@ -10,7 +10,6 @@ const console = log;
 
 app.on("ready", () => {
   // 포터블 버전은 업데이트 지원 안함..
-
   autoUpdater.on("update-available", async (updateInfo) => {
     console.log("updateInfo", updateInfo);
     send(IpcMainSend.Message, {
@@ -21,11 +20,13 @@ app.on("ready", () => {
     console.log("download", download);
   });
 
+  autoUpdater.on("download-progress", (progress) => {
+    console.log(progress);
+    send(IpcMainSend.UpdateDownloadProgress, progress.percent);
+  });
+
   autoUpdater.on("update-downloaded", async () => {
-    send(IpcMainSend.Message, {
-      type: "info",
-      message: "업데이트가 준비되었습니다. 앱을 재실행하면 적용됩니다.",
-    });
+    send(IpcMainSend.UpdateDownloadProgress, 1);
   });
 
   ipcMain.on(IpcRendererSend.UpdateCheck, async () => {
@@ -59,6 +60,10 @@ app.on("ready", () => {
 
   ipcMain.on(IpcRendererSend.OpenLogFolder, async () => {
     await shell.openPath(dirname(log.transports.file.getFile().path));
+  });
+
+  ipcMain.on(IpcRendererSend.Restart, async () => {
+    autoUpdater.quitAndInstall();
   });
 
   setInterval(() => {

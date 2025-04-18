@@ -4,6 +4,17 @@ import { Icon } from "@iconify/vue";
 import { ref } from "vue";
 import { RouterView, useRoute } from "vue-router";
 import { toast } from "vue-sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog";
+import { Progress } from "../../components/ui/progress";
 import { useApi } from "../../composable/useApi";
 import { useEvent } from "../../composable/useEvent";
 import { IpcMainSend, IpcRendererSend } from "../../events";
@@ -15,6 +26,8 @@ const route = useRoute();
 const api = useApi();
 const setting = useSetting();
 const isMaximized = ref(false);
+const updateDownloadProgress = ref(0);
+const updateDialogOpen = ref(false);
 
 const zoomIn = () => {
   if (setting.zoom + 5 <= 100) {
@@ -26,6 +39,10 @@ const zoomOut = () => {
   if (setting.zoom - 5 > 0) {
     setting.saveZoom(setting.zoom - 5);
   }
+};
+
+const restart = () => {
+  api.send(IpcRendererSend.Restart);
 };
 
 useEvent(
@@ -47,6 +64,12 @@ useEvent(
 );
 useEvent(IpcMainSend.WindowStatusChange, (e, isMax) => {
   isMaximized.value = isMax;
+});
+useEvent(IpcMainSend.UpdateDownloadProgress, (e, percent) => {
+  updateDownloadProgress.value = percent;
+  if (percent === 1) {
+    updateDialogOpen.value = true;
+  }
 });
 </script>
 
@@ -108,6 +131,11 @@ useEvent(IpcMainSend.WindowStatusChange, (e, isMax) => {
       >Setting</RouterLink
     >
     <div class="flex justify-end w-full gap-1 pr-4 items-center">
+      <Progress
+        v-if="updateDownloadProgress !== 0 && updateDownloadProgress !== 1"
+        style="width: 100px"
+        :model-value="updateDownloadProgress * 100"
+      />
       <button
         class="transition-colors hover:bg-slate-300 size-7 rounded-sm flex justify-center items-center"
         @click="zoomIn"
@@ -127,6 +155,21 @@ useEvent(IpcMainSend.WindowStatusChange, (e, isMax) => {
     <component :is="Component" class="py-2 px-4 pb-6" />
   </RouterView>
   <Toaster rich-colors close-button />
+  <AlertDialog>
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>업데이트 준비가 완료되었습니다.</AlertDialogTitle>
+        <AlertDialogDescription>
+          업데이트 준비가 완료되어 앱을 재시작 하면 업데이트됩니다. 지금 바로
+          재시작하겠습니까?
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>나중에</AlertDialogCancel>
+        <AlertDialogAction @click="restart">재시작</AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 </template>
 
 <style scoped>
