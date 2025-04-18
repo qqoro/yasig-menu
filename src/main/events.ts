@@ -38,6 +38,7 @@ export enum IpcRendererSend {
   UpdateCheck = "UpdateCheck",
   VersionCheck = "VersionCheck",
   ToggleDevTools = "ToggleDevTools",
+  OpenLogFolder = "OpenLogFolder",
 
   SourceSave = "SourceSave",
   LoadList = "LoadList",

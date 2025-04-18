@@ -91,6 +91,10 @@ const updateCheck = () => {
   api.send(IpcRendererSend.UpdateCheck);
 };
 
+const openLogFolder = () => {
+  api.send(IpcRendererSend.OpenLogFolder);
+};
+
 onMounted(() => {
   api.send(IpcRendererSend.VersionCheck);
 });
@@ -306,6 +310,10 @@ useEvent(IpcMainSend.VersionChecked, (e, version: string) => {
         <Button variant="outline" @click="updateCheck">
           <Icon icon="solar:refresh-circle-bold-duotone" />
           업데이트 확인
+        </Button>
+        <Button variant="outline" @click="openLogFolder">
+          <Icon icon="solar:document-text-bold-duotone" />
+          로그 폴더 열기
         </Button>
       </CardFooter>
     </Card>

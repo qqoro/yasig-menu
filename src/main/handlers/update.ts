@@ -1,6 +1,7 @@
-import { app, ipcMain } from "electron";
+import { app, ipcMain, shell } from "electron";
 import log from "electron-log";
 import * as ElectronUpdater from "electron-updater";
+import { dirname } from "path";
 import { IpcMainSend, IpcRendererSend } from "../events.js";
 import { send } from "../main.js";
 const { autoUpdater } = (ElectronUpdater as any)
@@ -54,6 +55,10 @@ app.on("ready", () => {
 
   ipcMain.on(IpcRendererSend.VersionCheck, () => {
     send(IpcMainSend.VersionChecked, app.getVersion());
+  });
+
+  ipcMain.on(IpcRendererSend.OpenLogFolder, async () => {
+    await shell.openPath(dirname(log.transports.file.getFile().path));
   });
 
   setInterval(() => {
