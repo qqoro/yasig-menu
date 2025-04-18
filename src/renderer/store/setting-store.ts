@@ -5,6 +5,12 @@ import Data from "../lib/data";
 const console = log;
 
 export const useSetting = defineStore("setting", () => {
+  const zoom = ref<number>(Data.getJSON("zoom") ?? 50);
+  const saveZoom = (newZoom: number) => {
+    zoom.value = newZoom;
+    Data.setJSON("zoom", newZoom);
+    console.log("saved!", zoom.value);
+  };
   const sources = ref<string[]>(Data.getJSON("sources") ?? []);
   const saveSources = (newSources: string[]) => {
     sources.value = newSources;
@@ -46,6 +52,8 @@ export const useSetting = defineStore("setting", () => {
   };
 
   return {
+    zoom,
+    saveZoom,
     sources,
     saveSources,
     blur,

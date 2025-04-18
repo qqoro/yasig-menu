@@ -8,11 +8,25 @@ import { useApi } from "../../composable/useApi";
 import { useEvent } from "../../composable/useEvent";
 import { IpcMainSend, IpcRendererSend } from "../../events";
 import { cn } from "../../lib/utils";
+import { useSetting } from "../../store/setting-store";
 import { Toaster } from "../ui/sonner";
 
 const route = useRoute();
 const api = useApi();
+const setting = useSetting();
 const isMaximized = ref(false);
+
+const zoomIn = () => {
+  if (setting.zoom + 5 <= 100) {
+    setting.saveZoom(setting.zoom + 5);
+  }
+};
+
+const zoomOut = () => {
+  if (setting.zoom - 5 > 0) {
+    setting.saveZoom(setting.zoom - 5);
+  }
+};
 
 useEvent(
   IpcMainSend.Message,
@@ -93,6 +107,21 @@ useEvent(IpcMainSend.WindowStatusChange, (e, isMax) => {
       "
       >Setting</RouterLink
     >
+    <div class="flex justify-end w-full gap-1 pr-4 items-center">
+      <button
+        class="transition-colors hover:bg-slate-300 size-7 rounded-sm flex justify-center items-center"
+        @click="zoomIn"
+      >
+        <Icon icon="solar:magnifer-zoom-in-outline" />
+      </button>
+      카드 크기 변경
+      <button
+        class="transition-colors hover:bg-slate-300 size-7 rounded-sm flex justify-center items-center"
+        @click="zoomOut"
+      >
+        <Icon icon="solar:magnifer-zoom-out-outline" />
+      </button>
+    </div>
   </nav>
   <RouterView #default="{ Component }">
     <component :is="Component" class="py-2 px-4 pb-6" />
