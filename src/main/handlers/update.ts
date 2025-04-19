@@ -9,7 +9,37 @@ const { autoUpdater } = (ElectronUpdater as any)
 const console = log;
 
 app.on("ready", () => {
-  // 포터블 버전은 업데이트 지원 안함..
+  ipcMain.on(IpcRendererSend.UpdateCheck, async () => {
+    // 포터블 버전은 직접 API호출하여 확인
+    if (process.env.PORTABLE_EXECUTABLE_FILE !== undefined) {
+      const result = await updateCheckForPortable();
+      console.log("result", result, "current version", app.getVersion());
+
+      if (result.tagName !== "v" + app.getVersion()) {
+        send(IpcMainSend.Message, {
+          type: "info",
+          message:
+            "업데이트 버전이 존재합니다. 포터블 버전은 자동 업데이트를 지원하지 않으므로 Github에서 다운로드 해주세요.",
+        });
+      } else {
+        send(IpcMainSend.Message, {
+          type: "info",
+          message: "최신 버전을 사용하고 있습니다.",
+        });
+      }
+      return;
+    }
+
+    // 업데이트 존재하는 경우 `update-available` 이벤트로 진행
+    const updateInfo = await autoUpdater.checkForUpdates();
+    if (!updateInfo?.isUpdateAvailable) {
+      send(IpcMainSend.Message, {
+        type: "info",
+        message: "최신 버전을 사용하고 있습니다.",
+      });
+    }
+  });
+
   autoUpdater.on("update-available", async (updateInfo) => {
     console.log("updateInfo", updateInfo);
     send(IpcMainSend.Message, {
@@ -29,31 +59,6 @@ app.on("ready", () => {
     send(IpcMainSend.UpdateDownloadProgress, 1);
   });
 
-  ipcMain.on(IpcRendererSend.UpdateCheck, async () => {
-    console.log(
-      "PORTABLE_EXECUTABLE_FILE",
-      process.env.PORTABLE_EXECUTABLE_FILE
-    );
-    if (process.env.PORTABLE_EXECUTABLE_FILE !== undefined) {
-      send(IpcMainSend.Message, {
-        type: "info",
-        message:
-          "포터블 버전은 업데이트를 지원하지 않습니다. Github에서 확인해주세요.",
-      });
-      return;
-    }
-
-    const updateInfo = await autoUpdater.checkForUpdates();
-    console.log("updateInfo", updateInfo);
-
-    if (!updateInfo?.isUpdateAvailable) {
-      send(IpcMainSend.Message, {
-        type: "info",
-        message: "최신 버전입니다.",
-      });
-    }
-  });
-
   ipcMain.on(IpcRendererSend.VersionCheck, () => {
     send(IpcMainSend.VersionChecked, app.getVersion());
   });
@@ -66,7 +71,21 @@ app.on("ready", () => {
     autoUpdater.quitAndInstall();
   });
 
+  autoUpdater.checkForUpdates();
   setInterval(() => {
     autoUpdater.checkForUpdates();
   }, 1000 * 60 * 10);
 });
+
+const updateCheckForPortable = async () => {
+  const url = `https://api.github.com/repos/qqoro/yasig-menu/releases/latest`;
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    console.log(data);
+    return data; // 전체 릴리즈 정보 반환
+  } catch (error) {
+    console.error("최신 릴리즈 정보 가져오기 실패:", error);
+    return null;
+  }
+};
