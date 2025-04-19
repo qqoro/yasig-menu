@@ -1,4 +1,7 @@
-type EnforceAllKeys<T extends Record<keyof typeof IpcMainSend, any[]>> = T;
+type EnforceAllKeys<
+  E extends IpcMainSend | IpcRendererSend,
+  T extends Record<E, any[]>
+> = T;
 
 export enum IpcMainSend {
   WindowStatusChange = "WindowStatusChange",
@@ -13,25 +16,28 @@ export enum IpcMainSend {
 }
 
 export interface IpcMainEventMap
-  extends EnforceAllKeys<{
-    [IpcMainSend.WindowStatusChange]: [boolean];
-    [IpcMainSend.UpdateChecked]: [boolean];
-    [IpcMainSend.UpdateDownloadProgress]: [number];
-    [IpcMainSend.VersionChecked]: [string];
+  extends EnforceAllKeys<
+    IpcMainSend,
+    {
+      [IpcMainSend.WindowStatusChange]: [boolean];
+      [IpcMainSend.UpdateChecked]: [boolean];
+      [IpcMainSend.UpdateDownloadProgress]: [number];
+      [IpcMainSend.VersionChecked]: [string];
 
-    [IpcMainSend.LoadedList]: [
-      { path: string; title: string; thumbnail?: string }[]
-    ];
-    [IpcMainSend.Message]: [
-      {
-        type: "info" | "success" | "warning" | "error";
-        message: string;
-        description?: string;
-      }
-    ];
+      [IpcMainSend.LoadedList]: [
+        { path: string; title: string; thumbnail?: string }[]
+      ];
+      [IpcMainSend.Message]: [
+        {
+          type: "info" | "success" | "warning" | "error";
+          message: string;
+          description?: string;
+        }
+      ];
 
-    [IpcMainSend.ThumbnailDone]: [string];
-  }> {}
+      [IpcMainSend.ThumbnailDone]: [string];
+    }
+  > {}
 
 export enum IpcRendererSend {
   WindowMinimize = "WindowMinimize",
@@ -43,7 +49,6 @@ export enum IpcRendererSend {
   OpenLogFolder = "OpenLogFolder",
   Restart = "Restart",
 
-  SourceSave = "SourceSave",
   LoadList = "LoadList",
 
   Play = "Play",
@@ -53,3 +58,27 @@ export enum IpcRendererSend {
   ThumbnailDownload = "ThumbnailDownload",
   ThumbnailDelete = "ThumbnailDelete",
 }
+
+export interface IpcRendererEventMap
+  extends EnforceAllKeys<
+    IpcRendererSend,
+    {
+      [IpcRendererSend.WindowMinimize]: [];
+      [IpcRendererSend.WindowMaximizeToggle]: [];
+      [IpcRendererSend.WindowClose]: [];
+      [IpcRendererSend.UpdateCheck]: [];
+      [IpcRendererSend.VersionCheck]: [];
+      [IpcRendererSend.ToggleDevTools]: [];
+      [IpcRendererSend.OpenLogFolder]: [];
+      [IpcRendererSend.Restart]: [];
+
+      [IpcRendererSend.LoadList]: [string[], string[]];
+
+      [IpcRendererSend.Play]: [string];
+      [IpcRendererSend.OpenFolder]: [string];
+      [IpcRendererSend.Hide]: [string];
+
+      [IpcRendererSend.ThumbnailDownload]: [string, string, [string, string]];
+      [IpcRendererSend.ThumbnailDelete]: [string];
+    }
+  > {}

@@ -89,7 +89,7 @@ export function send<T extends IpcMainSend>(
   event: T,
   ...data: IpcMainEventMap[T]
 ) {
-  console.log("main send!", event);
+  console.log("main send!", event, "data:", data);
   mainWindow.webContents.send(event, ...data);
 }
 

@@ -1,11 +1,11 @@
 import type { IpcRendererEvent } from "electron";
 import { onMounted, onUnmounted } from "vue";
-import { IpcMainSend } from "../events";
+import { IpcMainEventMap, IpcMainSend } from "../events";
 import { useApi } from "./useApi";
 
-export const useEvent = (
-  event: IpcMainSend,
-  callback: (event: IpcRendererEvent, ...args: any[]) => void
+export const useEvent = <T extends IpcMainSend>(
+  event: T,
+  callback: (event: IpcRendererEvent, ...args: IpcMainEventMap[T]) => void
 ) => {
   const api = useApi();
 
