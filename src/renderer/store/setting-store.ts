@@ -17,6 +17,14 @@ export const useSetting = defineStore("setting", () => {
     Data.setJSON("sources", newSources);
     console.log("saved!", sources.value);
   };
+  const applySources = ref<string[]>(
+    Data.getJSON("applySources") ?? [...sources.value] ?? []
+  );
+  const saveApplySources = (newApplySources: string[]) => {
+    applySources.value = newApplySources;
+    Data.setJSON("applySources", newApplySources);
+    console.log("saved!", applySources.value);
+  };
   const blur = ref<boolean>(Data.getJSON("blur") ?? false);
   const saveBlur = (newBlur: boolean) => {
     blur.value = newBlur;
@@ -44,8 +52,8 @@ export const useSetting = defineStore("setting", () => {
   const addExclude = (item: string) => {
     saveExclude([...exclude.value, item]);
   };
-  const search = ref<string[]>(Data.getJSON("search") ?? ["", ""]);
-  const saveSearch = (newSearch: string[]) => {
+  const search = ref<[string, string]>(Data.getJSON("search") ?? ["", ""]);
+  const saveSearch = (newSearch: [string, string]) => {
     search.value = newSearch;
     Data.setJSON("search", newSearch);
     console.log("saved!", search.value);
@@ -56,6 +64,8 @@ export const useSetting = defineStore("setting", () => {
     saveZoom,
     sources,
     saveSources,
+    applySources,
+    saveApplySources,
     blur,
     saveBlur,
     dark,

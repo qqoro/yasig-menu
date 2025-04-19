@@ -53,7 +53,7 @@ const hide = (filePath: string) => {
   toast.info(`${props.title}을 숨김 처리 했습니다.`);
   api.send(
     IpcRendererSend.LoadList,
-    [...setting.sources],
+    [...setting.applySources],
     [...setting.exclude]
   );
 };

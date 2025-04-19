@@ -27,7 +27,7 @@ useEvent(IpcMainSend.ThumbnailDone, () => {
   console.warn("called done!");
   api.send(
     IpcRendererSend.LoadList,
-    [...setting.sources],
+    [...setting.applySources],
     [...setting.exclude]
   );
 });
@@ -37,7 +37,7 @@ onMounted(() => {
   console.warn("mount!", IpcRendererSend.LoadList);
   api.send(
     IpcRendererSend.LoadList,
-    [...setting.sources],
+    [...setting.applySources],
     [...setting.exclude]
   );
 });
@@ -46,7 +46,7 @@ useWindowEvent("focus", () => {
   console.warn("focus!", IpcRendererSend.LoadList);
   api.send(
     IpcRendererSend.LoadList,
-    [...setting.sources],
+    [...setting.applySources],
     [...setting.exclude]
   );
 });
