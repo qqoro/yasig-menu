@@ -26,6 +26,12 @@ import {
   DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
 import { Progress } from "../../components/ui/progress";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../../components/ui/tooltip";
 import { useApi } from "../../composable/useApi";
 import { useEvent } from "../../composable/useEvent";
 import { IpcMainSend, IpcRendererSend } from "../../events";
@@ -78,11 +84,12 @@ const toggleApplySource = (e: Event, path: string, isExclude: boolean) => {
 
 const applySources = storeToRefs(setting).applySources;
 watch(applySources, () => {
-  api.send(
-    IpcRendererSend.LoadList,
-    [...setting.applySources],
-    [...setting.exclude]
-  );
+  const [isChange, thumbnailFolder] = setting.changeThumbnailFolder;
+  api.send(IpcRendererSend.LoadList, {
+    sources: [...setting.applySources],
+    exclude: [...setting.exclude],
+    thumbnailFolder: isChange ? thumbnailFolder : undefined,
+  });
 });
 
 useEvent(IpcMainSend.Message, (_, { type, message, description }) => {
@@ -163,19 +170,37 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, percent) => {
         :model-value="updateDownloadProgress * 100"
       />
       <template v-if="route.path === '/'">
-        <button
-          class="transition-colors hover:bg-slate-300 size-7 rounded-sm flex justify-center items-center"
-          @click="zoomIn"
-        >
-          <Icon icon="solar:magnifer-zoom-in-outline" />
-        </button>
-        카드 크기 변경
-        <button
-          class="transition-colors hover:bg-slate-300 size-7 rounded-sm flex justify-center items-center"
-          @click="zoomOut"
-        >
-          <Icon icon="solar:magnifer-zoom-out-outline" />
-        </button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <button
+                class="transition-colors hover:bg-slate-300 size-7 rounded-sm flex justify-center items-center"
+                @click="zoomIn"
+              >
+                <Icon icon="solar:magnifer-zoom-in-outline" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>확대</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <button
+                class="transition-colors hover:bg-slate-300 size-7 rounded-sm flex justify-center items-center"
+                @click="zoomOut"
+              >
+                <Icon icon="solar:magnifer-zoom-out-outline" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>축소</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
             <button

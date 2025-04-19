@@ -1,10 +1,10 @@
 import * as chromeLauncher from "chrome-launcher";
-import { app, ipcMain } from "electron";
+import { app } from "electron";
 import { rm, stat, writeFile } from "fs/promises";
 import { basename, extname, join } from "path";
 import puppeteer, { Browser, Page } from "puppeteer-core";
 import { IpcMainSend, IpcRendererSend } from "../events.js";
-import { send } from "../main.js";
+import { ipcMain, send } from "../main.js";
 
 import log from "electron-log";
 const console = log;
@@ -18,13 +18,16 @@ app.on("window-all-closed", async function () {
 
 ipcMain.on(
   IpcRendererSend.ThumbnailDownload,
-  async (e, filePath: string, cookie: string, search: [string, string]) => {
+  async (e, { filePath, cookie, search, savePath }) => {
     let page: Page | undefined;
 
+    const fileInfo = await stat(filePath);
     const baseName = basename(filePath);
     const fileName = baseName.substring(
       0,
-      baseName.length - extname(baseName).length
+      fileInfo.isFile()
+        ? baseName.length - extname(baseName).length
+        : baseName.length
     );
 
     try {
@@ -71,11 +74,14 @@ ipcMain.on(
         });
 
         if (imgUrl) {
-          const fileName = await getThumbnailName({
-            filePath,
-            thumbnailExt: extname(imgUrl),
-          });
-          await saveFromUrl({ fileName, imgUrl });
+          const thumbnailExt = extname(imgUrl);
+          const thumbnailName = savePath
+            ? join(savePath, fileName) + thumbnailExt
+            : await getThumbnailName({
+                filePath,
+                thumbnailExt,
+              });
+          await saveFromUrl({ fileName: thumbnailName, imgUrl });
           downloaded = true;
         }
       }
@@ -84,17 +90,20 @@ ipcMain.on(
         const query = [search[0], fileName, search[1]].join(" ");
         const base64Src = await getFromGoogle({ page, query });
         if (base64Src) {
-          const fileName = await getThumbnailName({
-            filePath,
-            thumbnailExt:
-              "." +
-              base64Src.substring(
-                base64Src.indexOf("/") + 1,
-                base64Src.indexOf(";")
-              ),
-          });
+          const thumbnailExt =
+            "." +
+            base64Src.substring(
+              base64Src.indexOf("/") + 1,
+              base64Src.indexOf(";")
+            );
+          const thumbnailName = savePath
+            ? join(savePath, fileName) + thumbnailExt
+            : await getThumbnailName({
+                filePath,
+                thumbnailExt,
+              });
           await saveFromBase64({
-            fileName,
+            fileName: thumbnailName,
             data: base64Src.substring(base64Src.indexOf(",") + 1),
           });
           downloaded = true;

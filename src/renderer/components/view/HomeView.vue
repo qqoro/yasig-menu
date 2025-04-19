@@ -25,30 +25,39 @@ useEvent(
 
 useEvent(IpcMainSend.ThumbnailDone, () => {
   console.warn("called done!");
-  api.send(
-    IpcRendererSend.LoadList,
-    [...setting.applySources],
-    [...setting.exclude]
-  );
+  const [isChange, thumbnailFolder] = setting.changeThumbnailFolder;
+  api.send(IpcRendererSend.LoadList, {
+    sources: [...setting.applySources],
+    exclude: [...setting.exclude],
+    thumbnailFolder: isChange ? thumbnailFolder : undefined,
+  });
 });
 
 onMounted(() => {
   loading.value = true;
   console.warn("mount!", IpcRendererSend.LoadList);
-  api.send(
-    IpcRendererSend.LoadList,
-    [...setting.applySources],
-    [...setting.exclude]
-  );
+  const [isChange, thumbnailFolder] = setting.changeThumbnailFolder;
+  api.send(IpcRendererSend.LoadList, {
+    sources: [...setting.applySources],
+    exclude: [...setting.exclude],
+    thumbnailFolder: isChange ? thumbnailFolder : undefined,
+  });
 });
 
 useWindowEvent("focus", () => {
   console.warn("focus!", IpcRendererSend.LoadList);
-  api.send(
-    IpcRendererSend.LoadList,
-    [...setting.applySources],
-    [...setting.exclude]
-  );
+  const [isChange, thumbnailFolder] = setting.changeThumbnailFolder;
+  api.send(IpcRendererSend.LoadList, {
+    sources: [...setting.applySources],
+    exclude: [...setting.exclude],
+    thumbnailFolder: isChange ? thumbnailFolder : undefined,
+  });
+});
+
+useWindowEvent("keyup", (e) => {
+  if (e.key.toLowerCase() === "f" && e.ctrlKey) {
+    console.log("i will search!");
+  }
 });
 
 const gameExist = computed(

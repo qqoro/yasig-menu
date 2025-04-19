@@ -72,13 +72,26 @@ export interface IpcRendererEventMap
       [IpcRendererSend.OpenLogFolder]: [];
       [IpcRendererSend.Restart]: [];
 
-      [IpcRendererSend.LoadList]: [string[], string[]];
+      [IpcRendererSend.LoadList]: [
+        {
+          sources: string[];
+          exclude: string[];
+          thumbnailFolder?: string;
+        }
+      ];
 
       [IpcRendererSend.Play]: [string];
       [IpcRendererSend.OpenFolder]: [string];
       [IpcRendererSend.Hide]: [string];
 
-      [IpcRendererSend.ThumbnailDownload]: [string, string, [string, string]];
+      [IpcRendererSend.ThumbnailDownload]: [
+        {
+          filePath: string;
+          cookie: string;
+          search: [string, string];
+          savePath?: string;
+        }
+      ];
       [IpcRendererSend.ThumbnailDelete]: [string];
     }
   > {}
