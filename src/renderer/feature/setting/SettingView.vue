@@ -40,6 +40,7 @@ import img6 from "@/assets/6.jpg";
 import img7 from "@/assets/7.jpg";
 
 import log from "electron-log";
+import Changelog from "../../components/Changelog.vue";
 const console = log;
 
 const setting = useSetting();
@@ -55,6 +56,8 @@ const cookie = ref(setting.cookie);
 const exclude = ref(setting.exclude);
 const search = ref(setting.search);
 const appVersion = ref("");
+
+const open = ref(false);
 
 const add = () => {
   sources.push("");
@@ -103,6 +106,10 @@ const updateCheck = () => {
 
 const openLogFolder = () => {
   api.send(IpcRendererSend.OpenLogFolder);
+};
+
+const openChangelog = () => {
+  open.value = !open.value;
 };
 
 onMounted(() => {
@@ -359,11 +366,16 @@ useEvent(IpcMainSend.VersionChecked, (e, version: string) => {
           <Icon icon="solar:document-text-bold-duotone" />
           로그 폴더 열기
         </Button>
+        <Button variant="outline" @click="openChangelog">
+          <Icon icon="solar:pin-list-bold-duotone" />
+          앱 업데이트 내역
+        </Button>
       </CardFooter>
     </Card>
 
     <!-- <Button @click="save">JSON으로 내보내기</Button> -->
     <!-- <Button @click="save">JSON으로 불러오기</Button> -->
     <Button @click="save">저장</Button>
+    <Changelog v-model:open="open" />
   </main>
 </template>
