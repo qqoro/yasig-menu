@@ -1,10 +1,19 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
 import { computed, onMounted, ref } from "vue";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
+import { Input } from "../../components/ui/input";
 import { useApi } from "../../composable/useApi";
 import { useEvent } from "../../composable/useEvent";
 import { useWindowEvent } from "../../composable/useWindowEvent";
 import { IpcMainSend, IpcRendererSend } from "../../events";
+import { searchFuzzy } from "../../lib/search";
 import { cn } from "../../lib/utils";
 import { useSetting } from "../../store/setting-store";
 import GameCard from "../GameCard.vue";
@@ -14,6 +23,18 @@ const api = useApi();
 const setting = useSetting();
 const loading = ref(true);
 const list = ref<{ path: string; title: string; thumbnail?: string }[]>([]);
+const searchOpen = ref(false);
+const searchWord = ref("");
+const searchFilteredList = computed(() => {
+  if (searchWord.value === "") {
+    return list.value;
+  }
+  const regexp = searchFuzzy(searchWord.value);
+  return list.value.filter(({ title }) => {
+    const trimmed = title.replace(" ", "");
+    return regexp.some((r) => r.test(trimmed));
+  });
+});
 
 useEvent(
   IpcMainSend.LoadedList,
@@ -54,9 +75,12 @@ useWindowEvent("focus", () => {
   });
 });
 
-useWindowEvent("keyup", (e) => {
+useWindowEvent("keydown", (e) => {
   if (e.key.toLowerCase() === "f" && e.ctrlKey) {
-    console.log("i will search!");
+    searchOpen.value = !searchOpen.value;
+  }
+  if (searchOpen.value && e.key === "Enter") {
+    searchOpen.value = false;
   }
 });
 
@@ -95,12 +119,46 @@ const gameExist = computed(
 
       <GameCard
         v-else
-        v-for="({ path, title, thumbnail }, index) in list"
+        v-for="({ path, title, thumbnail }, index) in searchFilteredList"
         :key="path + index"
         :path="path"
         :title="title"
         :thumbnail="thumbnail"
       />
+
+      <div
+        v-if="gameExist && searchFilteredList.length === 0"
+        class="flex justify-center items-center w-full h-full py-10"
+      >
+        <span>
+          검색 된 게임이 없습니다. 다른 검색어로 게임을 검색해보세요.
+        </span>
+      </div>
+
+      <!-- <DialogRoot v-model:open="sea">
+        <DialogPortal> </DialogPortal>
+      </DialogRoot> -->
+
+      <Dialog
+        :open="searchOpen"
+        :modal="false"
+        @update:open="(newOpen) => (searchOpen = newOpen)"
+      >
+        <DialogContent class="p-0" variant="min">
+          <DialogHeader class="sr-only">
+            <DialogTitle>검색</DialogTitle>
+            <DialogDescription>검색</DialogDescription>
+          </DialogHeader>
+          <div class="flex flex-row justify-center items-center gap-1 relative">
+            <Icon icon="solar:magnifer-linear" class="absolute left-2" />
+            <Input
+              class="pl-8"
+              placeholder="검색어 입력..."
+              v-model="searchWord"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   </main>
 </template>
