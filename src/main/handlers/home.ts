@@ -1,13 +1,14 @@
-import { ipcMain, shell } from "electron";
+import { shell } from "electron";
 import { Dirent } from "fs";
 import { readdir } from "fs/promises";
 import { extname, join } from "path";
 import { IpcMainSend, IpcRendererSend } from "../events.js";
-import { send } from "../main.js";
+import { ipcMain, send } from "../main.js";
 
 function findThumbnails(
   parent: string,
-  files: Dirent[]
+  files: Dirent[],
+  thumbnailFolder?: string
 ): { path: string; title: string; thumbnail?: string }[] {
   const imageExtensions = [
     ".jpg",
@@ -37,15 +38,14 @@ function findThumbnails(
     for (const imgExt of imageExtensions) {
       const thumbnail = `${baseName}${imgExt}`;
 
-      if (
-        files.find(
-          (file) => file.name.toLowerCase() === thumbnail.toLowerCase()
-        )
-      ) {
+      const thumbnailFile = files.find(
+        (file) => file.name.toLowerCase() === thumbnail.toLowerCase()
+      );
+      if (thumbnailFile) {
         result.push({
-          path,
+          path: join(file.parentPath, file.name),
           title: baseName,
-          thumbnail: join(parent, thumbnail),
+          thumbnail: join(thumbnailFile.parentPath, thumbnail),
         });
         return;
       }
@@ -63,19 +63,24 @@ function findThumbnails(
 
 ipcMain.on(
   IpcRendererSend.LoadList,
-  async (e, pathList: string[], exclude: string[] = []) => {
+  async (e, { sources, exclude, thumbnailFolder }) => {
     const list: {
       path: string;
       title: string;
       thumbnail?: string;
     }[] = [];
 
-    for (const parent of pathList) {
+    for (const parent of sources) {
       try {
         const child = (await readdir(parent, { withFileTypes: true })).filter(
           (path) => !exclude.includes(join(path.parentPath, path.name))
         );
-        list.push(...findThumbnails(parent, child));
+        const thumbs = thumbnailFolder
+          ? await readdir(thumbnailFolder, { withFileTypes: true })
+          : [];
+        list.push(
+          ...findThumbnails(parent, [...child, ...thumbs], thumbnailFolder)
+        );
       } catch (error) {
         send(IpcMainSend.Message, {
           type: "error",

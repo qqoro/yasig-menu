@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
 import log from "electron-log";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { toast } from "vue-sonner";
 import { useApi } from "../composable/useApi";
 import { useEvent } from "../composable/useEvent";
@@ -28,9 +28,13 @@ const loading = ref(false);
 
 const downloadThumbnail = (filePath: string) => {
   loading.value = true;
-  api.send(IpcRendererSend.ThumbnailDownload, filePath, setting.cookie, [
-    ...setting.search,
-  ]);
+  const [useSavePath, savePath] = setting.changeThumbnailFolder;
+  api.send(IpcRendererSend.ThumbnailDownload, {
+    filePath,
+    cookie: setting.cookie,
+    search: [...setting.search],
+    savePath: useSavePath ? savePath : undefined,
+  });
 };
 
 const deleteThumbnail = (filePath: string) => {
@@ -51,12 +55,17 @@ const hide = (filePath: string) => {
   console.log(filePath);
   setting.addExclude(filePath);
   toast.info(`${props.title}을 숨김 처리 했습니다.`);
-  api.send(
-    IpcRendererSend.LoadList,
-    [...setting.sources],
-    [...setting.exclude]
-  );
+  const [isChange, thumbnailFolder] = setting.changeThumbnailFolder;
+  api.send(IpcRendererSend.LoadList, {
+    sources: [...setting.applySources],
+    exclude: [...setting.exclude],
+    thumbnailFolder: isChange ? thumbnailFolder : undefined,
+  });
 };
+
+const titleFontSize = computed(() => {
+  return Math.max(16 / (setting.zoom * 0.02), 16);
+});
 
 useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
   if (filePath !== props.path) {
@@ -99,8 +108,9 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
       />
     </CardHeader>
     <CardContent
-      class="p-0 m-2 text-ellipsis text-nowrap overflow-hidden max-md:text-sm"
+      class="p-0 m-2 text-ellipsis text-nowrap overflow-hidden"
       :title="title"
+      :style="`font-size: ${titleFontSize}px`"
     >
       {{ title }}
     </CardContent>

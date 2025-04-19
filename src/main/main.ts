@@ -1,6 +1,19 @@
-import { app, BrowserWindow, session, shell } from "electron";
+import {
+  app,
+  BrowserWindow,
+  IpcMain,
+  IpcMainEvent,
+  ipcMain as ipcMainOrigin,
+  session,
+  shell,
+} from "electron";
 import { join } from "path";
-import { IpcMainEventMap, IpcMainSend } from "./events.js";
+import {
+  IpcMainEventMap,
+  IpcMainSend,
+  IpcRendererEventMap,
+  IpcRendererSend,
+} from "./events.js";
 import windowsInit from "./handlers/windows.js";
 
 import log from "electron-log";
@@ -8,6 +21,21 @@ log.initialize();
 export const console = log;
 
 let mainWindow: BrowserWindow;
+
+export function send<T extends IpcMainSend>(
+  event: T,
+  ...data: IpcMainEventMap[T]
+) {
+  console.log("main send!", event, "data:", data);
+  mainWindow.webContents.send(event, ...data);
+}
+
+export const ipcMain: Omit<IpcMain, "on"> & {
+  on: <T extends IpcRendererSend>(
+    channel: T,
+    listener: (event: IpcMainEvent, ...args: IpcRendererEventMap[T]) => void
+  ) => void;
+} = ipcMainOrigin;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -85,14 +113,6 @@ app.on("window-all-closed", function () {
   }
 });
 
-export function send<T extends IpcMainSend>(
-  event: T,
-  ...data: IpcMainEventMap[T]
-) {
-  console.log("main send!", event);
-  mainWindow.webContents.send(event, ...data);
-}
-
-import "./handlers/home.js";
-import "./handlers/thumbnail.js";
-import "./handlers/update.js";
+import("./handlers/home.js");
+import("./handlers/thumbnail.js");
+import("./handlers/update.js");

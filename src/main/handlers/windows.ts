@@ -1,5 +1,6 @@
-import { BrowserWindow, ipcMain } from "electron";
+import { BrowserWindow } from "electron";
 import { IpcRendererSend } from "../events.js";
+import { ipcMain } from "../main.js";
 
 export default function windowsInit(mainWindow: BrowserWindow) {
   ipcMain.on(IpcRendererSend.WindowMinimize, () => {
