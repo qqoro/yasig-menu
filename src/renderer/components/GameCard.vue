@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
 import log from "electron-log";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { toast } from "vue-sonner";
 import { useApi } from "../composable/useApi";
 import { useEvent } from "../composable/useEvent";
@@ -58,6 +58,10 @@ const hide = (filePath: string) => {
   );
 };
 
+const titleFontSize = computed(() => {
+  return Math.max(16 / (setting.zoom * 0.02), 16);
+});
+
 useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
   if (filePath !== props.path) {
     return;
@@ -99,8 +103,9 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
       />
     </CardHeader>
     <CardContent
-      class="p-0 m-2 text-ellipsis text-nowrap overflow-hidden max-md:text-sm"
+      class="p-0 m-2 text-ellipsis text-nowrap overflow-hidden"
       :title="title"
+      :style="`font-size: ${titleFontSize}px`"
     >
       {{ title }}
     </CardContent>
