@@ -8,6 +8,7 @@ const { autoUpdater } = (ElectronUpdater as any)
   .default as typeof ElectronUpdater;
 const console = log;
 
+let startDownload = false;
 ipcMain.on(IpcRendererSend.UpdateCheck, async () => {
   // 포터블 버전은 직접 API호출하여 확인
   if (process.env.PORTABLE_EXECUTABLE_FILE !== undefined) {
@@ -50,12 +51,14 @@ autoUpdater.on("update-available", async (updateInfo) => {
 });
 
 autoUpdater.on("download-progress", (progress) => {
+  startDownload = true;
   console.log(progress);
   send(IpcMainSend.UpdateDownloadProgress, progress.percent);
 });
 
 autoUpdater.on("update-downloaded", async () => {
-  send(IpcMainSend.UpdateDownloadProgress, 1);
+  startDownload = true;
+  send(IpcMainSend.UpdateDownloadProgress, 100);
 });
 
 ipcMain.on(IpcRendererSend.VersionCheck, () => {
@@ -72,6 +75,9 @@ ipcMain.on(IpcRendererSend.Restart, async () => {
 
 autoUpdater.checkForUpdates();
 setInterval(() => {
+  if (startDownload) {
+    return;
+  }
   autoUpdater.checkForUpdates();
 }, 1000 * 60 * 10);
 

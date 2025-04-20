@@ -2,6 +2,7 @@
 import { Icon } from "@iconify/vue";
 import { computed, onMounted, ref } from "vue";
 import PageTitle from "../../../components/PageTitle.vue";
+import Button from "../../../components/ui/button/Button.vue";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +11,12 @@ import {
   DialogTitle,
 } from "../../../components/ui/dialog";
 import { Input } from "../../../components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../../../components/ui/tooltip";
 import { useApi } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
 import { useWindowEvent } from "../../../composable/useWindowEvent";
@@ -96,14 +103,32 @@ const gameExist = computed(
 
 <template>
   <main class="flex flex-col gap-4">
-    <PageTitle
-      >게임 목록
-      <span
-        v-if="searchWord.length > 0"
-        class="text-muted-foreground text-sm italic"
-        >(검색어 : {{ searchWord }})</span
-      ></PageTitle
-    >
+    <PageTitle class="flex justify-between items-center">
+      <p>
+        게임 목록
+        <span
+          v-if="searchWord.length > 0"
+          class="text-muted-foreground text-sm italic"
+          >(검색어 : {{ searchWord }})</span
+        >
+      </p>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <Button size="icon" @click="searchOpen = !searchOpen">
+              <Icon icon="solar:magnifer-linear" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div class="flex justify-center items-center gap-0.5">
+              <span>Ctrl</span>
+              <span>+</span>
+              <span>F</span>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </PageTitle>
     <div
       :class="
         cn({
