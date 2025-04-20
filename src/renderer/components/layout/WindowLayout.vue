@@ -3,7 +3,7 @@ import logo from "@/assets/logo.png";
 import { Icon } from "@iconify/vue";
 import { IpcRendererEvent } from "electron";
 import { storeToRefs } from "pinia";
-import { ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { RouterView, useRoute } from "vue-router";
 import { toast } from "vue-sonner";
 import {
@@ -182,10 +182,12 @@ useEvent(IpcMainSend.WindowStatusChange, (e, isMax) => {
 });
 useEvent(IpcMainSend.UpdateDownloadProgress, (e, percent) => {
   updateDownloadProgress.value = percent;
-  if (percent === 1) {
+  if (percent === 100) {
     updateDialogOpen.value = true;
   }
 });
+
+onMounted(() => (updateDialogOpen.value = true));
 </script>
 
 <template>
@@ -362,7 +364,7 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, percent) => {
     <component :is="Component" class="py-2 px-4 pb-6" />
   </RouterView>
   <Toaster rich-colors close-button />
-  <AlertDialog>
+  <AlertDialog v-model:open="updateDialogOpen">
     <AlertDialogContent>
       <AlertDialogHeader>
         <AlertDialogTitle>업데이트 준비가 완료되었습니다.</AlertDialogTitle>
