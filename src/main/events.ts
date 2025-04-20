@@ -1,3 +1,5 @@
+import type { ExternalToast } from "vue-sonner";
+
 type EnforceAllKeys<
   E extends IpcMainSend | IpcRendererSend,
   T extends Record<E, any[]>
@@ -31,8 +33,7 @@ export interface IpcMainEventMap
         {
           type: "info" | "success" | "warning" | "error";
           message: string;
-          description?: string;
-        }
+        } & ExternalToast
       ];
 
       [IpcMainSend.ThumbnailDone]: [string];

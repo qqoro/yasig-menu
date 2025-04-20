@@ -1,23 +1,23 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
 import { computed, onMounted, ref } from "vue";
+import PageTitle from "../../../components/PageTitle.vue";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "../../components/ui/dialog";
-import { Input } from "../../components/ui/input";
-import { useApi } from "../../composable/useApi";
-import { useEvent } from "../../composable/useEvent";
-import { useWindowEvent } from "../../composable/useWindowEvent";
-import { IpcMainSend, IpcRendererSend } from "../../events";
-import { searchFuzzy } from "../../lib/search";
-import { cn } from "../../lib/utils";
-import { useSetting } from "../../store/setting-store";
-import GameCard from "../GameCard.vue";
-import PageTitle from "../PageTitle.vue";
+} from "../../../components/ui/dialog";
+import { Input } from "../../../components/ui/input";
+import { useApi } from "../../../composable/useApi";
+import { useEvent } from "../../../composable/useEvent";
+import { useWindowEvent } from "../../../composable/useWindowEvent";
+import { IpcMainSend, IpcRendererSend } from "../../../events";
+import { searchFuzzy } from "../../../lib/search";
+import { cn } from "../../../lib/utils";
+import { useSetting } from "../../../store/setting-store";
+import GameCard from "../components/GameCard.vue";
 
 const api = useApi();
 const setting = useSetting();
@@ -35,6 +35,11 @@ const searchFilteredList = computed(() => {
     return regexp.some((r) => r.test(trimmed));
   });
 });
+const gameCardData = ref<{ title: string; thumbnail: string } | undefined>();
+
+const viewGameCard = (title: string, thumbnail: string) => {
+  gameCardData.value = { title, thumbnail };
+};
 
 useEvent(
   IpcMainSend.LoadedList,
@@ -91,7 +96,14 @@ const gameExist = computed(
 
 <template>
   <main class="flex flex-col gap-4">
-    <PageTitle>게임 목록</PageTitle>
+    <PageTitle
+      >게임 목록
+      <span
+        v-if="searchWord.length > 0"
+        class="text-muted-foreground text-sm italic"
+        >(검색어 : {{ searchWord }})</span
+      ></PageTitle
+    >
     <div
       :class="
         cn({
@@ -124,7 +136,30 @@ const gameExist = computed(
         :path="path"
         :title="title"
         :thumbnail="thumbnail"
+        @view-thumbnail="viewGameCard"
       />
+
+      <Dialog
+        :open="!!gameCardData"
+        @update:open="(v) => (v === false ? (gameCardData = undefined) : null)"
+      >
+        <DialogContent
+          class="grid-rows-[auto_minmax(0,1fr)_auto] max-h-[90dvh]"
+        >
+          <DialogHeader>
+            <DialogTitle>{{ gameCardData?.title }}</DialogTitle>
+            <DialogDescription class="sr-only">썸네일 뷰어</DialogDescription>
+          </DialogHeader>
+          <div class="overflow-y-auto">
+            <img
+              class="w-full object-cover cursor-zoom-out"
+              @click="gameCardData = undefined"
+              :src="gameCardData?.thumbnail"
+              :alt="gameCardData?.title"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div
         v-if="gameExist && searchFilteredList.length === 0"
@@ -134,10 +169,6 @@ const gameExist = computed(
           검색 된 게임이 없습니다. 다른 검색어로 게임을 검색해보세요.
         </span>
       </div>
-
-      <!-- <DialogRoot v-model:open="sea">
-        <DialogPortal> </DialogPortal>
-      </DialogRoot> -->
 
       <Dialog
         :open="searchOpen"

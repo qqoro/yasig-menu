@@ -3,24 +3,32 @@ import { Icon } from "@iconify/vue";
 import log from "electron-log";
 import { computed, ref } from "vue";
 import { toast } from "vue-sonner";
-import { useApi } from "../composable/useApi";
-import { useEvent } from "../composable/useEvent";
-import { IpcMainSend, IpcRendererSend } from "../events";
-import { cn } from "../lib/utils";
-import { useSetting } from "../store/setting-store";
-import { GameData } from "../typings/local";
-import PopOverButton from "./PopOverButton.vue";
-import { Button } from "./ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
+import PopOverButton from "../../../components/PopOverButton.vue";
+import { Button } from "../../../components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "../../../components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+} from "../../../components/ui/dropdown-menu";
+import { useApi } from "../../../composable/useApi";
+import { useEvent } from "../../../composable/useEvent";
+import { IpcMainSend, IpcRendererSend } from "../../../events";
+import { cn } from "../../../lib/utils";
+import { useSetting } from "../../../store/setting-store";
+import { GameData } from "../../../typings/local";
 const console = log;
 
 const props = defineProps<GameData>();
+const emit = defineEmits<{
+  viewThumbnail: [title: string, thumbnailPath: string];
+}>();
 const setting = useSetting();
 
 const api = useApi();
@@ -81,17 +89,20 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
     class="p-0 overflow-hidden hover:bg-green-50 transition-colors gap-1 w-96"
   >
     <CardHeader
-      class="p-0 w-full aspect-video overflow-hidden flex justify-center items-center"
+      class="p-0 w-full overflow-hidden flex justify-center items-center"
+      style="aspect-ratio: 4/3"
     >
       <img
         v-if="thumbnail && !loading"
+        @click="emit('viewThumbnail', title, thumbnail)"
         :class="
           cn(
-            'object-cover w-full aspect-video',
+            'object-cover w-full aspect-[4/3] hover:scale-110 transition-transform cursor-zoom-in',
             { 'blur-md': setting.blur },
             { 'brightness-0': setting.dark }
           )
         "
+        style="aspect-ratio: 4/3"
         :src="thumbnail"
         alt=""
       />
@@ -134,7 +145,6 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
         <DropdownMenuTrigger as-child>
           <Button variant="outline" size="icon">
             <Icon icon="solar:hamburger-menu-line-duotone" />
-            <!-- 메뉴 -->
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">

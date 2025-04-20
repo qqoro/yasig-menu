@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import WindowLayout from "./components/layout/WindowLayout.vue";
-import HomeView from "./components/view/HomeView.vue";
-import SettingView from "./feature/setting/SettingView.vue";
+import HomeView from "./feature/home/view/HomeView.vue";
+import SettingView from "./feature/setting/view/SettingView.vue";
 
 const routes: RouteRecordRaw[] = [
   {

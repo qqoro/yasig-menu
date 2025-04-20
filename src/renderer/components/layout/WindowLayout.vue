@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import logo from "@/assets/logo.png";
 import { Icon } from "@iconify/vue";
+import { IpcRendererEvent } from "electron";
 import { storeToRefs } from "pinia";
 import { ref, watch } from "vue";
 import { RouterView, useRoute } from "vue-router";
@@ -35,7 +36,7 @@ import {
 import { useApi } from "../../composable/useApi";
 import { useEvent } from "../../composable/useEvent";
 import { IpcMainSend, IpcRendererSend } from "../../events";
-import { cn } from "../../lib/utils";
+import { cn, wait } from "../../lib/utils";
 import { useSetting } from "../../store/setting-store";
 import { Toaster } from "../ui/sonner";
 
@@ -92,8 +93,89 @@ watch(applySources, () => {
   });
 });
 
-useEvent(IpcMainSend.Message, (_, { type, message, description }) => {
-  toast[type](message, { description });
+const processQueue = ref<{ path: string; title: string; thumbnail?: string }[]>(
+  []
+);
+const batchProcessing = ref(false);
+const thumbnailBatchDownload = async () => {
+  if (batchProcessing.value) {
+    return;
+  }
+
+  batchProcessing.value = true;
+  const thumbnailFolder = setting.changeThumbnailFolder[0]
+    ? setting.changeThumbnailFolder[1]
+    : undefined;
+  await new Promise<void>((resolve) => {
+    api.once(
+      IpcMainSend.LoadedList,
+      (e, data: { path: string; title: string; thumbnail?: string }[]) => {
+        processQueue.value = data.filter(
+          (item) => item.thumbnail === undefined
+        );
+        resolve();
+      }
+    );
+    api.send(IpcRendererSend.LoadList, {
+      sources: [...setting.sources],
+      exclude: [...setting.exclude],
+      thumbnailFolder,
+    });
+  });
+
+  try {
+    const totalCount = processQueue.value.length;
+    const process = new Promise<void>((resolve) => {
+      const callback = (e: IpcRendererEvent, path: string) => {
+        processQueue.value = processQueue.value.filter(
+          (item) => item.path !== path
+        );
+        if (processQueue.value.length === 0) {
+          api.off(IpcMainSend.ThumbnailDone, callback);
+          resolve();
+        }
+        toast.info(
+          `다운로드 진행중... (${
+            totalCount - processQueue.value.length
+          }/${totalCount})`
+        );
+      };
+      api.on(IpcMainSend.ThumbnailDone, callback);
+    });
+    toast.promise(process, {
+      loading: `썸네일을 다운로드하고 있어요... (${totalCount}개)`,
+    });
+
+    for (const item of processQueue.value) {
+      await wait(1500);
+      api.send(IpcRendererSend.ThumbnailDownload, {
+        cookie: setting.cookie,
+        savePath: thumbnailFolder,
+        search: [...setting.search],
+        filePath: item.path,
+      });
+    }
+
+    await process;
+    toast.success("썸네일 일괄 다운로드가 완료되었습니다!");
+  } catch (error) {
+    toast.error("알 수 없는 오류가 발생했습니다!", {
+      description: [(error as Error).message, (error as Error).stack].join(
+        "\n"
+      ),
+    });
+  } finally {
+    batchProcessing.value = false;
+  }
+};
+const thumbnailBatchDelete = () => {
+  if (batchProcessing.value) {
+    return;
+  }
+};
+
+useEvent(IpcMainSend.Message, (_, { type, message, ...args }) => {
+  toast[type](message, { ...args });
 });
 useEvent(IpcMainSend.WindowStatusChange, (e, isMax) => {
   isMaximized.value = isMax;
@@ -243,6 +325,29 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, percent) => {
                 }}</DropdownMenuItem
               >
             </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <button
+              class="transition-colors hover:bg-slate-300 size-7 rounded-sm flex justify-center items-center"
+            >
+              <Icon icon="solar:menu-dots-outline" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-48" align="end">
+            <DropdownMenuItem @select="thumbnailBatchDownload">
+              <Icon icon="solar:download-bold-duotone" />
+              썸네일 일괄 다운로드
+            </DropdownMenuItem>
+            <!-- <DropdownMenuItem
+              variant="destructive"
+              @select="thumbnailBatchDelete"
+            >
+              <Icon icon="solar:trash-bin-2-bold-duotone" />
+              썸네일 일괄 삭제
+            </DropdownMenuItem> -->
           </DropdownMenuContent>
         </DropdownMenu>
       </template>
