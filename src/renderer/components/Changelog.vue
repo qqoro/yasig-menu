@@ -33,6 +33,7 @@ const changelog = [
       `업데이트 확인 개선`,
     ],
   ],
+  ["1.0.8", [`홈화면 썸네일 비율 변경`, `썸네일 일괄 다운로드 추가`]],
 ].toReversed() as [string, string[]][];
 </script>
 
