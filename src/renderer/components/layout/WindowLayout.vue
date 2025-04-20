@@ -246,11 +246,16 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, percent) => {
       >Setting</RouterLink
     >
     <div class="flex justify-end w-full gap-1 pr-4 items-center">
-      <Progress
-        v-if="updateDownloadProgress !== 0 && updateDownloadProgress !== 1"
-        style="width: 100px"
-        :model-value="updateDownloadProgress * 100"
-      />
+      <template
+        v-if="updateDownloadProgress !== 0 && updateDownloadProgress !== 100"
+      >
+        <span class="text-xs">업데이트 다운로드중...</span>
+        <Progress
+          style="width: 100px"
+          class="ml-1"
+          v-model="updateDownloadProgress"
+        />
+      </template>
       <template v-if="route.path === '/'">
         <TooltipProvider>
           <Tooltip>
