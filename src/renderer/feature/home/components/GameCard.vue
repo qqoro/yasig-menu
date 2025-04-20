@@ -3,21 +3,26 @@ import { Icon } from "@iconify/vue";
 import log from "electron-log";
 import { computed, ref } from "vue";
 import { toast } from "vue-sonner";
-import { useApi } from "../composable/useApi";
-import { useEvent } from "../composable/useEvent";
-import { IpcMainSend, IpcRendererSend } from "../events";
-import { cn } from "../lib/utils";
-import { useSetting } from "../store/setting-store";
-import { GameData } from "../typings/local";
-import PopOverButton from "./PopOverButton.vue";
-import { Button } from "./ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
+import PopOverButton from "../../../components/PopOverButton.vue";
+import { Button } from "../../../components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "../../../components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+} from "../../../components/ui/dropdown-menu";
+import { useApi } from "../../../composable/useApi";
+import { useEvent } from "../../../composable/useEvent";
+import { IpcMainSend, IpcRendererSend } from "../../../events";
+import { cn } from "../../../lib/utils";
+import { useSetting } from "../../../store/setting-store";
+import { GameData } from "../../../typings/local";
 const console = log;
 
 const props = defineProps<GameData>();

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { Button } from "@/components/ui/button";
+import { Icon } from "@iconify/vue";
+import { Button } from "../components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Icon } from "@iconify/vue";
+} from "../components/ui/tooltip";
 
 defineProps<{
   icon: string;

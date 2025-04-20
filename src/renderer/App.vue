@@ -9,7 +9,7 @@ import { IpcMainSend, IpcRendererSend } from "./events";
 const api = useApi();
 const open = ref(false);
 
-useWindowEvent("keyup", (event) => {
+useWindowEvent("keydown", (event) => {
   switch (true) {
     // 창 종료
     case event.key.toLowerCase() === "w" && event.ctrlKey:

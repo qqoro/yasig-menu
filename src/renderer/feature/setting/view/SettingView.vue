@@ -2,14 +2,15 @@
 import { Icon } from "@iconify/vue";
 import { onMounted, reactive, ref } from "vue";
 import { toast } from "vue-sonner";
-import PageTitle from "../../components/PageTitle.vue";
-import { Button } from "../../components/ui/button";
+import Changelog from "../../../components/Changelog.vue";
+import PageTitle from "../../../components/PageTitle.vue";
+import { Button } from "../../../components/ui/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
-} from "../../components/ui/card";
+} from "../../../components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -17,19 +18,19 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../../components/ui/dialog";
-import { Input } from "../../components/ui/input";
-import { Switch } from "../../components/ui/switch";
+} from "../../../components/ui/dialog";
+import { Input } from "../../../components/ui/input";
+import { Switch } from "../../../components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../../components/ui/tooltip";
-import { useApi } from "../../composable/useApi";
-import { useEvent } from "../../composable/useEvent";
-import { IpcMainSend, IpcRendererSend } from "../../events";
-import { useSetting } from "../../store/setting-store";
+} from "../../../components/ui/tooltip";
+import { useApi } from "../../../composable/useApi";
+import { useEvent } from "../../../composable/useEvent";
+import { IpcMainSend, IpcRendererSend } from "../../../events";
+import { useSetting } from "../../../store/setting-store";
 
 import img1 from "@/assets/1.jpg";
 import img2 from "@/assets/2.jpg";
@@ -40,7 +41,6 @@ import img6 from "@/assets/6.jpg";
 import img7 from "@/assets/7.jpg";
 
 import log from "electron-log";
-import Changelog from "../../components/Changelog.vue";
 const console = log;
 
 const setting = useSetting();

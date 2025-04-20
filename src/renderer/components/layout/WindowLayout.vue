@@ -92,8 +92,8 @@ watch(applySources, () => {
   });
 });
 
-useEvent(IpcMainSend.Message, (_, { type, message, description }) => {
-  toast[type](message, { description });
+useEvent(IpcMainSend.Message, (_, { type, message, ...args }) => {
+  toast[type](message, { ...args });
 });
 useEvent(IpcMainSend.WindowStatusChange, (e, isMax) => {
   isMaximized.value = isMax;

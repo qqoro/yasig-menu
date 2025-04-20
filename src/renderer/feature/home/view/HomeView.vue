@@ -1,23 +1,23 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
 import { computed, onMounted, ref } from "vue";
+import PageTitle from "../../../components/PageTitle.vue";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "../../components/ui/dialog";
-import { Input } from "../../components/ui/input";
-import { useApi } from "../../composable/useApi";
-import { useEvent } from "../../composable/useEvent";
-import { useWindowEvent } from "../../composable/useWindowEvent";
-import { IpcMainSend, IpcRendererSend } from "../../events";
-import { searchFuzzy } from "../../lib/search";
-import { cn } from "../../lib/utils";
-import { useSetting } from "../../store/setting-store";
-import GameCard from "../GameCard.vue";
-import PageTitle from "../PageTitle.vue";
+} from "../../../components/ui/dialog";
+import { Input } from "../../../components/ui/input";
+import { useApi } from "../../../composable/useApi";
+import { useEvent } from "../../../composable/useEvent";
+import { useWindowEvent } from "../../../composable/useWindowEvent";
+import { IpcMainSend, IpcRendererSend } from "../../../events";
+import { searchFuzzy } from "../../../lib/search";
+import { cn } from "../../../lib/utils";
+import { useSetting } from "../../../store/setting-store";
+import GameCard from "../components/GameCard.vue";
 
 const api = useApi();
 const setting = useSetting();
