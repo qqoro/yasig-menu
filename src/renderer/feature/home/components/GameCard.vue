@@ -26,6 +26,9 @@ import { GameData } from "../../../typings/local";
 const console = log;
 
 const props = defineProps<GameData>();
+const emit = defineEmits<{
+  viewThumbnail: [title: string, thumbnailPath: string];
+}>();
 const setting = useSetting();
 
 const api = useApi();
@@ -86,17 +89,20 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
     class="p-0 overflow-hidden hover:bg-green-50 transition-colors gap-1 w-96"
   >
     <CardHeader
-      class="p-0 w-full aspect-video overflow-hidden flex justify-center items-center"
+      class="p-0 w-full overflow-hidden flex justify-center items-center"
+      style="aspect-ratio: 4/3"
     >
       <img
         v-if="thumbnail && !loading"
+        @click="emit('viewThumbnail', title, thumbnail)"
         :class="
           cn(
-            'object-cover w-full aspect-video',
+            'object-cover w-full aspect-[4/3] hover:scale-110 transition-transform cursor-zoom-in',
             { 'blur-md': setting.blur },
             { 'brightness-0': setting.dark }
           )
         "
+        style="aspect-ratio: 4/3"
         :src="thumbnail"
         alt=""
       />

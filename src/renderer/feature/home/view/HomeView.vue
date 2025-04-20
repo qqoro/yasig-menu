@@ -35,6 +35,11 @@ const searchFilteredList = computed(() => {
     return regexp.some((r) => r.test(trimmed));
   });
 });
+const gameCardData = ref<{ title: string; thumbnail: string } | undefined>();
+
+const viewGameCard = (title: string, thumbnail: string) => {
+  gameCardData.value = { title, thumbnail };
+};
 
 useEvent(
   IpcMainSend.LoadedList,
@@ -131,7 +136,30 @@ const gameExist = computed(
         :path="path"
         :title="title"
         :thumbnail="thumbnail"
+        @view-thumbnail="viewGameCard"
       />
+
+      <Dialog
+        :open="!!gameCardData"
+        @update:open="(v) => (v === false ? (gameCardData = undefined) : null)"
+      >
+        <DialogContent
+          class="grid-rows-[auto_minmax(0,1fr)_auto] max-h-[90dvh]"
+        >
+          <DialogHeader>
+            <DialogTitle>{{ gameCardData?.title }}</DialogTitle>
+            <DialogDescription class="sr-only">썸네일 뷰어</DialogDescription>
+          </DialogHeader>
+          <div class="overflow-y-auto">
+            <img
+              class="w-full object-cover cursor-zoom-out"
+              @click="gameCardData = undefined"
+              :src="gameCardData?.thumbnail"
+              :alt="gameCardData?.title"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div
         v-if="gameExist && searchFilteredList.length === 0"
