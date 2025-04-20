@@ -145,7 +145,6 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
         <DropdownMenuTrigger as-child>
           <Button variant="outline" size="icon">
             <Icon icon="solar:hamburger-menu-line-duotone" />
-            <!-- 메뉴 -->
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
