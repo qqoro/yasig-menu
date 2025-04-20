@@ -3,7 +3,7 @@ import logo from "@/assets/logo.png";
 import { Icon } from "@iconify/vue";
 import { IpcRendererEvent } from "electron";
 import { storeToRefs } from "pinia";
-import { onMounted, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { RouterView, useRoute } from "vue-router";
 import { toast } from "vue-sonner";
 import {
@@ -186,8 +186,6 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, percent) => {
     updateDialogOpen.value = true;
   }
 });
-
-onMounted(() => (updateDialogOpen.value = true));
 </script>
 
 <template>
