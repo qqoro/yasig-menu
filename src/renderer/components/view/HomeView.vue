@@ -91,7 +91,14 @@ const gameExist = computed(
 
 <template>
   <main class="flex flex-col gap-4">
-    <PageTitle>게임 목록</PageTitle>
+    <PageTitle
+      >게임 목록
+      <span
+        v-if="searchWord.length > 0"
+        class="text-muted-foreground text-sm italic"
+        >(검색어 : {{ searchWord }})</span
+      ></PageTitle
+    >
     <div
       :class="
         cn({
@@ -134,10 +141,6 @@ const gameExist = computed(
           검색 된 게임이 없습니다. 다른 검색어로 게임을 검색해보세요.
         </span>
       </div>
-
-      <!-- <DialogRoot v-model:open="sea">
-        <DialogPortal> </DialogPortal>
-      </DialogRoot> -->
 
       <Dialog
         :open="searchOpen"
