@@ -127,6 +127,13 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
     </CardContent>
     <CardFooter class="p-2 pt-0 flex gap-2">
       <PopOverButton
+        v-if="path.toLowerCase().endsWith('.zip')"
+        icon="solar:zip-file-bold-duotone"
+        @click="play(path)"
+        message="압축파일을 실행합니다."
+      />
+      <PopOverButton
+        v-else
         icon="solar:play-bold-duotone"
         @click="play(path)"
         message="게임을 실행합니다."
