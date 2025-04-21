@@ -33,6 +33,7 @@ const setting = useSetting();
 
 const api = useApi();
 const loading = ref(false);
+const isRJCodeExist = computed(() => /RJ\d{6,8}/gi.exec(props.title));
 
 const downloadThumbnail = (filePath: string) => {
   loading.value = true;
@@ -69,6 +70,10 @@ const hide = (filePath: string) => {
     exclude: [...setting.exclude],
     thumbnailFolder: isChange ? thumbnailFolder : undefined,
   });
+};
+
+const openDLSite = (rjCode: string) => {
+  window.open(`https://www.dlsite.com/maniax/work/=/product_id/${rjCode}.html`);
 };
 
 const titleFontSize = computed(() => {
@@ -127,6 +132,13 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
     </CardContent>
     <CardFooter class="p-2 pt-0 flex gap-2">
       <PopOverButton
+        v-if="path.toLowerCase().endsWith('.zip')"
+        icon="solar:zip-file-bold-duotone"
+        @click="play(path)"
+        message="압축파일을 실행합니다."
+      />
+      <PopOverButton
+        v-else
         icon="solar:play-bold-duotone"
         @click="play(path)"
         message="게임을 실행합니다."
@@ -159,6 +171,16 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
           <DropdownMenuItem @click="downloadThumbnail(path)">
             <Icon icon="solar:refresh-circle-bold-duotone" />
             <span>썸네일 다시 다운로드</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem v-if="isRJCodeExist?.[0]" as-child>
+            <a
+              :href="`https://www.dlsite.com/maniax/work/=/product_id/${isRJCodeExist?.[0]}.html`"
+              target="_blank"
+              referrerpolicy="no-referrer"
+            >
+              <Icon icon="solar:square-share-line-bold-duotone" />
+              <span>RJ 사이트 열기</span>
+            </a>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

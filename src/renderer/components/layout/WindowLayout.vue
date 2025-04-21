@@ -38,6 +38,7 @@ import { useEvent } from "../../composable/useEvent";
 import { IpcMainSend, IpcRendererSend } from "../../events";
 import { cn, wait } from "../../lib/utils";
 import { useSetting } from "../../store/setting-store";
+import { GameData } from "../../typings/local";
 import { Toaster } from "../ui/sonner";
 
 const route = useRoute();
@@ -124,12 +125,14 @@ const thumbnailBatchDownload = async () => {
   });
 
   try {
+    let list: GameData[] = [];
     const totalCount = processQueue.value.length;
     const process = new Promise<void>((resolve) => {
       const callback = (e: IpcRendererEvent, path: string) => {
         processQueue.value = processQueue.value.filter(
           (item) => item.path !== path
         );
+        list = list.filter((item) => item.path !== path);
         if (processQueue.value.length === 0) {
           api.off(IpcMainSend.ThumbnailDone, callback);
           resolve();
@@ -146,14 +149,18 @@ const thumbnailBatchDownload = async () => {
       loading: `썸네일을 다운로드하고 있어요... (${totalCount}개)`,
     });
 
+    // TODO: 코드 개선 필요...
     for (const item of processQueue.value) {
-      await wait(1500);
+      while (list.length >= 3) {
+        await wait(200);
+      }
       api.send(IpcRendererSend.ThumbnailDownload, {
         cookie: setting.cookie,
         savePath: thumbnailFolder,
         search: [...setting.search],
         filePath: item.path,
       });
+      list.push(item);
     }
 
     await process;
@@ -342,7 +349,10 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, percent) => {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-48" align="end">
-            <DropdownMenuItem @select="thumbnailBatchDownload">
+            <DropdownMenuItem
+              @select="thumbnailBatchDownload"
+              :disabled="batchProcessing"
+            >
               <Icon icon="solar:download-bold-duotone" />
               썸네일 일괄 다운로드
             </DropdownMenuItem>

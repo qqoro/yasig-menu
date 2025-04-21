@@ -76,9 +76,15 @@ function createWindow() {
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
     // 특정 도메인만 외부 브라우저로 열기
-    if (details.url.startsWith("https://github.com")) {
+    const allowedDomains = ["github.com", "www.dlsite.com"];
+    if (
+      allowedDomains.some((domain) =>
+        details.url.startsWith("https://" + domain)
+      )
+    ) {
       shell.openExternal(details.url);
     }
+
     // Electron 내부 창 생성 차단
     return { action: "deny" };
   });
