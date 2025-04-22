@@ -23,24 +23,47 @@ import { useWindowEvent } from "../../../composable/useWindowEvent";
 import { IpcMainSend, IpcRendererSend } from "../../../events";
 import { searchFuzzy } from "../../../lib/search";
 import { cn } from "../../../lib/utils";
+import { useGame } from "../../../store/game-store";
 import { useSetting } from "../../../store/setting-store";
+import { GameData } from "../../../typings/local";
 import GameCard from "../components/GameCard.vue";
 
 const api = useApi();
 const setting = useSetting();
+const game = useGame();
 const loading = ref(true);
 const list = ref<{ path: string; title: string; thumbnail?: string }[]>([]);
 const searchOpen = ref(false);
 const searchWord = ref("");
 const searchFilteredList = computed(() => {
-  if (searchWord.value === "") {
-    return list.value;
+  const recent: GameData[] = [];
+  const games: GameData[] = [];
+  for (const item of list.value) {
+    const gameData = {
+      ...item,
+      cleared: game.clearGame.includes(item.path),
+    };
+    if (game.recentGame.includes(item.path)) {
+      recent.push(gameData);
+    } else {
+      games.push(gameData);
+    }
   }
+  if (searchWord.value === "") {
+    return { recent, games };
+  }
+
   const regexp = searchFuzzy(searchWord.value);
-  return list.value.filter(({ title }) => {
-    const trimmed = title.replace(" ", "");
-    return regexp.some((r) => r.test(trimmed));
-  });
+  return {
+    recent: recent.filter(({ title }) => {
+      const trimmed = title.replace(" ", "");
+      return regexp.some((r) => r.test(trimmed));
+    }),
+    games: games.filter(({ title }) => {
+      const trimmed = title.replace(" ", "");
+      return regexp.some((r) => r.test(trimmed));
+    }),
+  };
 });
 const gameCardData = ref<{ title: string; thumbnail: string } | undefined>();
 
@@ -132,7 +155,7 @@ const gameExist = computed(
     <div
       :class="
         cn({
-          'inline-flex gap-4 mx-auto w-fit flex-wrap justify-center  items-start':
+          'inline-flex gap-4 mx-auto w-fit flex-wrap justify-center items-start max-w-full':
             gameExist,
           'flex justify-center items-center h-[calc(100dvh-200px)]': !gameExist,
         })
@@ -154,15 +177,44 @@ const gameExist = computed(
         </span>
       </div>
 
-      <GameCard
-        v-else
-        v-for="({ path, title, thumbnail }, index) in searchFilteredList"
-        :key="path + index"
-        :path="path"
-        :title="title"
-        :thumbnail="thumbnail"
-        @view-thumbnail="viewGameCard"
-      />
+      <template v-else>
+        <div
+          v-if="searchFilteredList.recent.length > 0"
+          class="w-full flex flex-col mb-4"
+        >
+          <h2 :style="{ zoom: (1 / (setting.zoom * 0.02)) * 1.2 }">
+            최근 플레이
+          </h2>
+          <div
+            class="max-w-full overflow-x-auto flex flex-row items-center gap-4"
+          >
+            <GameCard
+              v-for="(
+                { path, title, thumbnail, cleared }, index
+              ) in searchFilteredList.recent"
+              class="shrink-0"
+              :key="path + index"
+              :path="path"
+              :title="title"
+              :thumbnail="thumbnail"
+              :cleared="cleared"
+              :recent="true"
+              @view-thumbnail="viewGameCard"
+            />
+          </div>
+        </div>
+        <GameCard
+          v-for="(
+            { path, title, thumbnail, cleared }, index
+          ) in searchFilteredList.games"
+          :key="path + index"
+          :path="path"
+          :title="title"
+          :thumbnail="thumbnail"
+          :cleared="cleared"
+          @view-thumbnail="viewGameCard"
+        />
+      </template>
 
       <Dialog
         :open="!!gameCardData"
@@ -187,7 +239,11 @@ const gameExist = computed(
       </Dialog>
 
       <div
-        v-if="gameExist && searchFilteredList.length === 0"
+        v-if="
+          gameExist &&
+          searchFilteredList.games.length === 0 &&
+          searchFilteredList.recent.length === 0
+        "
         class="flex justify-center items-center w-full h-full py-10"
       >
         <span>

@@ -21,15 +21,17 @@ import { useApi } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
 import { IpcMainSend, IpcRendererSend } from "../../../events";
 import { cn } from "../../../lib/utils";
+import { useGame } from "../../../store/game-store";
 import { useSetting } from "../../../store/setting-store";
 import { GameData } from "../../../typings/local";
 const console = log;
 
-const props = defineProps<GameData>();
+const props = defineProps<GameData & { recent?: boolean }>();
 const emit = defineEmits<{
   viewThumbnail: [title: string, thumbnailPath: string];
 }>();
 const setting = useSetting();
+const game = useGame();
 
 const api = useApi();
 const loading = ref(false);
@@ -52,6 +54,7 @@ const deleteThumbnail = (filePath: string) => {
 
 const play = (filePath: string) => {
   console.log(filePath);
+  game.saveRecentGame([...new Set([...game.recentGame, filePath])]);
   api.send(IpcRendererSend.Play, filePath);
 };
 
@@ -72,8 +75,19 @@ const hide = (filePath: string) => {
   });
 };
 
-const openDLSite = (rjCode: string) => {
-  window.open(`https://www.dlsite.com/maniax/work/=/product_id/${rjCode}.html`);
+const clear = (filePath: string) => {
+  console.log(filePath);
+  if (game.clearGame.includes(filePath)) {
+    game.saveClearGame([...game.clearGame].filter((v) => v !== filePath));
+  } else {
+    game.saveClearGame([...new Set([...game.clearGame, filePath])]);
+  }
+};
+
+const removeRecent = (filePath: string) => {
+  if (game.recentGame.includes(filePath)) {
+    game.saveRecentGame([...game.recentGame].filter((v) => v !== filePath));
+  }
 };
 
 const titleFontSize = computed(() => {
@@ -91,7 +105,11 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
 
 <template>
   <Card
-    class="p-0 overflow-hidden hover:bg-green-50 transition-colors gap-1 w-96"
+    :class="
+      cn('p-0 overflow-hidden hover:bg-green-50 gap-1 w-96 transition-all', {
+        'opacity-50 hover:opacity-100': cleared,
+      })
+    "
   >
     <CardHeader
       class="p-0 w-full overflow-hidden flex justify-center items-center"
@@ -153,6 +171,16 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
         @click="hide(path)"
         message="이 게임을 목록에서 숨깁니다."
       />
+
+      <PopOverButton
+        :icon="cleared ? 'solar:flag-bold-duotone' : 'solar:flag-line-duotone'"
+        @click="clear(path)"
+        :message="
+          cleared
+            ? '이 게임을 클리어하지 않음으로 표시합니다.'
+            : '이 게임을 클리어로 표시합니다.'
+        "
+      />
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button variant="outline" size="icon">
@@ -181,6 +209,10 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
               <Icon icon="solar:square-share-line-bold-duotone" />
               <span>RJ 사이트 열기</span>
             </a>
+          </DropdownMenuItem>
+          <DropdownMenuItem v-if="recent" @click="removeRecent(path)">
+            <Icon icon="solar:eraser-bold-duotone" />
+            <span>최근 플레이 기록 삭제</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
