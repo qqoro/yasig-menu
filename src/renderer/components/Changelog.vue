@@ -44,6 +44,7 @@ const changelog = [
       `폴더 명에 RJ코드가 있는 경우 DL로 갈 수 있는 메뉴를 추가`,
     ],
   ],
+  ["1.0.12", [`최근 실행 게임, 클리어 게임 체크 기능 추가`]],
 ].toReversed() as [string, string[]][];
 </script>
 

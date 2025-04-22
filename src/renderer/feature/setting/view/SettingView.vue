@@ -47,6 +47,17 @@ const save = () => {
     set.add(source);
   }
 
+  const compareA = [...setting.sources].sort();
+  const compareB = sources.value.map((source) => source.trim()).sort();
+  if (compareA.length === compareB.length) {
+    for (let index = 0; index < compareA.length; index++) {
+      if (compareA[index] === compareB[index]) {
+        continue;
+      }
+      // 소스 폴더가 변경됨 > 적용폴더 초기화
+      setting.saveApplySources(compareB);
+    }
+  }
   setting.saveSources(sources.value.map((source) => source.trim()));
   setting.saveChangeThumbnailFolder(changeThumbnailFolder.value);
   setting.saveBlur(blur.value);
