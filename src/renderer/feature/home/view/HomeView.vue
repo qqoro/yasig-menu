@@ -35,6 +35,7 @@ const loading = ref(true);
 const list = ref<{ path: string; title: string; thumbnail?: string }[]>([]);
 const searchOpen = ref(false);
 const searchWord = ref("");
+const showCount = ref(20);
 const searchFilteredList = computed(() => {
   const recent: GameData[] = [];
   const games: GameData[] = [];
@@ -43,12 +44,19 @@ const searchFilteredList = computed(() => {
       ...item,
       cleared: game.clearGame.includes(item.path),
     };
-    if (game.recentGame.includes(item.path)) {
+    if (game.recentGame.includes(item.path) && setting.home.showRecent) {
       recent.push(gameData);
     } else {
       games.push(gameData);
     }
   }
+
+  // 초기 조회개수 설정
+  if (!setting.home.showAll) {
+    recent.length = Math.min(recent.length, showCount.value);
+    games.length = Math.min(games.length, showCount.value);
+  }
+
   if (searchWord.value === "") {
     return { recent, games };
   }
@@ -179,7 +187,7 @@ const gameExist = computed(
 
       <template v-else>
         <div
-          v-if="searchFilteredList.recent.length > 0"
+          v-if="setting.home.showRecent && searchFilteredList.recent.length > 0"
           class="w-full flex flex-col mb-4"
         >
           <h2 :style="{ zoom: (1 / (setting.zoom * 0.02)) * 1.2 }">
