@@ -19,6 +19,7 @@ import SearchKeywordCard from "../components/SearchKeywordCard.vue";
 import ThumbnailCard from "../components/ThumbnailCard.vue";
 
 import log from "electron-log";
+import Data from "../../../lib/data";
 const console = log;
 
 const setting = useSetting();
@@ -50,17 +51,25 @@ const save = () => {
     set.add(source);
   }
 
-  const compareA = [...setting.sources].sort();
+  const compareA: string[] = (Data.getJSON("sources") ?? []).sort();
   const compareB = sources.value.map((source) => source.trim()).sort();
-  if (compareA.length === compareB.length) {
-    for (let index = 0; index < compareA.length; index++) {
-      if (compareA[index] === compareB[index]) {
-        continue;
-      }
-      // 소스 폴더가 변경됨 > 적용폴더 초기화
-      setting.saveApplySources(compareB);
+  for (
+    let index = 0;
+    index < Math.max(compareA.length, compareB.length);
+    index++
+  ) {
+    // 정렬 후 인덱스 검사하여 변경되었는지 체크
+    if (compareA[index] === compareB[index]) {
+      continue;
     }
+    // 소스 폴더가 변경됨 > 적용폴더 초기화 / 제외폴더 정리
+    setting.saveApplySources(compareB);
+    exclude.value = exclude.value.filter((path) =>
+      compareB.some((source) => path.startsWith(source))
+    );
+    break;
   }
+
   setting.saveSources(sources.value.map((source) => source.trim()));
   setting.saveHome(home.value);
   setting.saveChangeThumbnailFolder(changeThumbnailFolder.value);
