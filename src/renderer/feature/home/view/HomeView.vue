@@ -79,6 +79,10 @@ const viewGameCard = (title: string, thumbnail: string) => {
   gameCardData.value = { title, thumbnail };
 };
 
+const moreLoad = (count: number) => {
+  showCount.value += count;
+};
+
 useEvent(
   IpcMainSend.LoadedList,
   (e, data: { path: string; title: string; thumbnail?: string }[]) => {
@@ -137,29 +141,33 @@ const gameExist = computed(
     <PageTitle class="flex justify-between items-center">
       <p>
         게임 목록
-        <span
-          v-if="searchWord.length > 0"
-          class="text-muted-foreground text-sm italic"
-          >(검색어 : {{ searchWord }})</span
+        <span class="text-sm text-muted-foreground"
+          >총 {{ list.length }}개</span
         >
       </p>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger as-child>
-            <Button size="icon" @click="searchOpen = !searchOpen">
-              <Icon icon="solar:magnifer-linear" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <div class="flex justify-center items-center gap-0.5">
-              <span>Ctrl</span>
-              <span>+</span>
-              <span>F</span>
-            </div>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <div class="flex justify-center items-center gap-2">
+        <span v-if="searchWord.length > 0" class="text-sm font-normal">
+          검색어 : {{ searchWord }}
+        </span>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <Button size="icon" @click="searchOpen = !searchOpen">
+                <Icon icon="solar:magnifer-linear" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <div class="flex justify-center items-center gap-0.5">
+                <span>Ctrl</span>
+                <span>+</span>
+                <span>F</span>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
     </PageTitle>
+
     <div
       :class="
         cn({
@@ -222,6 +230,23 @@ const gameExist = computed(
           :cleared="cleared"
           @view-thumbnail="viewGameCard"
         />
+
+        <div
+          v-if="
+            searchFilteredList.recent.length +
+              searchFilteredList.games.length >=
+            showCount
+          "
+          class="w-full flex justify-center items-center gap-4"
+          :style="{ zoom: 1 / (setting.zoom * 0.02) }"
+        >
+          <Button variant="outline" @click="moreLoad(20)"
+            >더 불러오기 (20개)</Button
+          >
+          <Button variant="outline" @click="moreLoad(list.length)"
+            >전부 불러오기</Button
+          >
+        </div>
       </template>
 
       <Dialog
