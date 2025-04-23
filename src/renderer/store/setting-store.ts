@@ -25,6 +25,14 @@ export const useSetting = defineStore("setting", () => {
     Data.setJSON("applySources", newApplySources);
     console.log("applySources saved!", applySources.value);
   };
+  const home = ref<{ showAll: boolean; showRecent: boolean }>(
+    Data.getJSON("home") ?? { showAll: false, showRecent: true }
+  );
+  const saveHome = (newHome: { showAll: boolean; showRecent: boolean }) => {
+    home.value = newHome;
+    Data.setJSON("home", newHome);
+    console.log("home saved!", home.value);
+  };
   const changeThumbnailFolder = ref<[boolean, string]>(
     Data.getJSON("changeThumbnailFolder") ?? [false, ""]
   );
@@ -76,6 +84,8 @@ export const useSetting = defineStore("setting", () => {
     saveSources,
     applySources,
     saveApplySources,
+    home,
+    saveHome,
     changeThumbnailFolder,
     saveChangeThumbnailFolder,
     blur,

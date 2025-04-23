@@ -35,6 +35,7 @@ const loading = ref(true);
 const list = ref<{ path: string; title: string; thumbnail?: string }[]>([]);
 const searchOpen = ref(false);
 const searchWord = ref("");
+const showCount = ref(20);
 const searchFilteredList = computed(() => {
   const recent: GameData[] = [];
   const games: GameData[] = [];
@@ -43,12 +44,19 @@ const searchFilteredList = computed(() => {
       ...item,
       cleared: game.clearGame.includes(item.path),
     };
-    if (game.recentGame.includes(item.path)) {
+    if (game.recentGame.includes(item.path) && setting.home.showRecent) {
       recent.push(gameData);
     } else {
       games.push(gameData);
     }
   }
+
+  // 초기 조회개수 설정
+  if (!setting.home.showAll) {
+    recent.length = Math.min(recent.length, showCount.value);
+    games.length = Math.min(games.length, showCount.value);
+  }
+
   if (searchWord.value === "") {
     return { recent, games };
   }
@@ -69,6 +77,10 @@ const gameCardData = ref<{ title: string; thumbnail: string } | undefined>();
 
 const viewGameCard = (title: string, thumbnail: string) => {
   gameCardData.value = { title, thumbnail };
+};
+
+const moreLoad = (count: number) => {
+  showCount.value += count;
 };
 
 useEvent(
@@ -129,29 +141,33 @@ const gameExist = computed(
     <PageTitle class="flex justify-between items-center">
       <p>
         게임 목록
-        <span
-          v-if="searchWord.length > 0"
-          class="text-muted-foreground text-sm italic"
-          >(검색어 : {{ searchWord }})</span
+        <span class="text-sm text-muted-foreground"
+          >총 {{ list.length }}개</span
         >
       </p>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger as-child>
-            <Button size="icon" @click="searchOpen = !searchOpen">
-              <Icon icon="solar:magnifer-linear" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <div class="flex justify-center items-center gap-0.5">
-              <span>Ctrl</span>
-              <span>+</span>
-              <span>F</span>
-            </div>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <div class="flex justify-center items-center gap-2">
+        <span v-if="searchWord.length > 0" class="text-sm font-normal">
+          검색어 : {{ searchWord }}
+        </span>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <Button size="icon" @click="searchOpen = !searchOpen">
+                <Icon icon="solar:magnifer-linear" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <div class="flex justify-center items-center gap-0.5">
+                <span>Ctrl</span>
+                <span>+</span>
+                <span>F</span>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
     </PageTitle>
+
     <div
       :class="
         cn({
@@ -179,7 +195,7 @@ const gameExist = computed(
 
       <template v-else>
         <div
-          v-if="searchFilteredList.recent.length > 0"
+          v-if="setting.home.showRecent && searchFilteredList.recent.length > 0"
           class="w-full flex flex-col mb-4"
         >
           <h2 :style="{ zoom: (1 / (setting.zoom * 0.02)) * 1.2 }">
@@ -214,6 +230,23 @@ const gameExist = computed(
           :cleared="cleared"
           @view-thumbnail="viewGameCard"
         />
+
+        <div
+          v-if="
+            searchFilteredList.recent.length +
+              searchFilteredList.games.length >=
+            showCount
+          "
+          class="w-full flex justify-center items-center gap-4"
+          :style="{ zoom: 1 / (setting.zoom * 0.02) }"
+        >
+          <Button variant="outline" @click="moreLoad(20)"
+            >더 불러오기 (20개)</Button
+          >
+          <Button variant="outline" @click="moreLoad(list.length)"
+            >전부 불러오기</Button
+          >
+        </div>
       </template>
 
       <Dialog

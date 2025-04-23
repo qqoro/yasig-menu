@@ -9,20 +9,24 @@ import { useApi } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
 import { IpcMainSend, IpcRendererSend } from "../../../events";
 import { useSetting } from "../../../store/setting-store";
+import { SettingData } from "../../../typings/local";
 import AppInfoCard from "../components/AppInfoCard.vue";
 import CookieCard from "../components/CookieCard.vue";
 import ExcludeGameCard from "../components/ExcludeGameCard.vue";
 import GamePathCard from "../components/GamePathCard.vue";
+import HomeCard from "../components/HomeCard.vue";
 import SearchKeywordCard from "../components/SearchKeywordCard.vue";
 import ThumbnailCard from "../components/ThumbnailCard.vue";
 
 import log from "electron-log";
+import Data from "../../../lib/data";
 const console = log;
 
 const setting = useSetting();
 const api = useApi();
 
 const sources = ref([...setting.sources]);
+const home = ref({ ...setting.home });
 const changeThumbnailFolder = ref<[boolean, string]>([
   ...setting.changeThumbnailFolder,
 ]);
@@ -47,18 +51,27 @@ const save = () => {
     set.add(source);
   }
 
-  const compareA = [...setting.sources].sort();
+  const compareA: string[] = (Data.getJSON("sources") ?? []).sort();
   const compareB = sources.value.map((source) => source.trim()).sort();
-  if (compareA.length === compareB.length) {
-    for (let index = 0; index < compareA.length; index++) {
-      if (compareA[index] === compareB[index]) {
-        continue;
-      }
-      // 소스 폴더가 변경됨 > 적용폴더 초기화
-      setting.saveApplySources(compareB);
+  for (
+    let index = 0;
+    index < Math.max(compareA.length, compareB.length);
+    index++
+  ) {
+    // 정렬 후 인덱스 검사하여 변경되었는지 체크
+    if (compareA[index] === compareB[index]) {
+      continue;
     }
+    // 소스 폴더가 변경됨 > 적용폴더 초기화 / 제외폴더 정리
+    setting.saveApplySources(compareB);
+    exclude.value = exclude.value.filter((path) =>
+      compareB.some((source) => path.startsWith(source))
+    );
+    break;
   }
+
   setting.saveSources(sources.value.map((source) => source.trim()));
+  setting.saveHome(home.value);
   setting.saveChangeThumbnailFolder(changeThumbnailFolder.value);
   setting.saveBlur(blur.value);
   setting.saveDark(dark.value);
@@ -84,13 +97,14 @@ const exportSetting = async () => {
     zoom: setting.zoom,
     sources: setting.sources,
     applySources: setting.applySources,
+    home: setting.home,
     changeThumbnailFolder: setting.changeThumbnailFolder,
     blur: setting.blur,
     dark: setting.dark,
     cookie: setting.cookie,
     exclude: setting.exclude,
     search: setting.search,
-  };
+  } satisfies SettingData;
   await window.navigator.clipboard.writeText(JSON.stringify(data, null, 4));
   toast.success("설정이 클립보드에 복사되었습니다.");
 };
@@ -98,17 +112,7 @@ const exportSetting = async () => {
 const importSetting = async () => {
   try {
     const dataText = await window.navigator.clipboard.readText();
-    const data = JSON.parse(dataText) as Partial<{
-      zoom: number;
-      sources: string[];
-      applySources: string[];
-      changeThumbnailFolder: [boolean, string];
-      blur: boolean;
-      dark: boolean;
-      cookie: string;
-      exclude: string[];
-      search: [string, string];
-    }>;
+    const data = JSON.parse(dataText) as Partial<SettingData>;
 
     if (data.zoom !== undefined) {
       setting.saveZoom(data.zoom);
@@ -119,6 +123,10 @@ const importSetting = async () => {
     }
     if (data.applySources !== undefined) {
       setting.saveApplySources(data.applySources);
+    }
+    if (data.home !== undefined) {
+      home.value = data.home;
+      setting.saveHome(data.home);
     }
     if (data.changeThumbnailFolder !== undefined) {
       changeThumbnailFolder.value = data.changeThumbnailFolder;
@@ -187,6 +195,7 @@ watch(blur, () => {
     </PageTitle>
 
     <GamePathCard v-model="sources" />
+    <HomeCard v-model:all="home.showAll" v-model:recent="home.showRecent" />
     <ThumbnailCard
       v-model="changeThumbnailFolder"
       v-model:blur="blur"
