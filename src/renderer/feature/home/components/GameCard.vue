@@ -19,6 +19,7 @@ import {
 } from "../../../components/ui/dropdown-menu";
 import { useApi } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
+import { COMPRESS_FILE_TYPE } from "../../../constants";
 import { IpcMainSend, IpcRendererSend } from "../../../events";
 import { cn } from "../../../lib/utils";
 import { useGame } from "../../../store/game-store";
@@ -36,6 +37,15 @@ const game = useGame();
 const api = useApi();
 const loading = ref(false);
 const isRJCodeExist = computed(() => /RJ\d{6,8}/gi.exec(props.title));
+const isCompressFile = computed(() => {
+  // title 파싱 시 파일유무 확인하며, 파일인 경우 확장자를 제외하기 때문에
+  // 파일이라면 경로가 제목과 같게 끝날 수 없음
+  if (props.path.endsWith(props.title)) {
+    return false;
+  }
+  const lowerPath = props.path.toLowerCase();
+  return COMPRESS_FILE_TYPE.some((ext) => lowerPath.endsWith(ext));
+});
 
 const downloadThumbnail = (filePath: string) => {
   loading.value = true;
@@ -150,7 +160,7 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
     </CardContent>
     <CardFooter class="p-2 pt-0 flex gap-2">
       <PopOverButton
-        v-if="path.toLowerCase().endsWith('.zip')"
+        v-if="isCompressFile"
         icon="solar:zip-file-bold-duotone"
         @click="play(path)"
         message="압축파일을 실행합니다."
