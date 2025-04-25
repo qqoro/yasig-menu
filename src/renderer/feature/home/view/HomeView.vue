@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
+import { storeToRefs } from "pinia";
 import { computed, onMounted, ref } from "vue";
 import PageTitle from "../../../components/PageTitle.vue";
 import Button from "../../../components/ui/button/Button.vue";
@@ -26,6 +27,7 @@ import Data from "../../../lib/data";
 import { searchFuzzy } from "../../../lib/search";
 import { cn } from "../../../lib/utils";
 import { useGame } from "../../../store/game-store";
+import { useSearch } from "../../../store/search-store";
 import { useSetting } from "../../../store/setting-store";
 import { GameData } from "../../../typings/local";
 import GameCard from "../components/GameCard.vue";
@@ -43,10 +45,10 @@ const moreLoad = (count: number) => {
 };
 
 const searchOpen = ref(false);
-const searchWord = ref("");
+const { searchWord } = storeToRefs(useSearch());
 const searchFilteredList = computed(() => {
-  const recent: GameData[] = [];
-  const games: GameData[] = [];
+  let recent: GameData[] = [];
+  let games: GameData[] = [];
   for (const item of list.value) {
     const gameData = {
       ...item,
@@ -59,26 +61,39 @@ const searchFilteredList = computed(() => {
     }
   }
 
+  // 검색어 없는 경우 바로 리턴
+  if (searchWord.value === "") {
+    // 초기 조회개수 설정
+    if (!setting.home.showAll) {
+      recent.length = Math.min(recent.length, showCount.value);
+      games.length = Math.min(games.length, showCount.value);
+    }
+    return { recent, games };
+  }
+
+  // 정확히 일치하는 데이터 있으면 바로 리턴
+  const exactMatch = {
+    recent: recent.find((game) => game.title === searchWord.value),
+    games: games.find((game) => game.title === searchWord.value),
+  };
+  if (exactMatch.recent || exactMatch.games) {
+    return {
+      recent: exactMatch.recent ? [exactMatch.recent] : [],
+      games: exactMatch.games ? [exactMatch.games] : [],
+    };
+  }
+
+  const regexp = searchFuzzy(searchWord.value);
+  recent = recent.filter(({ title }) => regexp.test(title));
+  games = games.filter(({ title }) => regexp.test(title));
   // 초기 조회개수 설정
   if (!setting.home.showAll) {
     recent.length = Math.min(recent.length, showCount.value);
     games.length = Math.min(games.length, showCount.value);
   }
-
-  if (searchWord.value === "") {
-    return { recent, games };
-  }
-
-  const regexp = searchFuzzy(searchWord.value);
   return {
-    recent: recent.filter(({ title }) => {
-      const trimmed = title.replace(" ", "");
-      return regexp.some((r) => r.test(trimmed));
-    }),
-    games: games.filter(({ title }) => {
-      const trimmed = title.replace(" ", "");
-      return regexp.some((r) => r.test(trimmed));
-    }),
+    recent,
+    games,
   };
 });
 
@@ -241,7 +256,9 @@ const gameExist = computed(
               :thumbnail="thumbnail"
               :cleared="cleared"
               :recent="true"
-              :memo="memoData[path]"
+              :memo="
+                memoData[path] ? '메모 내용:\n' + memoData[path] : undefined
+              "
               @view-thumbnail="viewGameCard"
               @write-memo="viewGameMemo"
             />
@@ -256,7 +273,7 @@ const gameExist = computed(
           :title="title"
           :thumbnail="thumbnail"
           :cleared="cleared"
-          :memo="memoData[path]"
+          :memo="memoData[path] ? '메모 내용:\n' + memoData[path] : undefined"
           @view-thumbnail="viewGameCard"
           @write-memo="viewGameMemo"
         />
