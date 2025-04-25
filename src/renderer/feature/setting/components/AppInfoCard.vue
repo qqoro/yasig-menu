@@ -52,6 +52,16 @@ const emit = defineEmits<{
         <Icon icon="solar:pin-list-bold-duotone" />
         앱 업데이트 내역
       </Button>
+      <Button variant="outline" as-child>
+        <a
+          href="https://forms.gle/QegZYSXn1fguRErU6"
+          target="_blank"
+          referrerpolicy="no-referrer"
+        >
+          <Icon icon="solar:pen-new-square-bold-duotone" />
+          오류 제보 및 건의
+        </a>
+      </Button>
     </CardFooter>
   </Card>
 </template>
