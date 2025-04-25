@@ -207,8 +207,11 @@ const gameExist = computed(
           >총 {{ list.length }}개</span
         >
       </p>
-      <div class="flex justify-center items-center gap-2">
-        <span v-if="searchWord.length > 0" class="text-sm font-normal">
+      <div class="flex justify-center items-center gap-2 max-w-[50dvw]">
+        <span
+          v-if="searchWord.length > 0"
+          class="text-sm font-normal text-ellipsis overflow-hidden text-nowrap"
+        >
           검색어 : {{ searchWord }}
         </span>
         <TooltipProvider>
