@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "../../../components/ui/dialog";
 import { Input } from "../../../components/ui/input";
+import { Textarea } from "../../../components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
@@ -21,6 +22,7 @@ import { useApi } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
 import { useWindowEvent } from "../../../composable/useWindowEvent";
 import { IpcMainSend, IpcRendererSend } from "../../../events";
+import Data from "../../../lib/data";
 import { searchFuzzy } from "../../../lib/search";
 import { cn } from "../../../lib/utils";
 import { useGame } from "../../../store/game-store";
@@ -31,11 +33,17 @@ import GameCard from "../components/GameCard.vue";
 const api = useApi();
 const setting = useSetting();
 const game = useGame();
-const loading = ref(true);
 const list = ref<{ path: string; title: string; thumbnail?: string }[]>([]);
+const loading = ref(true);
+const memoData = ref<Record<string, string>>(Data.getJSON("memo") ?? {});
+
+const showCount = ref(20);
+const moreLoad = (count: number) => {
+  showCount.value += count;
+};
+
 const searchOpen = ref(false);
 const searchWord = ref("");
-const showCount = ref(20);
 const searchFilteredList = computed(() => {
   const recent: GameData[] = [];
   const games: GameData[] = [];
@@ -73,14 +81,32 @@ const searchFilteredList = computed(() => {
     }),
   };
 });
-const gameCardData = ref<{ title: string; thumbnail: string } | undefined>();
 
+const gameCardData = ref<{ title: string; thumbnail: string } | undefined>();
 const viewGameCard = (title: string, thumbnail: string) => {
   gameCardData.value = { title, thumbnail };
 };
 
-const moreLoad = (count: number) => {
-  showCount.value += count;
+const memoModel = ref("");
+const gameMemoData = ref<{ path: string; title: string } | undefined>();
+const viewGameMemo = (path: string, title: string) => {
+  memoModel.value = Data.getJSON("memo")?.[path] ?? "";
+  gameMemoData.value = { path, title };
+};
+const updateViewGameMemo = (open: boolean) => {
+  if (!gameMemoData.value) {
+    return;
+  }
+
+  if (!open) {
+    const data = Data.getJSON("memo") ?? {};
+    data[gameMemoData.value.path] = memoModel.value;
+    Data.setJSON("memo", data);
+    memoModel.value = "";
+    gameMemoData.value = undefined;
+
+    memoData.value = Data.getJSON("memo") ?? {};
+  }
 };
 
 useEvent(
@@ -215,7 +241,9 @@ const gameExist = computed(
               :thumbnail="thumbnail"
               :cleared="cleared"
               :recent="true"
+              :memo="memoData[path]"
               @view-thumbnail="viewGameCard"
+              @write-memo="viewGameMemo"
             />
           </div>
         </div>
@@ -228,7 +256,9 @@ const gameExist = computed(
           :title="title"
           :thumbnail="thumbnail"
           :cleared="cleared"
+          :memo="memoData[path]"
           @view-thumbnail="viewGameCard"
+          @write-memo="viewGameMemo"
         />
 
         <div
@@ -267,6 +297,22 @@ const gameExist = computed(
               :src="gameCardData?.thumbnail"
               :alt="gameCardData?.title"
             />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog :open="!!gameMemoData" @update:open="updateViewGameMemo">
+        <DialogContent
+          class="grid-rows-[auto_minmax(0,1fr)_auto] max-h-[90dvh]"
+        >
+          <DialogHeader>
+            <DialogTitle>{{ gameMemoData?.title }} 메모 작성하기</DialogTitle>
+            <DialogDescription>
+              메모를 작성하세요. 해당 창을 닫을 때 자동 저장됩니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div class="overflow-y-auto">
+            <Textarea v-model="memoModel">하이</Textarea>
           </div>
         </DialogContent>
       </Dialog>

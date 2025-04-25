@@ -7,10 +7,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../components/ui/tooltip";
+import { cn } from "../lib/utils";
 
 defineProps<{
   icon: string;
   message: string;
+  pre?: boolean;
 }>();
 const emit = defineEmits<{
   click: [event: Event];
@@ -30,7 +32,9 @@ const onClick = (event: Event) => {
         </Button>
       </TooltipTrigger>
       <TooltipContent>
-        <p>{{ message }}</p>
+        <p :class="cn({ 'whitespace-pre-wrap break-all max-w-64': pre })">
+          {{ message }}
+        </p>
       </TooltipContent>
     </Tooltip>
   </TooltipProvider>

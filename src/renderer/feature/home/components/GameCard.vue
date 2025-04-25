@@ -27,9 +27,10 @@ import { useSetting } from "../../../store/setting-store";
 import { GameData } from "../../../typings/local";
 const console = log;
 
-const props = defineProps<GameData & { recent?: boolean }>();
+const props = defineProps<GameData & { recent?: boolean; memo?: string }>();
 const emit = defineEmits<{
   viewThumbnail: [title: string, thumbnailPath: string];
+  writeMemo: [path: string, title: string];
 }>();
 const setting = useSetting();
 const game = useGame();
@@ -162,35 +163,41 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
       <PopOverButton
         v-if="isCompressFile"
         icon="solar:zip-file-bold-duotone"
-        @click="play(path)"
         message="압축파일을 실행합니다."
+        @click="play(path)"
       />
       <PopOverButton
         v-else
         icon="solar:play-bold-duotone"
-        @click="play(path)"
         message="게임을 실행합니다."
+        @click="play(path)"
       />
       <PopOverButton
         icon="solar:move-to-folder-bold-duotone"
-        @click="openFolder(path)"
         message="해당 폴더를 탐색기로 엽니다."
+        @click="openFolder(path)"
       />
       <PopOverButton
         icon="solar:eye-bold-duotone"
-        @click="hide(path)"
         message="이 게임을 목록에서 숨깁니다."
+        @click="hide(path)"
       />
-
       <PopOverButton
         :icon="cleared ? 'solar:flag-bold-duotone' : 'solar:flag-line-duotone'"
-        @click="clear(path)"
         :message="
           cleared
             ? '이 게임을 클리어하지 않음으로 표시합니다.'
             : '이 게임을 클리어로 표시합니다.'
         "
+        @click="clear(path)"
       />
+      <PopOverButton
+        icon="solar:pen-new-round-bold-duotone"
+        :message="memo || '메모하기'"
+        :pre="true"
+        @click="emit('writeMemo', path, title)"
+      />
+
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button variant="outline" size="icon">

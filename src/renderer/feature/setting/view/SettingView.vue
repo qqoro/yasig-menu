@@ -8,8 +8,10 @@ import { Button } from "../../../components/ui/button";
 import { useApi } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
 import { IpcMainSend, IpcRendererSend } from "../../../events";
+import Data from "../../../lib/data";
+import { useGame } from "../../../store/game-store";
 import { useSetting } from "../../../store/setting-store";
-import { SettingData } from "../../../typings/local";
+import { GameHistoryData, SettingData } from "../../../typings/local";
 import AppInfoCard from "../components/AppInfoCard.vue";
 import CookieCard from "../components/CookieCard.vue";
 import ExcludeGameCard from "../components/ExcludeGameCard.vue";
@@ -19,10 +21,10 @@ import SearchKeywordCard from "../components/SearchKeywordCard.vue";
 import ThumbnailCard from "../components/ThumbnailCard.vue";
 
 import log from "electron-log";
-import Data from "../../../lib/data";
 const console = log;
 
 const setting = useSetting();
+const game = useGame();
 const api = useApi();
 
 const sources = ref([...setting.sources]);
@@ -104,7 +106,9 @@ const exportSetting = async () => {
     cookie: setting.cookie,
     exclude: setting.exclude,
     search: setting.search,
-  } satisfies SettingData;
+    clearGame: game.clearGame,
+    recentGame: game.recentGame,
+  } satisfies SettingData & GameHistoryData;
   await window.navigator.clipboard.writeText(JSON.stringify(data, null, 4));
   toast.success("설정이 클립보드에 복사되었습니다.");
 };
@@ -112,7 +116,7 @@ const exportSetting = async () => {
 const importSetting = async () => {
   try {
     const dataText = await window.navigator.clipboard.readText();
-    const data = JSON.parse(dataText) as Partial<SettingData>;
+    const data = JSON.parse(dataText) as Partial<SettingData & GameHistoryData>;
 
     if (data.zoom !== undefined) {
       setting.saveZoom(data.zoom);
@@ -151,6 +155,13 @@ const importSetting = async () => {
     if (data.search !== undefined) {
       search.value = data.search;
       setting.saveSearch(data.search);
+    }
+
+    if (data.clearGame !== undefined) {
+      game.saveClearGame(data.clearGame)
+    }
+    if (data.recentGame !== undefined) {
+      game.saveRecentGame(data.recentGame);
     }
 
     console.log("설정 데이터", data);
