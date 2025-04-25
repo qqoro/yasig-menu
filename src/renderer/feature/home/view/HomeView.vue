@@ -22,9 +22,10 @@ import {
 import { useApi } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
 import { useWindowEvent } from "../../../composable/useWindowEvent";
+import { Sort } from "../../../constants";
 import { IpcMainSend, IpcRendererSend } from "../../../events";
 import Data from "../../../lib/data";
-import { searchFuzzy } from "../../../lib/search";
+import { searchFuzzy, sortRJCode } from "../../../lib/search";
 import { cn } from "../../../lib/utils";
 import { useGame } from "../../../store/game-store";
 import { useSearch } from "../../../store/search-store";
@@ -34,6 +35,7 @@ import GameCard from "../components/GameCard.vue";
 
 const api = useApi();
 const setting = useSetting();
+const { sort } = storeToRefs(useSearch());
 const game = useGame();
 const list = ref<{ path: string; title: string; thumbnail?: string }[]>([]);
 const loading = ref(true);
@@ -49,7 +51,26 @@ const { searchWord } = storeToRefs(useSearch());
 const searchFilteredList = computed(() => {
   let recent: GameData[] = [];
   let games: GameData[] = [];
-  for (const item of list.value) {
+
+  let sorted: { path: string; title: string; thumbnail?: string }[];
+  switch (sort.value) {
+    case Sort.Title:
+      sorted = [...list.value].sort((a, b) => a.title.localeCompare(b.title));
+      break;
+    case Sort.TitleDesc:
+      sorted = [...list.value].sort((a, b) => b.title.localeCompare(a.title));
+      break;
+    case Sort.RJCode:
+      sorted = [...list.value].sort((a, b) => sortRJCode(a.title, b.title));
+      break;
+    case Sort.RJCodeDesc:
+      sorted = [...list.value].sort((a, b) =>
+        sortRJCode(b.title, a.title, true)
+      );
+      break;
+  }
+
+  for (const item of sorted) {
     const gameData = {
       ...item,
       cleared: game.clearGame.includes(item.path),

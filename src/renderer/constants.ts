@@ -14,3 +14,10 @@ export const COMPRESS_FILE_TYPE = [
   ".alz",
   ".egg",
 ] as const;
+
+export enum Sort {
+  Title = "Title",
+  TitleDesc = "TitleDesc",
+  RJCode = "RJCode",
+  RJCodeDesc = "RJCodeDesc",
+}

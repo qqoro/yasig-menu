@@ -23,6 +23,8 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
@@ -35,6 +37,7 @@ import {
 } from "../../components/ui/tooltip";
 import { useApi } from "../../composable/useApi";
 import { useEvent } from "../../composable/useEvent";
+import { Sort } from "../../constants";
 import { IpcMainSend, IpcRendererSend } from "../../events";
 import { cn, wait } from "../../lib/utils";
 import { useSearch } from "../../store/search-store";
@@ -82,6 +85,14 @@ const zoomOut = () => {
 
 const restart = () => {
   api.send(IpcRendererSend.Restart);
+};
+
+const { sort } = storeToRefs(useSearch());
+const sortName: Record<Sort, string> = {
+  [Sort.Title]: "제목 정렬",
+  [Sort.TitleDesc]: "제목 역순 정렬",
+  [Sort.RJCode]: "RJ코드 정렬",
+  [Sort.RJCodeDesc]: "RJ코드 역순 정렬",
 };
 
 const allToggleApplySource = (e: Event) => {
@@ -323,6 +334,30 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, percent) => {
           </Tooltip>
         </TooltipProvider>
 
+        <!-- 정렬 -->
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <button
+              class="transition-colors hover:bg-slate-300 size-7 rounded-sm flex justify-center items-center"
+            >
+              <Icon icon="solar:round-sort-vertical-outline" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-44" align="end">
+            <DropdownMenuLabel>정렬</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuRadioGroup v-model="sort">
+              <DropdownMenuRadioItem
+                v-for="item in Sort"
+                :value="item"
+                :key="item"
+              >
+                {{ sortName[item] }}
+              </DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <!-- 소스 필터 -->
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
             <button

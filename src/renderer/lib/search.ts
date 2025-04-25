@@ -44,3 +44,22 @@ export function searchFuzzy(searchTerm: string): RegExp {
     return /.*/;
   }
 }
+
+const rjExp = /RJ\d{6,8}/i;
+export function sortRJCode(a: string, b: string, desc: boolean = false) {
+  const [codeA, codeB] = [
+    rjExp.exec(a)?.[0].substring(2),
+    rjExp.exec(b)?.[0].substring(2),
+  ];
+  if (codeA && codeB) {
+    return Number(codeA) - Number(codeB);
+  }
+  if (codeA) {
+    return desc ? 1 : -1;
+  }
+  if (codeB) {
+    return desc ? -1 : 1;
+  }
+
+  return 0;
+}
