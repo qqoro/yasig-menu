@@ -20,3 +20,8 @@ export interface SettingData {
   exclude: string[];
   search: [string, string];
 }
+
+export interface GameHistoryData {
+  clearGame: string[];
+  recentGame: string[];
+}

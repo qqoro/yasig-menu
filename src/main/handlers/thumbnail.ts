@@ -3,6 +3,7 @@ import { app } from "electron";
 import { rm, stat, writeFile } from "fs/promises";
 import { basename, extname, join } from "path";
 import puppeteer, { Browser, Page } from "puppeteer-core";
+import type { ToastT } from "vue-sonner";
 import { IpcMainSend, IpcRendererSend } from "../events.js";
 import { ipcMain, send } from "../main.js";
 
@@ -62,10 +63,13 @@ ipcMain.on(
         domain: ".google.com",
         value: cookie,
       });
-      const page = await browser.newPage();
+      page = await browser.newPage();
 
       let downloaded = false;
+      let message: undefined | Omit<ToastT & { message: string }, "id"> =
+        undefined;
 
+      // DLSite 다운로드
       const regexResult = /RJ\d{6,8}/i.exec(fileName);
       if (regexResult?.[0]) {
         const imgUrl = await getFromDLSite({
@@ -86,35 +90,76 @@ ipcMain.on(
         }
       }
 
+      // 구글 검색 다운로드
       if (!downloaded) {
         const query = [search[0], fileName, search[1]].join(" ");
-        const base64Src = await getFromGoogle({ page, query });
-        if (base64Src) {
-          const thumbnailExt =
-            "." +
-            base64Src.substring(
-              base64Src.indexOf("/") + 1,
-              base64Src.indexOf(";")
-            );
-          const thumbnailName = savePath
-            ? join(savePath, fileName) + thumbnailExt
-            : await getThumbnailName({
-                filePath,
-                thumbnailExt,
-              });
-          await saveFromBase64({
-            fileName: thumbnailName,
-            data: base64Src.substring(base64Src.indexOf(",") + 1),
-          });
-          downloaded = true;
+        const [src, bestSrc] = await getFromGoogle({ page, query });
+        try {
+          if (bestSrc) {
+            const thumbnailExt = getUrlExtension(bestSrc);
+            const thumbnailName = savePath
+              ? join(savePath, fileName) + thumbnailExt
+              : await getThumbnailName({
+                  filePath,
+                  thumbnailExt,
+                });
+            await saveFromUrl({
+              fileName: thumbnailName,
+              imgUrl: bestSrc,
+            });
+            downloaded = true;
+          }
+          if (!downloaded && src) {
+            const thumbnailExt =
+              "." + src.substring(src.indexOf("/") + 1, src.indexOf(";"));
+            const thumbnailName = savePath
+              ? join(savePath, fileName) + thumbnailExt
+              : await getThumbnailName({
+                  filePath,
+                  thumbnailExt,
+                });
+            await saveFromBase64({
+              fileName: thumbnailName,
+              data: src.substring(src.indexOf(",") + 1),
+            });
+            downloaded = true;
+          }
+        } catch (error) {
+          console.error("thumbnail highest quality download fail", error);
+          if (src) {
+            message = {
+              type: "info",
+              message:
+                "이미지 원본 사이트 접속에 문제가 있어 최고 품질의 이미지를 다운로드 받지 못했습니다.",
+              description:
+                "사이트 접속 차단으로 인해 다운로드 받지 못했을 가능성이 높습니다. cloudflare의 WARP나 goodbyedpi등을 사용해보세요.",
+            };
+            console.log("src", src);
+            const thumbnailExt =
+              "." + src.substring(src.indexOf("/") + 1, src.indexOf(";"));
+            const thumbnailName = savePath
+              ? join(savePath, fileName) + thumbnailExt
+              : await getThumbnailName({
+                  filePath,
+                  thumbnailExt,
+                });
+            await saveFromBase64({
+              fileName: thumbnailName,
+              data: src.substring(src.indexOf(",") + 1),
+            });
+            downloaded = true;
+          }
         }
       }
 
       if (downloaded) {
-        send(IpcMainSend.Message, {
-          type: "success",
-          message: `${baseName}의 썸네일을 다운로드 했습니다.`,
-        });
+        send(
+          IpcMainSend.Message,
+          message ?? {
+            type: "success",
+            message: `${baseName}의 썸네일을 다운로드 했습니다.`,
+          }
+        );
       } else {
         send(IpcMainSend.Message, {
           type: "error",
@@ -169,11 +214,23 @@ async function getFromGoogle({ page, query }: { page: Page; query: string }) {
   });
   await page.goto("https://www.google.com/search?" + params);
   await page.waitForSelector("#center_col img", { timeout: 5000 });
-  const src = await page.$$eval("#center_col img", (imgs) =>
-    imgs[0].getAttribute("src")
-  );
+  const src = await page.$$eval("#center_col img", (imgs) => {
+    imgs[0].click();
+    return imgs[0].getAttribute("src");
+  });
+  try {
+    await page.waitForSelector("img.sFlh5c.FyHeAf.iPVvYb", { timeout: 10000 });
+    const higherImage = await page.$$eval(
+      "img.sFlh5c.FyHeAf.iPVvYb",
+      (imgs) => {
+        return imgs[0].getAttribute("src");
+      }
+    );
 
-  return src;
+    return [src, higherImage];
+  } catch {
+    return [src];
+  }
 }
 
 async function getFromDLSite({ page, rjCode }: { page: Page; rjCode: string }) {
@@ -190,6 +247,19 @@ async function getFromDLSite({ page, rjCode }: { page: Page; rjCode: string }) {
   );
 
   return "https:" + src;
+}
+
+function getUrlExtension(url: string) {
+  let newURL = extname(url);
+  const hasQuery = newURL.indexOf("?");
+  if (hasQuery >= 0) {
+    newURL = newURL.substring(0, hasQuery);
+  }
+  const hasId = newURL.indexOf("#");
+  if (hasId >= 0) {
+    newURL = newURL.substring(0, hasId);
+  }
+  return newURL;
 }
 
 async function getThumbnailName({

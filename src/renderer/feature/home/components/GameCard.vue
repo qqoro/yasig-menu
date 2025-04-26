@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
 import log from "electron-log";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import PopOverButton from "../../../components/PopOverButton.vue";
 import { Button } from "../../../components/ui/button";
@@ -27,16 +27,19 @@ import { useSetting } from "../../../store/setting-store";
 import { GameData } from "../../../typings/local";
 const console = log;
 
-const props = defineProps<GameData & { recent?: boolean }>();
+const props = defineProps<GameData & { recent?: boolean; memo?: string }>();
 const emit = defineEmits<{
   viewThumbnail: [title: string, thumbnailPath: string];
+  writeMemo: [path: string, title: string];
 }>();
 const setting = useSetting();
 const game = useGame();
 
 const api = useApi();
 const loading = ref(false);
-const isRJCodeExist = computed(() => /RJ\d{6,8}/gi.exec(props.title));
+// 썸네일 변경 후에도 캐시된 이미지가 노출되는 경우 때문에 가짜 쿼리스트링 추가가
+const fakeQueryId = ref(0);
+const isRJCodeExist = computed(() => /RJ\d{6,8}/i.exec(props.title));
 const isCompressFile = computed(() => {
   // title 파싱 시 파일유무 확인하며, 파일인 경우 확장자를 제외하기 때문에
   // 파일이라면 경로가 제목과 같게 끝날 수 없음
@@ -60,6 +63,13 @@ const downloadThumbnail = (filePath: string) => {
 
 const deleteThumbnail = (filePath: string) => {
   api.send(IpcRendererSend.ThumbnailDelete, filePath);
+  api.send(IpcRendererSend.LoadList, {
+    sources: [...setting.sources],
+    exclude: [...setting.exclude],
+    thumbnailFolder: setting.changeThumbnailFolder[0]
+      ? setting.changeThumbnailFolder[1]
+      : undefined,
+  });
 };
 
 const play = (filePath: string) => {
@@ -109,7 +119,18 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
     return;
   }
 
+  api.send(IpcRendererSend.LoadList, {
+    sources: [...setting.sources],
+    exclude: [...setting.exclude],
+    thumbnailFolder: setting.changeThumbnailFolder[0]
+      ? setting.changeThumbnailFolder[1]
+      : undefined,
+  });
   loading.value = false;
+});
+
+watch(loading, () => {
+  fakeQueryId.value += 1;
 });
 </script>
 
@@ -136,7 +157,7 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
           )
         "
         style="aspect-ratio: 4/3"
-        :src="thumbnail"
+        :src="thumbnail + '?v=' + fakeQueryId"
         alt=""
       />
       <button v-else-if="!loading" @click="downloadThumbnail(path)">
@@ -162,35 +183,41 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
       <PopOverButton
         v-if="isCompressFile"
         icon="solar:zip-file-bold-duotone"
-        @click="play(path)"
         message="압축파일을 실행합니다."
+        @click="play(path)"
       />
       <PopOverButton
         v-else
         icon="solar:play-bold-duotone"
-        @click="play(path)"
         message="게임을 실행합니다."
+        @click="play(path)"
       />
       <PopOverButton
         icon="solar:move-to-folder-bold-duotone"
-        @click="openFolder(path)"
         message="해당 폴더를 탐색기로 엽니다."
+        @click="openFolder(path)"
       />
       <PopOverButton
         icon="solar:eye-bold-duotone"
-        @click="hide(path)"
         message="이 게임을 목록에서 숨깁니다."
+        @click="hide(path)"
       />
-
       <PopOverButton
         :icon="cleared ? 'solar:flag-bold-duotone' : 'solar:flag-line-duotone'"
-        @click="clear(path)"
         :message="
           cleared
             ? '이 게임을 클리어하지 않음으로 표시합니다.'
             : '이 게임을 클리어로 표시합니다.'
         "
+        @click="clear(path)"
       />
+      <PopOverButton
+        icon="solar:pen-new-round-bold-duotone"
+        :message="memo || '메모하기'"
+        :pre="true"
+        @click="emit('writeMemo', path, title)"
+      />
+
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button variant="outline" size="icon">

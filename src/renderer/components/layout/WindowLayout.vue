@@ -23,6 +23,8 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
@@ -35,8 +37,10 @@ import {
 } from "../../components/ui/tooltip";
 import { useApi } from "../../composable/useApi";
 import { useEvent } from "../../composable/useEvent";
+import { Sort } from "../../constants";
 import { IpcMainSend, IpcRendererSend } from "../../events";
 import { cn, wait } from "../../lib/utils";
+import { useSearch } from "../../store/search-store";
 import { useSetting } from "../../store/setting-store";
 import { GameData } from "../../typings/local";
 import { Toaster } from "../ui/sonner";
@@ -44,9 +48,28 @@ import { Toaster } from "../ui/sonner";
 const route = useRoute();
 const api = useApi();
 const setting = useSetting();
+const search = useSearch();
 const isMaximized = ref(false);
 const updateDownloadProgress = ref(0);
 const updateDialogOpen = ref(false);
+
+const selectRandomGame = async () => {
+  const thumbnailFolder = setting.changeThumbnailFolder[0]
+    ? setting.changeThumbnailFolder[1]
+    : undefined;
+  const list = await new Promise<GameData[]>((resolve) => {
+    api.once(IpcMainSend.LoadedList, (e, data: GameData[]) => {
+      resolve(data);
+    });
+    api.send(IpcRendererSend.LoadList, {
+      sources: [...setting.sources],
+      exclude: [...setting.exclude],
+      thumbnailFolder,
+    });
+  });
+  const game = list[Math.floor(list.length * Math.random())];
+  search.searchWord = game.title;
+};
 
 const zoomIn = () => {
   if (setting.zoom + 5 <= 100) {
@@ -62,6 +85,14 @@ const zoomOut = () => {
 
 const restart = () => {
   api.send(IpcRendererSend.Restart);
+};
+
+const { sort } = storeToRefs(useSearch());
+const sortName: Record<Sort, string> = {
+  [Sort.Title]: "제목 정렬",
+  [Sort.TitleDesc]: "제목 역순 정렬",
+  [Sort.RJCode]: "RJ코드 정렬",
+  [Sort.RJCodeDesc]: "RJ코드 역순 정렬",
 };
 
 const allToggleApplySource = (e: Event) => {
@@ -94,9 +125,7 @@ watch(applySources, () => {
   });
 });
 
-const processQueue = ref<{ path: string; title: string; thumbnail?: string }[]>(
-  []
-);
+const processQueue = ref<GameData[]>([]);
 const batchProcessing = ref(false);
 const thumbnailBatchDownload = async () => {
   if (batchProcessing.value) {
@@ -108,15 +137,10 @@ const thumbnailBatchDownload = async () => {
     ? setting.changeThumbnailFolder[1]
     : undefined;
   await new Promise<void>((resolve) => {
-    api.once(
-      IpcMainSend.LoadedList,
-      (e, data: { path: string; title: string; thumbnail?: string }[]) => {
-        processQueue.value = data.filter(
-          (item) => item.thumbnail === undefined
-        );
-        resolve();
-      }
-    );
+    api.once(IpcMainSend.LoadedList, (e, data: GameData[]) => {
+      processQueue.value = data.filter((item) => item.thumbnail === undefined);
+      resolve();
+    });
     api.send(IpcRendererSend.LoadList, {
       sources: [...setting.sources],
       exclude: [...setting.exclude],
@@ -269,6 +293,21 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, percent) => {
             <TooltipTrigger as-child>
               <button
                 class="transition-colors hover:bg-slate-300 size-7 rounded-sm flex justify-center items-center"
+                @click="selectRandomGame"
+              >
+                <Icon icon="solar:rocket-2-outline" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>랜덤</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <button
+                class="transition-colors hover:bg-slate-300 size-7 rounded-sm flex justify-center items-center"
                 @click="zoomIn"
               >
                 <Icon icon="solar:magnifer-zoom-in-outline" />
@@ -295,6 +334,30 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, percent) => {
           </Tooltip>
         </TooltipProvider>
 
+        <!-- 정렬 -->
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <button
+              class="transition-colors hover:bg-slate-300 size-7 rounded-sm flex justify-center items-center"
+            >
+              <Icon icon="solar:round-sort-vertical-outline" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-44" align="end">
+            <DropdownMenuLabel>정렬</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuRadioGroup v-model="sort">
+              <DropdownMenuRadioItem
+                v-for="item in Sort"
+                :value="item"
+                :key="item"
+              >
+                {{ sortName[item] }}
+              </DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <!-- 소스 필터 -->
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
             <button

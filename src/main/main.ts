@@ -76,7 +76,7 @@ function createWindow() {
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
     // 특정 도메인만 외부 브라우저로 열기
-    const allowedDomains = ["github.com", "www.dlsite.com"];
+    const allowedDomains = ["github.com", "www.dlsite.com", "forms.gle"];
     if (
       allowedDomains.some((domain) =>
         details.url.startsWith("https://" + domain)

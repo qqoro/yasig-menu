@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
+import { storeToRefs } from "pinia";
 import { computed, onMounted, ref } from "vue";
 import PageTitle from "../../../components/PageTitle.vue";
 import Button from "../../../components/ui/button/Button.vue";
@@ -11,6 +12,7 @@ import {
   DialogTitle,
 } from "../../../components/ui/dialog";
 import { Input } from "../../../components/ui/input";
+import { Textarea } from "../../../components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
@@ -20,26 +22,55 @@ import {
 import { useApi } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
 import { useWindowEvent } from "../../../composable/useWindowEvent";
+import { Sort } from "../../../constants";
 import { IpcMainSend, IpcRendererSend } from "../../../events";
-import { searchFuzzy } from "../../../lib/search";
+import Data from "../../../lib/data";
+import { searchFuzzy, sortRJCode } from "../../../lib/search";
 import { cn } from "../../../lib/utils";
 import { useGame } from "../../../store/game-store";
+import { useSearch } from "../../../store/search-store";
 import { useSetting } from "../../../store/setting-store";
 import { GameData } from "../../../typings/local";
 import GameCard from "../components/GameCard.vue";
 
 const api = useApi();
 const setting = useSetting();
+const { sort } = storeToRefs(useSearch());
 const game = useGame();
-const loading = ref(true);
 const list = ref<{ path: string; title: string; thumbnail?: string }[]>([]);
-const searchOpen = ref(false);
-const searchWord = ref("");
+const loading = ref(true);
+const memoData = ref<Record<string, string>>(Data.getJSON("memo") ?? {});
+
 const showCount = ref(20);
+const moreLoad = (count: number) => {
+  showCount.value += count;
+};
+
+const searchOpen = ref(false);
+const { searchWord } = storeToRefs(useSearch());
 const searchFilteredList = computed(() => {
-  const recent: GameData[] = [];
-  const games: GameData[] = [];
-  for (const item of list.value) {
+  let recent: GameData[] = [];
+  let games: GameData[] = [];
+
+  let sorted: { path: string; title: string; thumbnail?: string }[];
+  switch (sort.value) {
+    case Sort.Title:
+      sorted = [...list.value].sort((a, b) => a.title.localeCompare(b.title));
+      break;
+    case Sort.TitleDesc:
+      sorted = [...list.value].sort((a, b) => b.title.localeCompare(a.title));
+      break;
+    case Sort.RJCode:
+      sorted = [...list.value].sort((a, b) => sortRJCode(a.title, b.title));
+      break;
+    case Sort.RJCodeDesc:
+      sorted = [...list.value].sort((a, b) =>
+        sortRJCode(b.title, a.title, true)
+      );
+      break;
+  }
+
+  for (const item of sorted) {
     const gameData = {
       ...item,
       cleared: game.clearGame.includes(item.path),
@@ -51,36 +82,67 @@ const searchFilteredList = computed(() => {
     }
   }
 
+  // 검색어 없는 경우 바로 리턴
+  if (searchWord.value === "") {
+    // 초기 조회개수 설정
+    if (!setting.home.showAll) {
+      recent.length = Math.min(recent.length, showCount.value);
+      games.length = Math.min(games.length, showCount.value);
+    }
+    return { recent, games };
+  }
+
+  // 정확히 일치하는 데이터 있으면 바로 리턴
+  const exactMatch = {
+    recent: recent.find((game) => game.title === searchWord.value),
+    games: games.find((game) => game.title === searchWord.value),
+  };
+  if (exactMatch.recent || exactMatch.games) {
+    return {
+      recent: exactMatch.recent ? [exactMatch.recent] : [],
+      games: exactMatch.games ? [exactMatch.games] : [],
+    };
+  }
+
+  const regexp = searchFuzzy(searchWord.value);
+  recent = recent.filter(({ title }) => regexp.test(title));
+  games = games.filter(({ title }) => regexp.test(title));
   // 초기 조회개수 설정
   if (!setting.home.showAll) {
     recent.length = Math.min(recent.length, showCount.value);
     games.length = Math.min(games.length, showCount.value);
   }
-
-  if (searchWord.value === "") {
-    return { recent, games };
-  }
-
-  const regexp = searchFuzzy(searchWord.value);
   return {
-    recent: recent.filter(({ title }) => {
-      const trimmed = title.replace(" ", "");
-      return regexp.some((r) => r.test(trimmed));
-    }),
-    games: games.filter(({ title }) => {
-      const trimmed = title.replace(" ", "");
-      return regexp.some((r) => r.test(trimmed));
-    }),
+    recent,
+    games,
   };
 });
-const gameCardData = ref<{ title: string; thumbnail: string } | undefined>();
 
+const gameCardData = ref<{ title: string; thumbnail: string } | undefined>();
 const viewGameCard = (title: string, thumbnail: string) => {
   gameCardData.value = { title, thumbnail };
 };
 
-const moreLoad = (count: number) => {
-  showCount.value += count;
+const memoModel = ref("");
+const gameMemoData = ref<{ path: string; title: string } | undefined>();
+const viewGameMemo = (path: string, title: string) => {
+  memoModel.value = Data.getJSON("memo")?.[path] ?? "";
+  gameMemoData.value = { path, title };
+};
+const updateViewGameMemo = (open: boolean) => {
+  if (!gameMemoData.value) {
+    return;
+  }
+
+  if (!open) {
+    const data = Data.getJSON("memo") ?? {};
+    data[gameMemoData.value.path] = memoModel.value;
+    Data.setJSON("memo", data);
+    memoModel.value = "";
+    gameMemoData.value = undefined;
+
+    memoData.value = Data.getJSON("memo") ?? {};
+  }
 };
 
 useEvent(
@@ -145,10 +207,31 @@ const gameExist = computed(
           >총 {{ list.length }}개</span
         >
       </p>
-      <div class="flex justify-center items-center gap-2">
-        <span v-if="searchWord.length > 0" class="text-sm font-normal">
-          검색어 : {{ searchWord }}
-        </span>
+      <div class="flex justify-center items-center gap-2 max-w-[50dvw]">
+        <template v-if="searchWord.length > 0">
+          <span
+            class="text-sm font-normal text-ellipsis overflow-hidden text-nowrap"
+          >
+            검색어 : {{ searchWord }}
+          </span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <Button
+                  size="sm"
+                  class="aspect-square"
+                  variant="outline"
+                  @click="searchWord = ''"
+                >
+                  <Icon icon="solar:close-circle-outline" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>검색어 초기화</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </template>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger as-child>
@@ -215,7 +298,11 @@ const gameExist = computed(
               :thumbnail="thumbnail"
               :cleared="cleared"
               :recent="true"
+              :memo="
+                memoData[path] ? '메모 내용:\n' + memoData[path] : undefined
+              "
               @view-thumbnail="viewGameCard"
+              @write-memo="viewGameMemo"
             />
           </div>
         </div>
@@ -228,7 +315,9 @@ const gameExist = computed(
           :title="title"
           :thumbnail="thumbnail"
           :cleared="cleared"
+          :memo="memoData[path] ? '메모 내용:\n' + memoData[path] : undefined"
           @view-thumbnail="viewGameCard"
+          @write-memo="viewGameMemo"
         />
 
         <div
@@ -267,6 +356,22 @@ const gameExist = computed(
               :src="gameCardData?.thumbnail"
               :alt="gameCardData?.title"
             />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog :open="!!gameMemoData" @update:open="updateViewGameMemo">
+        <DialogContent
+          class="grid-rows-[auto_minmax(0,1fr)_auto] max-h-[90dvh]"
+        >
+          <DialogHeader>
+            <DialogTitle>{{ gameMemoData?.title }} 메모 작성하기</DialogTitle>
+            <DialogDescription>
+              메모를 작성하세요. 해당 창을 닫을 때 자동 저장됩니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div class="overflow-y-auto">
+            <Textarea v-model="memoModel">하이</Textarea>
           </div>
         </DialogContent>
       </Dialog>

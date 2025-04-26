@@ -12,7 +12,7 @@ export default class Data {
     try {
       const data = localStorage.getItem(key);
       return data ? JSON.parse(data) : data;
-    } catch (error) {
+    } catch {
       return null;
     }
   }

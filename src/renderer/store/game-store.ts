@@ -18,10 +18,17 @@ export const useGame = defineStore("game", () => {
     console.log("recentGame saved!", recentGame.value);
   };
 
+  const reset = () => {
+    clearGame.value = Data.getJSON("clearGame") ?? [];
+    recentGame.value = Data.getJSON("recentGame") ?? [];
+  };
+
   return {
     clearGame,
     saveClearGame,
     recentGame,
     saveRecentGame,
+
+    reset,
   };
 });

@@ -1,4 +1,4 @@
-import type { ExternalToast } from "vue-sonner";
+import type { ToastT } from "vue-sonner";
 
 type EnforceAllKeys<
   E extends IpcMainSend | IpcRendererSend,
@@ -30,10 +30,12 @@ export interface IpcMainEventMap
         { path: string; title: string; thumbnail?: string }[]
       ];
       [IpcMainSend.Message]: [
-        {
-          type: "info" | "success" | "warning" | "error";
-          message: string;
-        } & ExternalToast
+        Omit<
+          {
+            message: string;
+          } & ToastT,
+          "id"
+        >
       ];
 
       [IpcMainSend.ThumbnailDone]: [string];
