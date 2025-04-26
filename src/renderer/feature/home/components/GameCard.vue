@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
 import log from "electron-log";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import PopOverButton from "../../../components/PopOverButton.vue";
 import { Button } from "../../../components/ui/button";
@@ -37,6 +37,8 @@ const game = useGame();
 
 const api = useApi();
 const loading = ref(false);
+// 썸네일 변경 후에도 캐시된 이미지가 노출되는 경우 때문에 가짜 쿼리스트링 추가가
+const fakeQueryId = ref(0);
 const isRJCodeExist = computed(() => /RJ\d{6,8}/i.exec(props.title));
 const isCompressFile = computed(() => {
   // title 파싱 시 파일유무 확인하며, 파일인 경우 확장자를 제외하기 때문에
@@ -61,6 +63,13 @@ const downloadThumbnail = (filePath: string) => {
 
 const deleteThumbnail = (filePath: string) => {
   api.send(IpcRendererSend.ThumbnailDelete, filePath);
+  api.send(IpcRendererSend.LoadList, {
+    sources: [...setting.sources],
+    exclude: [...setting.exclude],
+    thumbnailFolder: setting.changeThumbnailFolder[0]
+      ? setting.changeThumbnailFolder[1]
+      : undefined,
+  });
 };
 
 const play = (filePath: string) => {
@@ -110,7 +119,18 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
     return;
   }
 
+  api.send(IpcRendererSend.LoadList, {
+    sources: [...setting.sources],
+    exclude: [...setting.exclude],
+    thumbnailFolder: setting.changeThumbnailFolder[0]
+      ? setting.changeThumbnailFolder[1]
+      : undefined,
+  });
   loading.value = false;
+});
+
+watch(loading, () => {
+  fakeQueryId.value += 1;
 });
 </script>
 
@@ -137,7 +157,7 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
           )
         "
         style="aspect-ratio: 4/3"
-        :src="thumbnail"
+        :src="thumbnail + '?v=' + fakeQueryId"
         alt=""
       />
       <button v-else-if="!loading" @click="downloadThumbnail(path)">
