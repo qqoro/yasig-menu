@@ -77,6 +77,23 @@ export const useSetting = defineStore("setting", () => {
     console.log("search saved!", search.value);
   };
 
+  const reset = () => {
+    zoom.value = Data.getJSON("zoom") ?? 50;
+    sources.value = Data.getJSON("sources") ?? [];
+    applySources.value =
+      Data.getJSON("applySources") ?? [...sources.value] ?? [];
+    home.value = Data.getJSON("home") ?? { showAll: false, showRecent: true };
+    changeThumbnailFolder.value = Data.getJSON("changeThumbnailFolder") ?? [
+      false,
+      "",
+    ];
+    blur.value = Data.getJSON("blur") ?? false;
+    dark.value = Data.getJSON("dark") ?? false;
+    cookie.value = Data.getJSON("cookie") ?? "";
+    exclude.value = Data.getJSON("exclude") ?? [];
+    search.value = Data.getJSON("search") ?? ["", ""];
+  };
+
   return {
     zoom,
     saveZoom,
@@ -99,5 +116,7 @@ export const useSetting = defineStore("setting", () => {
     addExclude,
     search,
     saveSearch,
+
+    reset,
   };
 });

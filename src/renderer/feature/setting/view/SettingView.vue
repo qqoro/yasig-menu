@@ -4,12 +4,24 @@ import { onMounted, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import Changelog from "../../../components/Changelog.vue";
 import PageTitle from "../../../components/PageTitle.vue";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../../../components/ui/alert-dialog";
 import { Button } from "../../../components/ui/button";
 import { useApi } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
 import { IpcMainSend, IpcRendererSend } from "../../../events";
 import Data from "../../../lib/data";
 import { useGame } from "../../../store/game-store";
+import { useSearch } from "../../../store/search-store";
 import { useSetting } from "../../../store/setting-store";
 import { GameHistoryData, SettingData } from "../../../typings/local";
 import AppInfoCard from "../components/AppInfoCard.vue";
@@ -158,7 +170,7 @@ const importSetting = async () => {
     }
 
     if (data.clearGame !== undefined) {
-      game.saveClearGame(data.clearGame)
+      game.saveClearGame(data.clearGame);
     }
     if (data.recentGame !== undefined) {
       game.saveRecentGame(data.recentGame);
@@ -184,6 +196,25 @@ const importSetting = async () => {
         }
       );
     }
+  }
+};
+
+const resetSetting = () => {
+  localStorage.clear();
+  setting.reset();
+  game.reset();
+  useSearch().reset();
+
+  sources.value = setting.sources;
+  home.value = setting.home;
+  changeThumbnailFolder.value = setting.changeThumbnailFolder;
+  blur.value = setting.blur;
+  dark.value = setting.dark;
+  cookie.value = setting.cookie;
+  exclude.value = setting.exclude;
+  search.value = setting.search;
+  if (appVersion.value) {
+    Data.set("version", appVersion.value);
   }
 };
 
@@ -232,6 +263,40 @@ watch(blur, () => {
         <Icon icon="solar:import-bold-duotone" />
         JSON으로 불러오기
       </Button>
+      <AlertDialog>
+        <AlertDialogTrigger as-child>
+          <Button variant="outline">
+            <Icon icon="solar:export-bold-duotone" />
+            앱 데이터 초기화
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle
+              >정말로 앱을 초기화 하시겠습니까?</AlertDialogTitle
+            >
+            <AlertDialogDescription>
+              <p>
+                설정된 설정, 게임 메모, 클리어 기록 등 앱 내부에 저장된 데이터를
+                전부 초기화합니다. 저장된 게임이나 썸네일은 삭제되지 않습니다.
+              </p>
+              <p>
+                정말로 앱을 초기화 하시겠습니까?
+                <span class="font-bold">이 작업은 되돌릴 수 없습니다.</span>
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction
+              class="text-red-800 bg-red-200 hover:bg-red-300"
+              @click="resetSetting"
+            >
+              초기화
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
 
     <Button class="sticky bottom-2 right-0 save-button-shadow" @click="save">

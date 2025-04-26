@@ -8,8 +8,15 @@ export const useSearch = defineStore("search", () => {
   const searchWord = ref("");
   const sort = ref(Sort.Title);
 
+  const reset = () => {
+    searchWord.value = "";
+    sort.value = Sort.Title;
+  };
+
   return {
     searchWord,
     sort,
+
+    reset,
   };
 });
