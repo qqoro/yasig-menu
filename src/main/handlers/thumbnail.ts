@@ -62,7 +62,7 @@ ipcMain.on(
         domain: ".google.com",
         value: cookie,
       });
-      const page = await browser.newPage();
+      page = await browser.newPage();
 
       let downloaded = false;
 
