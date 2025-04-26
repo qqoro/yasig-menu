@@ -13,17 +13,22 @@
     "build": "tsc --noEmit && node scripts/build.js && electron-builder --win --publish=never",
     "build:port": "tsc --noEmit && node scripts/build.js && electron-builder --win portable --publish=never",
     "build:win": "tsc --noEmit && node scripts/build.js && electron-builder --win --publish=never",
-    "build:port:win": "tsc --noEmit && node scripts/build.js && electron-builder --win portable --publish=never"
+    "build:port:win": "tsc --noEmit && node scripts/build.js && electron-builder --win portable --publish=never",
+    "prepare": "husky"
   },
   "type": "module",
   "devDependencies": {
     "@iconify/vue": "^4.3.0",
     "@types/node": "^22.14.1",
+    "@types/semver": "^7.7.0",
     "@vitejs/plugin-vue": "^5.2.3",
     "chalk": "^5.4.1",
     "chokidar": "^3.5.3",
     "electron": "^32.1.2",
     "electron-builder": "^25.1.6",
+    "husky": "^9.1.7",
+    "semver": "^7.7.1",
+    "tsx": "^4.19.3",
     "typescript": "^5.8.3",
     "vite": "^6.3.0"
   },
