@@ -208,12 +208,30 @@ const gameExist = computed(
         >
       </p>
       <div class="flex justify-center items-center gap-2 max-w-[50dvw]">
-        <span
-          v-if="searchWord.length > 0"
-          class="text-sm font-normal text-ellipsis overflow-hidden text-nowrap"
-        >
-          검색어 : {{ searchWord }}
-        </span>
+        <template v-if="searchWord.length > 0">
+          <span
+            class="text-sm font-normal text-ellipsis overflow-hidden text-nowrap"
+          >
+            검색어 : {{ searchWord }}
+          </span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <Button
+                  size="sm"
+                  class="aspect-square"
+                  variant="outline"
+                  @click="searchWord = ''"
+                >
+                  <Icon icon="solar:close-circle-outline" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>검색어 초기화</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </template>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger as-child>
