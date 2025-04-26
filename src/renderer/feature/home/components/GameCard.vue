@@ -157,7 +157,7 @@ watch(loading, () => {
           )
         "
         style="aspect-ratio: 4/3"
-        :src="thumbnail + '?v=' + fakeQueryId"
+        :src="thumbnail.replaceAll('#', '%23') + '?v=' + fakeQueryId"
         alt=""
       />
       <button v-else-if="!loading" @click="downloadThumbnail(path)">

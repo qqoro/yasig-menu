@@ -353,7 +353,7 @@ const gameExist = computed(
             <img
               class="w-full object-cover cursor-zoom-out"
               @click="gameCardData = undefined"
-              :src="gameCardData?.thumbnail"
+              :src="gameCardData?.thumbnail.replaceAll('#', '%23')"
               :alt="gameCardData?.title"
             />
           </div>
