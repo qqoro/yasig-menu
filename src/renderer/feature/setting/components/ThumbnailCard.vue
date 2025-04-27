@@ -10,6 +10,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../../../components/ui/tooltip";
+import { useApi } from "../../../composable/useApi";
+import { IpcRendererSend } from "../../../events";
 
 defineProps<{
   modelValue: [boolean, string];
@@ -21,6 +23,11 @@ const emit = defineEmits<{
   (e: "update:blur", value: boolean): void;
   (e: "update:dark", value: boolean): void;
 }>();
+
+const api = useApi();
+const openFolder = (path: string) => {
+  api.send(IpcRendererSend.OpenFolder, path);
+};
 </script>
 
 <template>
@@ -57,12 +64,21 @@ const emit = defineEmits<{
           </div>
           <Switch :model-value="modelValue[0]" />
         </Button>
-        <Input
-          v-if="modelValue[0]"
-          :model-value="modelValue[1]"
-          @update:model-value="(v) => emit('update:modelValue', [modelValue[0], v as string])"
-          placeholder="새로운 저장 경로를 입력하세요."
-        />
+        <div class="flex justify-center items-center gap-2">
+          <Input
+            v-if="modelValue[0]"
+            :model-value="modelValue[1]"
+            @update:model-value="(v) => emit('update:modelValue', [modelValue[0], v as string])"
+            placeholder="새로운 저장 경로를 입력하세요."
+          />
+          <Button
+            size="icon"
+            variant="outline"
+            @click="openFolder(modelValue[1])"
+          >
+            <Icon icon="solar:move-to-folder-bold-duotone" />
+          </Button>
+        </div>
       </div>
       <div class="flex flex-col gap-2">
         <Button

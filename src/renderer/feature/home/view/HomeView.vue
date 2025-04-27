@@ -92,21 +92,9 @@ const searchFilteredList = computed(() => {
     return { recent, games };
   }
 
-  // 정확히 일치하는 데이터 있으면 바로 리턴
-  const exactMatch = {
-    recent: recent.find((game) => game.title === searchWord.value),
-    games: games.find((game) => game.title === searchWord.value),
-  };
-  if (exactMatch.recent || exactMatch.games) {
-    return {
-      recent: exactMatch.recent ? [exactMatch.recent] : [],
-      games: exactMatch.games ? [exactMatch.games] : [],
-    };
-  }
-
   const regexp = searchFuzzy(searchWord.value);
-  recent = recent.filter(({ title }) => regexp.test(title));
-  games = games.filter(({ title }) => regexp.test(title));
+  recent = recent.filter(({ title }) => regexp.test(title.replace(/\s/g, "")));
+  games = games.filter(({ title }) => regexp.test(title.replace(/\s/g, "")));
   // 초기 조회개수 설정
   if (!setting.home.showAll) {
     recent.length = Math.min(recent.length, showCount.value);

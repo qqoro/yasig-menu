@@ -3,14 +3,22 @@ import { Icon } from "@iconify/vue";
 import { Button } from "../../../components/ui/button";
 import { Card, CardContent, CardHeader } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
+import { useApi } from "../../../composable/useApi";
+import { IpcRendererSend } from "../../../events";
 
 const props = defineProps<{ modelValue: string[] }>();
 const emit = defineEmits<{
   (e: "update:modelValue", value: string[]): void;
 }>();
 
+const api = useApi();
+
 const add = () => {
   emit("update:modelValue", [...props.modelValue, ""]);
+};
+
+const openFolder = (path: string) => {
+  api.send(IpcRendererSend.OpenFolder, path);
 };
 
 const deleteSource = (index: number) => {
@@ -45,6 +53,13 @@ const updateInputValue = (index: number, value: string) => {
           @update:model-value="(v) => updateInputValue(index, v as string)"
           placeholder="경로"
         />
+        <Button
+          size="icon"
+          variant="outline"
+          @click="openFolder(modelValue[index])"
+        >
+          <Icon icon="solar:move-to-folder-bold-duotone" />
+        </Button>
         <Button size="icon" variant="destructive" @click="deleteSource(index)">
           <Icon icon="solar:trash-bin-minimalistic-2-bold-duotone" />
         </Button>
