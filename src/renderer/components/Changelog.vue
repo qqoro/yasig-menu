@@ -68,6 +68,7 @@ const changelog = [
     ],
   ],
   ["1.0.15", [`경로에 특수문자 대응`]],
+  ["1.0.16", [`검색 로직 변경`, `설정폴더 열기 추가`]],
 ].toReversed() as [string, string[]][];
 </script>
 
