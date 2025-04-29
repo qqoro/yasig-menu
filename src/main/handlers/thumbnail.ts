@@ -8,6 +8,7 @@ import { IpcMainSend, IpcRendererSend } from "../events.js";
 import { ipcMain, send } from "../main.js";
 
 import log from "electron-log";
+import { config } from "./home.js";
 const console = log;
 
 let browser: Browser | undefined;
@@ -181,6 +182,7 @@ ipcMain.on(
         });
       }
     } finally {
+      config.isCacheDirty = true;
       send(IpcMainSend.ThumbnailDone, filePath);
       await page?.close();
     }
@@ -192,6 +194,7 @@ ipcMain.on(
   async (e, thumbnailFilePath: string) => {
     try {
       await rm(thumbnailFilePath);
+      config.isCacheDirty = true;
       send(IpcMainSend.ThumbnailDone, thumbnailFilePath);
       send(IpcMainSend.Message, {
         type: "success",

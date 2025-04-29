@@ -26,7 +26,8 @@ export function send<T extends IpcMainSend>(
   event: T,
   ...data: IpcMainEventMap[T]
 ) {
-  console.log("main send!", event, "data:", data);
+  // console.log("main send!", event, "data:", data);
+  console.log("main send!", event);
   mainWindow.webContents.send(event, ...data);
 }
 
