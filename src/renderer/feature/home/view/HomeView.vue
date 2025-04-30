@@ -48,62 +48,62 @@ const moreLoad = (count: number) => {
 
 const searchOpen = ref(false);
 const { searchWord } = storeToRefs(useSearch());
-const searchFilteredList = computed(() => {
-  let recent: GameData[] = [];
-  let games: GameData[] = [];
-
-  let sorted: { path: string; title: string; thumbnail?: string }[];
+const sortedList = computed(() => {
   switch (sort.value) {
     case Sort.Title:
-      sorted = [...list.value].sort((a, b) => a.title.localeCompare(b.title));
-      break;
+      return [...list.value].sort((a, b) => a.title.localeCompare(b.title));
     case Sort.TitleDesc:
-      sorted = [...list.value].sort((a, b) => b.title.localeCompare(a.title));
-      break;
+      return [...list.value].sort((a, b) => b.title.localeCompare(a.title));
     case Sort.RJCode:
-      sorted = [...list.value].sort((a, b) => sortRJCode(a.title, b.title));
-      break;
+      return [...list.value].sort((a, b) => sortRJCode(a.title, b.title));
     case Sort.RJCodeDesc:
-      sorted = [...list.value].sort((a, b) =>
-        sortRJCode(b.title, a.title, true)
-      );
-      break;
+      return [...list.value].sort((a, b) => sortRJCode(b.title, a.title, true));
+  }
+});
+const searchRegex = computed(() => {
+  if (!searchWord.value) {
+    return null;
   }
 
-  for (const item of sorted) {
+  return searchFuzzy(searchWord.value);
+});
+const searchFilteredList = computed(() => {
+  const recent: GameData[] = [];
+  const games: GameData[] = [];
+  const regex = searchRegex.value; // 메모이제이션된 정규식 사용
+
+  for (const item of sortedList.value) {
+    // 검색 정규식 있는 경우 체크 후 건너뛰기
+    if (regex && !regex.test(item.title.replaceAll(" ", ""))) {
+      continue;
+    }
+
+    const isRecent =
+      game.recentGame.includes(item.path) && setting.home.showRecent;
     const gameData = {
       ...item,
       cleared: game.clearGame.includes(item.path),
     };
-    if (game.recentGame.includes(item.path) && setting.home.showRecent) {
-      recent.push(gameData);
+
+    // 최근 목록 사용 + 검색어 없을때만 표시
+    if (isRecent && !regex) {
+      // 개수 제한이 있거나, 아직 recent 목록이 showCount 미만일 때만 추가
+      if (!setting.home.showAll || recent.length < showCount.value) {
+        recent.push(gameData);
+      }
     } else {
-      games.push(gameData);
+      // 개수 제한이 있거나, 아직 games 목록이 showCount 미만일 때만 추가
+      if (!setting.home.showAll || games.length < showCount.value) {
+        games.push(gameData);
+      }
+    }
+
+    if (games.length < showCount.value && regex) {
+      break;
     }
   }
 
-  // 검색어 없는 경우 바로 리턴
-  if (searchWord.value === "") {
-    // 초기 조회개수 설정
-    if (!setting.home.showAll) {
-      recent.length = Math.min(recent.length, showCount.value);
-      games.length = Math.min(games.length, showCount.value);
-    }
-    return { recent, games };
-  }
-
-  const regexp = searchFuzzy(searchWord.value);
-  recent = recent.filter(({ title }) => regexp.test(title.replace(/\s/g, "")));
-  games = games.filter(({ title }) => regexp.test(title.replace(/\s/g, "")));
-  // 초기 조회개수 설정
-  if (!setting.home.showAll) {
-    recent.length = Math.min(recent.length, showCount.value);
-    games.length = Math.min(games.length, showCount.value);
-  }
-  return {
-    recent,
-    games,
-  };
+  return { recent, games };
 });
 
 const gameCardData = ref<{ title: string; thumbnail: string } | undefined>();

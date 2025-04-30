@@ -79,6 +79,7 @@ ipcMain.on(
       JSON.stringify(config.exclude.toSorted())
     ) {
       config.isCacheDirty = true;
+      config.exclude = [...exclude];
     }
 
     const list = await getListData({ sources, exclude, thumbnailFolder });
@@ -338,9 +339,11 @@ const getListData = async ({
   const processedList = findThumbnails(allFiles);
 
   // 결과 캐싱 및 상태 플래그 업데이트
-  await saveToCache(cacheKey, processedList);
-  config.isCacheDirty = false; // 데이터 생성 및 캐싱 완료 후 플래그 리셋
-  console.log("데이터 재생성 및 캐싱 완료. 변경 플래그: false.");
+  // 성능을 위해 파일 작업은 데이터 먼저 전달한 뒤 내부적으로 처리
+  saveToCache(cacheKey, processedList).then(() => {
+    config.isCacheDirty = false; // 데이터 생성 및 캐싱 완료 후 플래그 리셋
+    console.log("데이터 재생성 및 캐싱 완료. 변경 플래그: false.");
+  });
 
   return processedList;
 };
