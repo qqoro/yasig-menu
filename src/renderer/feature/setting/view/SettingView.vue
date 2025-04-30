@@ -266,7 +266,7 @@ watch(blur, () => {
       <AlertDialog>
         <AlertDialogTrigger as-child>
           <Button variant="outline">
-            <Icon icon="solar:export-bold-duotone" />
+            <Icon icon="solar:siren-bold-duotone" />
             앱 데이터 초기화
           </Button>
         </AlertDialogTrigger>
