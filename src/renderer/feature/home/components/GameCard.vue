@@ -101,6 +101,8 @@ const clear = (filePath: string) => {
     game.saveClearGame([...game.clearGame].filter((v) => v !== filePath));
   } else {
     game.saveClearGame([...new Set([...game.clearGame, filePath])]);
+    // 게임 클리어 시 최근게임에서 제거
+    removeRecent(filePath);
   }
 };
 
