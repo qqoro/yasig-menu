@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
 import { storeToRefs } from "pinia";
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import PageTitle from "../../../components/PageTitle.vue";
 import Button from "../../../components/ui/button/Button.vue";
 import {
@@ -19,92 +19,20 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../../../components/ui/tooltip";
-import { useApi } from "../../../composable/useApi";
-import { useEvent } from "../../../composable/useEvent";
 import { useWindowEvent } from "../../../composable/useWindowEvent";
-import { Sort } from "../../../constants";
-import { IpcMainSend, IpcRendererSend } from "../../../events";
 import Data from "../../../lib/data";
-import { searchFuzzy, sortRJCode } from "../../../lib/search";
 import { cn } from "../../../lib/utils";
 import { useGame } from "../../../store/game-store";
 import { useSearch } from "../../../store/search-store";
 import { useSetting } from "../../../store/setting-store";
-import { GameData } from "../../../typings/local";
 import GameCard from "../components/GameCard.vue";
 
-const api = useApi();
 const setting = useSetting();
-const { sort } = storeToRefs(useSearch());
 const game = useGame();
-const list = ref<{ path: string; title: string; thumbnail?: string }[]>([]);
-const loading = ref(true);
 const memoData = ref<Record<string, string>>(Data.getJSON("memo") ?? {});
-
-const showCount = ref(20);
-const moreLoad = (count: number) => {
-  showCount.value += count;
-};
 
 const searchOpen = ref(false);
 const { searchWord } = storeToRefs(useSearch());
-const sortedList = computed(() => {
-  switch (sort.value) {
-    case Sort.Title:
-      return [...list.value].sort((a, b) => a.title.localeCompare(b.title));
-    case Sort.TitleDesc:
-      return [...list.value].sort((a, b) => b.title.localeCompare(a.title));
-    case Sort.RJCode:
-      return [...list.value].sort((a, b) => sortRJCode(a.title, b.title));
-    case Sort.RJCodeDesc:
-      return [...list.value].sort((a, b) => sortRJCode(b.title, a.title, true));
-  }
-});
-const searchRegex = computed(() => {
-  if (!searchWord.value) {
-    return null;
-  }
-
-  return searchFuzzy(searchWord.value);
-});
-const searchFilteredList = computed(() => {
-  const recent: GameData[] = [];
-  const games: GameData[] = [];
-  const regex = searchRegex.value; // 메모이제이션된 정규식 사용
-
-  for (const item of sortedList.value) {
-    // 검색 정규식 있는 경우 체크 후 건너뛰기
-    if (regex && !regex.test(item.title.replaceAll(" ", ""))) {
-      continue;
-    }
-
-    const isRecent =
-      game.recentGame.includes(item.path) && setting.home.showRecent;
-    const gameData = {
-      ...item,
-      cleared: game.clearGame.includes(item.path),
-    };
-
-    // 최근 목록 사용 + 검색어 없을때만 표시
-    if (isRecent && !regex) {
-      // 개수 제한이 있거나, 아직 recent 목록이 showCount 미만일 때만 추가
-      if (!setting.home.showAll || recent.length < showCount.value) {
-        recent.push(gameData);
-      }
-    } else {
-      // 개수 제한이 있거나, 아직 games 목록이 showCount 미만일 때만 추가
-      if (!setting.home.showAll || games.length < showCount.value) {
-        games.push(gameData);
-      }
-    }
-
-    if (games.length < showCount.value && regex) {
-      break;
-    }
-  }
-
-  return { recent, games };
-});
 
 const gameCardData = ref<{ title: string; thumbnail: string } | undefined>();
 const viewGameCard = (title: string, thumbnail: string) => {
@@ -133,45 +61,6 @@ const updateViewGameMemo = (open: boolean) => {
   }
 };
 
-useEvent(
-  IpcMainSend.LoadedList,
-  (e, data: { path: string; title: string; thumbnail?: string }[]) => {
-    loading.value = false;
-    list.value = data;
-  }
-);
-
-useEvent(IpcMainSend.ThumbnailDone, () => {
-  console.warn("called done!");
-  const [isChange, thumbnailFolder] = setting.changeThumbnailFolder;
-  api.send(IpcRendererSend.LoadList, {
-    sources: [...setting.applySources],
-    exclude: [...setting.exclude],
-    thumbnailFolder: isChange ? thumbnailFolder : undefined,
-  });
-});
-
-onMounted(() => {
-  loading.value = true;
-  console.warn("mount!", IpcRendererSend.LoadList);
-  const [isChange, thumbnailFolder] = setting.changeThumbnailFolder;
-  api.send(IpcRendererSend.LoadList, {
-    sources: [...setting.applySources],
-    exclude: [...setting.exclude],
-    thumbnailFolder: isChange ? thumbnailFolder : undefined,
-  });
-});
-
-useWindowEvent("focus", () => {
-  console.warn("focus!", IpcRendererSend.LoadList);
-  const [isChange, thumbnailFolder] = setting.changeThumbnailFolder;
-  api.send(IpcRendererSend.LoadList, {
-    sources: [...setting.applySources],
-    exclude: [...setting.exclude],
-    thumbnailFolder: isChange ? thumbnailFolder : undefined,
-  });
-});
-
 useWindowEvent("keydown", (e) => {
   if (e.key.toLowerCase() === "f" && e.ctrlKey) {
     searchOpen.value = !searchOpen.value;
@@ -181,8 +70,12 @@ useWindowEvent("keydown", (e) => {
   }
 });
 
+useWindowEvent("focus", () => {
+  game.loadList();
+});
+
 const gameExist = computed(
-  () => !(setting.sources.length === 0 || list.value.length === 0)
+  () => !(setting.sources.length === 0 || game.list.length === 0)
 );
 </script>
 
@@ -192,7 +85,7 @@ const gameExist = computed(
       <p>
         게임 목록
         <span class="text-sm text-muted-foreground"
-          >총 {{ list.length }}개</span
+          >총 {{ game.list.length }}개</span
         >
       </p>
       <div class="flex justify-center items-center gap-2 max-w-[50dvw]">
@@ -256,17 +149,19 @@ const gameExist = computed(
         <span v-if="setting.sources.length === 0">
           게임 폴더 경로가 설정되지 않았습니다! 설정에서 경로를 지정해주세요.
         </span>
-        <span v-else-if="loading">
+        <span v-else-if="game.loading">
           <Icon icon="svg-spinners:ring-resize" class="m-8 size-20" />
         </span>
-        <span v-else-if="list.length === 0">
+        <span v-else-if="game.list.length === 0">
           지정한 경로에서 게임을 찾지 못했습니다.
         </span>
       </div>
 
       <template v-else>
         <div
-          v-if="setting.home.showRecent && searchFilteredList.recent.length > 0"
+          v-if="
+            setting.home.showRecent && game.searchFilteredList.recent.length > 0
+          "
           class="w-full flex flex-col mb-4"
         >
           <h2 :style="{ zoom: (1 / (setting.zoom * 0.02)) * 1.2 }">
@@ -276,9 +171,8 @@ const gameExist = computed(
             class="max-w-full overflow-x-auto flex flex-row items-center gap-4"
           >
             <GameCard
-              v-for="(
-                { path, title, thumbnail, cleared }, index
-              ) in searchFilteredList.recent"
+              v-for="({ path, title, thumbnail, cleared }, index) in game
+                .searchFilteredList.recent"
               class="shrink-0"
               :key="path + index"
               :path="path"
@@ -295,9 +189,8 @@ const gameExist = computed(
           </div>
         </div>
         <GameCard
-          v-for="(
-            { path, title, thumbnail, cleared }, index
-          ) in searchFilteredList.games"
+          v-for="({ path, title, thumbnail, cleared }, index) in game
+            .searchFilteredList.games"
           :key="path + index"
           :path="path"
           :title="title"
@@ -310,17 +203,17 @@ const gameExist = computed(
 
         <div
           v-if="
-            searchFilteredList.recent.length +
-              searchFilteredList.games.length >=
-            showCount
+            game.searchFilteredList.recent.length +
+              game.searchFilteredList.games.length >=
+            game.showCount
           "
           class="w-full flex justify-center items-center gap-4"
           :style="{ zoom: 1 / (setting.zoom * 0.02) }"
         >
-          <Button variant="outline" @click="moreLoad(20)"
+          <Button variant="outline" @click="game.moreLoad(20)"
             >더 불러오기 (20개)</Button
           >
-          <Button variant="outline" @click="moreLoad(list.length)"
+          <Button variant="outline" @click="game.moreLoad(game.list.length)"
             >전부 불러오기</Button
           >
         </div>
@@ -367,8 +260,8 @@ const gameExist = computed(
       <div
         v-if="
           gameExist &&
-          searchFilteredList.games.length === 0 &&
-          searchFilteredList.recent.length === 0
+          game.searchFilteredList.games.length === 0 &&
+          game.searchFilteredList.recent.length === 0
         "
         class="flex justify-center items-center w-full h-full py-10"
       >

@@ -20,7 +20,7 @@ import { useApi } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
 import { IpcMainSend, IpcRendererSend } from "../../../events";
 import Data from "../../../lib/data";
-import { useGame } from "../../../store/game-store";
+import { useGameHistory } from "../../../store/game-history-store";
 import { useSearch } from "../../../store/search-store";
 import { useSetting } from "../../../store/setting-store";
 import { GameHistoryData, SettingData } from "../../../typings/local";
@@ -36,7 +36,7 @@ import log from "electron-log";
 const console = log;
 
 const setting = useSetting();
-const game = useGame();
+const game = useGameHistory();
 const api = useApi();
 
 const sources = ref([...setting.sources]);

@@ -22,7 +22,7 @@ import { useEvent } from "../../../composable/useEvent";
 import { COMPRESS_FILE_TYPE } from "../../../constants";
 import { IpcMainSend, IpcRendererSend } from "../../../events";
 import { cn } from "../../../lib/utils";
-import { useGame } from "../../../store/game-store";
+import { useGameHistory } from "../../../store/game-history-store";
 import { useSetting } from "../../../store/setting-store";
 import { GameData } from "../../../typings/local";
 const console = log;
@@ -33,7 +33,7 @@ const emit = defineEmits<{
   writeMemo: [path: string, title: string];
 }>();
 const setting = useSetting();
-const game = useGame();
+const game = useGameHistory();
 
 const api = useApi();
 const loading = ref(false);
