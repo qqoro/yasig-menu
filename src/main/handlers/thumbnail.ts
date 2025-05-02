@@ -3,12 +3,10 @@ import { app } from "electron";
 import { rm, stat, writeFile } from "fs/promises";
 import { basename, extname, join } from "path";
 import puppeteer, { Browser, Page } from "puppeteer-core";
-import type { ToastT } from "vue-sonner";
-import { IpcMainSend, IpcRendererSend } from "../events.js";
+import { IpcMainEventMap, IpcMainSend, IpcRendererSend } from "../events.js";
 import { ipcMain, send } from "../main.js";
 
 import log from "electron-log";
-import { config } from "./home.js";
 const console = log;
 
 let browser: Browser | undefined;
@@ -67,11 +65,11 @@ ipcMain.on(
       page = await browser.newPage();
 
       let downloaded = false;
-      let message: undefined | Omit<ToastT & { message: string }, "id"> =
+      let message: undefined | IpcMainEventMap[IpcMainSend.Message][0] =
         undefined;
 
       // DLSite 다운로드
-      const regexResult = /RJ\d{6,8}/i.exec(fileName);
+      const regexResult = /[RBV]J\d{6,8}/i.exec(fileName);
       if (regexResult?.[0]) {
         const imgUrl = await getFromDLSite({
           page,
@@ -182,7 +180,6 @@ ipcMain.on(
         });
       }
     } finally {
-      config.isCacheDirty = true;
       send(IpcMainSend.ThumbnailDone, filePath);
       await page?.close();
     }
@@ -194,7 +191,6 @@ ipcMain.on(
   async (e, thumbnailFilePath: string) => {
     try {
       await rm(thumbnailFilePath);
-      config.isCacheDirty = true;
       send(IpcMainSend.ThumbnailDone, thumbnailFilePath);
       send(IpcMainSend.Message, {
         type: "success",
