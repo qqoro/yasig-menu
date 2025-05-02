@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
-import { Button } from "../components/ui/button";
+import { Button, ButtonVariants } from "../components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -12,6 +12,7 @@ import { cn } from "../lib/utils";
 defineProps<{
   icon: string;
   message: string;
+  variant?: ButtonVariants["variant"];
   pre?: boolean;
 }>();
 const emit = defineEmits<{
@@ -27,7 +28,7 @@ const onClick = (event: Event) => {
   <TooltipProvider>
     <Tooltip>
       <TooltipTrigger as-child>
-        <Button variant="outline" size="icon" @click="onClick">
+        <Button :variant="variant ?? 'outline'" size="icon" @click="onClick">
           <Icon :icon="icon" />
         </Button>
       </TooltipTrigger>

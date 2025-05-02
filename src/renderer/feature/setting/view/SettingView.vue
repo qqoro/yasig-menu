@@ -20,7 +20,7 @@ import { useApi } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
 import { IpcMainSend, IpcRendererSend } from "../../../events";
 import Data from "../../../lib/data";
-import { useGame } from "../../../store/game-store";
+import { useGameHistory } from "../../../store/game-history-store";
 import { useSearch } from "../../../store/search-store";
 import { useSetting } from "../../../store/setting-store";
 import { GameHistoryData, SettingData } from "../../../typings/local";
@@ -36,7 +36,7 @@ import log from "electron-log";
 const console = log;
 
 const setting = useSetting();
-const game = useGame();
+const game = useGameHistory();
 const api = useApi();
 
 const sources = ref([...setting.sources]);
@@ -100,6 +100,10 @@ const updateCheck = () => {
 
 const openLogFolder = () => {
   api.send(IpcRendererSend.OpenLogFolder);
+};
+
+const cleanCache = () => {
+  api.send(IpcRendererSend.CleanCache);
 };
 
 const openChangelog = () => {
@@ -250,6 +254,7 @@ watch(blur, () => {
       :appVersion="appVersion"
       @updateCheck="updateCheck"
       @openLogFolder="openLogFolder"
+      @cleanCache="cleanCache"
       @openChangelog="openChangelog"
       @toggleDevTools="api.send(IpcRendererSend.ToggleDevTools)"
     />
@@ -266,7 +271,7 @@ watch(blur, () => {
       <AlertDialog>
         <AlertDialogTrigger as-child>
           <Button variant="outline">
-            <Icon icon="solar:export-bold-duotone" />
+            <Icon icon="solar:siren-bold-duotone" />
             앱 데이터 초기화
           </Button>
         </AlertDialogTrigger>

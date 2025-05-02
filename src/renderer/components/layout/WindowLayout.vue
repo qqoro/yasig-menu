@@ -40,6 +40,7 @@ import { useEvent } from "../../composable/useEvent";
 import { Sort } from "../../constants";
 import { IpcMainSend, IpcRendererSend } from "../../events";
 import { cn, wait } from "../../lib/utils";
+import { useGame } from "../../store/game-store";
 import { useSearch } from "../../store/search-store";
 import { useSetting } from "../../store/setting-store";
 import { GameData } from "../../typings/local";
@@ -48,27 +49,21 @@ import { Toaster } from "../ui/sonner";
 const route = useRoute();
 const api = useApi();
 const setting = useSetting();
+const game = useGame();
 const search = useSearch();
 const isMaximized = ref(false);
 const updateDownloadProgress = ref(0);
 const updateDialogOpen = ref(false);
 
 const selectRandomGame = async () => {
-  const thumbnailFolder = setting.changeThumbnailFolder[0]
-    ? setting.changeThumbnailFolder[1]
-    : undefined;
   const list = await new Promise<GameData[]>((resolve) => {
     api.once(IpcMainSend.LoadedList, (e, data: GameData[]) => {
       resolve(data);
     });
-    api.send(IpcRendererSend.LoadList, {
-      sources: [...setting.sources],
-      exclude: [...setting.exclude],
-      thumbnailFolder,
-    });
+    game.loadList();
   });
-  const game = list[Math.floor(list.length * Math.random())];
-  search.searchWord = game.title;
+  const data = list[Math.floor(list.length * Math.random())];
+  search.searchWord = data.title;
 };
 
 const zoomIn = () => {
@@ -116,13 +111,9 @@ const toggleApplySource = (e: Event, path: string, isExclude: boolean) => {
 };
 
 const applySources = storeToRefs(setting).applySources;
-watch(applySources, () => {
-  const [isChange, thumbnailFolder] = setting.changeThumbnailFolder;
-  api.send(IpcRendererSend.LoadList, {
-    sources: [...setting.applySources],
-    exclude: [...setting.exclude],
-    thumbnailFolder: isChange ? thumbnailFolder : undefined,
-  });
+const hideZipFile = storeToRefs(game).hideZipFile;
+watch([applySources, hideZipFile], () => {
+  game.loadList();
 });
 
 const processQueue = ref<GameData[]>([]);
@@ -141,11 +132,7 @@ const thumbnailBatchDownload = async () => {
       processQueue.value = data.filter((item) => item.thumbnail === undefined);
       resolve();
     });
-    api.send(IpcRendererSend.LoadList, {
-      sources: [...setting.sources],
-      exclude: [...setting.exclude],
-      thumbnailFolder,
-    });
+    game.loadList();
   });
 
   try {
@@ -367,7 +354,7 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, percent) => {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-56" align="end">
-            <DropdownMenuLabel>소스 필터 적용</DropdownMenuLabel>
+            <DropdownMenuLabel>필터</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuCheckboxItem
@@ -399,6 +386,12 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, percent) => {
                   setting.applySources.length === 0 ? "켜기" : "끄기"
                 }}</DropdownMenuItem
               >
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuCheckboxItem v-model="hideZipFile" @select.prevent>
+                <span>압축파일 제외</span>
+              </DropdownMenuCheckboxItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>

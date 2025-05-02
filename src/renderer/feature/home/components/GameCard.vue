@@ -22,6 +22,7 @@ import { useEvent } from "../../../composable/useEvent";
 import { COMPRESS_FILE_TYPE } from "../../../constants";
 import { IpcMainSend, IpcRendererSend } from "../../../events";
 import { cn } from "../../../lib/utils";
+import { useGameHistory } from "../../../store/game-history-store";
 import { useGame } from "../../../store/game-store";
 import { useSetting } from "../../../store/setting-store";
 import { GameData } from "../../../typings/local";
@@ -34,6 +35,7 @@ const emit = defineEmits<{
 }>();
 const setting = useSetting();
 const game = useGame();
+const gameHistory = useGameHistory();
 
 const api = useApi();
 const loading = ref(false);
@@ -63,18 +65,14 @@ const downloadThumbnail = (filePath: string) => {
 
 const deleteThumbnail = (filePath: string) => {
   api.send(IpcRendererSend.ThumbnailDelete, filePath);
-  api.send(IpcRendererSend.LoadList, {
-    sources: [...setting.sources],
-    exclude: [...setting.exclude],
-    thumbnailFolder: setting.changeThumbnailFolder[0]
-      ? setting.changeThumbnailFolder[1]
-      : undefined,
-  });
+  game.loadList();
 };
 
 const play = (filePath: string) => {
   console.log(filePath);
-  game.saveRecentGame([...new Set([...game.recentGame, filePath])]);
+  gameHistory.saveRecentGame([
+    ...new Set([...gameHistory.recentGame, filePath]),
+  ]);
   api.send(IpcRendererSend.Play, filePath);
 };
 
@@ -87,26 +85,29 @@ const hide = (filePath: string) => {
   console.log(filePath);
   setting.addExclude(filePath);
   toast.info(`${props.title}을 숨김 처리 했습니다.`);
-  const [isChange, thumbnailFolder] = setting.changeThumbnailFolder;
-  api.send(IpcRendererSend.LoadList, {
-    sources: [...setting.applySources],
-    exclude: [...setting.exclude],
-    thumbnailFolder: isChange ? thumbnailFolder : undefined,
-  });
+  game.loadList();
 };
 
 const clear = (filePath: string) => {
   console.log(filePath);
-  if (game.clearGame.includes(filePath)) {
-    game.saveClearGame([...game.clearGame].filter((v) => v !== filePath));
+  if (gameHistory.clearGame.includes(filePath)) {
+    gameHistory.saveClearGame(
+      [...gameHistory.clearGame].filter((v) => v !== filePath)
+    );
   } else {
-    game.saveClearGame([...new Set([...game.clearGame, filePath])]);
+    gameHistory.saveClearGame([
+      ...new Set([...gameHistory.clearGame, filePath]),
+    ]);
+    // 게임 클리어 시 최근게임에서 제거
+    removeRecent(filePath);
   }
 };
 
 const removeRecent = (filePath: string) => {
-  if (game.recentGame.includes(filePath)) {
-    game.saveRecentGame([...game.recentGame].filter((v) => v !== filePath));
+  if (gameHistory.recentGame.includes(filePath)) {
+    gameHistory.saveRecentGame(
+      [...gameHistory.recentGame].filter((v) => v !== filePath)
+    );
   }
 };
 
@@ -119,13 +120,7 @@ useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
     return;
   }
 
-  api.send(IpcRendererSend.LoadList, {
-    sources: [...setting.sources],
-    exclude: [...setting.exclude],
-    thumbnailFolder: setting.changeThumbnailFolder[0]
-      ? setting.changeThumbnailFolder[1]
-      : undefined,
-  });
+  game.loadList();
   loading.value = false;
 });
 
