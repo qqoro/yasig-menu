@@ -5,7 +5,6 @@ import {
   IpcRendererEventMap,
   IpcRendererSend,
 } from "../events";
-import { useSetting } from "../store/setting-store";
 
 type Send = <T extends IpcRendererSend>(
   channel: T,
@@ -31,16 +30,4 @@ export const api = window.require("electron").ipcRenderer as Omit<
     channel: T,
     listener: (event: IpcRendererEvent, ...args: IpcMainEventMap[T]) => void
   ) => void;
-};
-
-export const useLoadList = () => {
-  const api = useApi();
-  const setting = useSetting();
-
-  const [isChange, thumbnailFolder] = setting.changeThumbnailFolder;
-  api.send(IpcRendererSend.LoadList, {
-    sources: [...setting.applySources],
-    exclude: [...setting.exclude],
-    thumbnailFolder: isChange ? thumbnailFolder : undefined,
-  });
 };

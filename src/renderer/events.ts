@@ -1,4 +1,4 @@
-import type { ExternalToast } from "vue-sonner";
+import { ToastT } from "vue-sonner";
 
 type EnforceAllKeys<
   E extends IpcMainSend | IpcRendererSend,
@@ -31,9 +31,9 @@ export interface IpcMainEventMap
       ];
       [IpcMainSend.Message]: [
         {
-          type: "info" | "success" | "warning" | "error";
+          type: "success" | "info" | "warning" | "error";
           message: string;
-        } & ExternalToast
+        } & Omit<ToastT, "id" | "type">
       ];
 
       [IpcMainSend.ThumbnailDone]: [string];
@@ -51,6 +51,7 @@ export enum IpcRendererSend {
   Restart = "Restart",
 
   LoadList = "LoadList",
+  CleanCache = "CleanCache",
 
   Play = "Play",
   OpenFolder = "OpenFolder",
@@ -78,8 +79,10 @@ export interface IpcRendererEventMap
           sources: string[];
           exclude: string[];
           thumbnailFolder?: string;
+          hideZipFile: boolean;
         }
       ];
+      [IpcRendererSend.CleanCache]: [];
 
       [IpcRendererSend.Play]: [string];
       [IpcRendererSend.OpenFolder]: [string];

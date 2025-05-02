@@ -15,6 +15,7 @@ const console = log;
 
 export const useGame = defineStore("game", () => {
   const loading = ref(true);
+  const hideZipFile = ref(false);
   const list = ref<{ path: string; title: string; thumbnail?: string }[]>([]);
   const showCount = ref(20);
   const moreLoad = (count: number) => {
@@ -91,6 +92,7 @@ export const useGame = defineStore("game", () => {
       sources: [...setting.applySources],
       exclude: [...setting.exclude],
       thumbnailFolder: isChange ? thumbnailFolder : undefined,
+      hideZipFile: hideZipFile.value,
     });
   };
 
@@ -120,6 +122,7 @@ export const useGame = defineStore("game", () => {
 
   return {
     loading,
+    hideZipFile,
     showCount,
     moreLoad,
     list,

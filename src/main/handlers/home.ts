@@ -2,8 +2,9 @@ import chokidar from "chokidar";
 import { createHash } from "crypto";
 import { app, shell } from "electron";
 import fg from "fast-glob";
-import { mkdir, readdir, readFile, stat, writeFile } from "fs/promises";
+import { mkdir, readdir, readFile, rm, stat, writeFile } from "fs/promises";
 import { extname, join } from "path";
+import { COMPRESS_FILE_TYPE } from "../constants.js";
 import { IpcMainSend, IpcRendererSend } from "../events.js";
 import { ipcMain, send } from "../main.js";
 
@@ -42,50 +43,39 @@ export const config: {
 
 ipcMain.on(
   IpcRendererSend.LoadList,
-  async (e, { sources, exclude, thumbnailFolder }) => {
-    const { watcher, watcherSource } = config;
+  async (e, { sources, exclude, thumbnailFolder, hideZipFile }) => {
+    console.time("getListData");
+    const list = await getListData({
+      sources,
+      exclude,
+      thumbnailFolder,
+      hideZipFile,
+    });
+    console.timeEnd("getListData");
 
-    // watcher가 없거나 경로가 변경 된 경우 기존 객체 정리 후 새로 적용
-    const newWatcherSource = [...sources];
-    if (thumbnailFolder) {
-      newWatcherSource.push(thumbnailFolder);
-    }
-    newWatcherSource.sort();
-
-    if (
-      !watcher ||
-      !watcherSource ||
-      JSON.stringify(watcherSource) !== JSON.stringify(newWatcherSource)
-    ) {
-      if (watcher) {
-        watcher.close();
-      }
-
-      config.isCacheDirty = true;
-      config.watcherSource = [...sources];
-      if (thumbnailFolder) {
-        config.watcherSource.push(thumbnailFolder);
-      }
-      config.watcherSource.sort();
-      console.log("watcherSource", config.watcherSource);
-      // 파일 추가/삭제 이벤트 시 캐시 재생성 예약
-      config.watcher = setupWatcher(config.watcherSource, () => {
-        config.isCacheDirty = true;
-      });
-    }
-
-    if (
-      JSON.stringify(exclude.toSorted()) !==
-      JSON.stringify(config.exclude.toSorted())
-    ) {
-      config.isCacheDirty = true;
-      config.exclude = [...exclude];
-    }
-
-    const list = await getListData({ sources, exclude, thumbnailFolder });
     send(IpcMainSend.LoadedList, list);
   }
 );
+
+ipcMain.on(IpcRendererSend.CleanCache, async () => {
+  try {
+    const cacheDir = join(app.getPath("userData"), ".cache");
+
+    const files = await readdir(cacheDir);
+    files.forEach((file) => rm(join(cacheDir, file)));
+
+    send(IpcMainSend.Message, {
+      type: "success",
+      message: "성공적으로 캐시를 삭제했습니다.",
+    });
+  } catch (error) {
+    send(IpcMainSend.Message, {
+      type: "error",
+      message: "캐시를 삭제하던 중 오류가 발생했습니다.",
+      description: (error as Error).stack,
+    });
+  }
+});
 
 const exclude = ["notification_helper", "UnityCrashHandler64"];
 ipcMain.on(IpcRendererSend.Play, async (e, filePath: string) => {
@@ -120,7 +110,8 @@ ipcMain.on(IpcRendererSend.Play, async (e, filePath: string) => {
     console.error("error!", error);
     send(IpcMainSend.Message, {
       type: "warning",
-      message: (error as Error).stack ?? "",
+      message: `게임 실행에 실패했습니다.`,
+      description: (error as Error).stack,
     });
   }
 });
@@ -131,16 +122,57 @@ ipcMain.on(IpcRendererSend.OpenFolder, (e, filePath: string) => {
 
 const cacheDir = join(app.getPath("userData"), ".cache");
 
-const createCacheKey = (
-  sources: string[],
-  exclude: string[],
-  thumbnailFolder?: string
-): string => {
+const createCacheKey = ({
+  sources,
+  exclude,
+  thumbnailFolder,
+  hideZipFile,
+}: {
+  sources: string[];
+  exclude: string[];
+  thumbnailFolder?: string;
+  hideZipFile: boolean;
+}): string => {
   return createHash("md5")
-    .update(JSON.stringify({ sources, exclude, thumbnailFolder }))
+    .update(JSON.stringify({ sources, exclude, thumbnailFolder, hideZipFile }))
     .digest("hex");
 };
 
+/**
+ * 캐시 유효성 검사, 이 값이 `true`인 경우 캐시를 재생성 해야 함.
+ *
+ * @param sources 파일, 썸네일 경로들
+ * @param cacheKey 캐시 키
+ * @returns 캐시 유효성 검사 결과
+ */
+const checkCacheDirty = async (
+  sources: (string | undefined)[],
+  cacheKey: string
+) => {
+  try {
+    const cacheFilePath = join(cacheDir, `${cacheKey}.json`);
+    const [cacheInfo, ...sourcesInfo] = await Promise.all(
+      ([cacheFilePath, ...sources.filter((v) => !!v)] as string[]).map((path) =>
+        stat(path)
+      )
+    );
+
+    return (
+      cacheInfo.mtimeMs <=
+      Math.max(...sourcesInfo.map((source) => source.mtimeMs))
+    );
+  } catch (error) {
+    console.log("cache load fail!", error);
+    return true;
+  }
+};
+
+/**
+ * 캐시 키 이름으로 json 파일 생성
+ *
+ * @param key 캐시 파일 명
+ * @param data 저장할 데이터
+ */
 const saveToCache = async (
   key: string,
   data: Record<string, any>
@@ -155,12 +187,17 @@ const saveToCache = async (
   }
 };
 
-// 캐시 로드 함수
+/**
+ * 캐시 데이터를 불러옴
+ *
+ * @param key 캐시 파일명
+ * @returns 캐시 데이터
+ */
 const loadFromCache = async (key: string): Promise<GameData[] | null> => {
   const cacheFile = join(cacheDir, `${key}.json`);
+
   try {
     // 파일 존재 여부 먼저 확인
-    await stat(cacheFile);
     const data = await readFile(cacheFile, "utf8");
     console.log("캐시 파일 로드 성공:", cacheFile);
     return JSON.parse(data);
@@ -173,58 +210,6 @@ const loadFromCache = async (key: string): Promise<GameData[] | null> => {
     return null;
   }
 };
-
-// 파일 감지 및 플래그 설정
-function setupWatcher(
-  watchSources: string[],
-  onPotentialChange: () => void
-): chokidar.FSWatcher | null {
-  if (watchSources.length === 0) {
-    console.warn("감시할 유효한 소스 경로가 없습니다.");
-    return null;
-  }
-
-  console.log("파일 변경 감시 시작:", watchSources);
-  try {
-    const watcher = chokidar.watch(watchSources, {
-      persistent: true, // 앱 실행 동안 계속 감시
-      ignoreInitial: true, // 초기 스캔 시 이벤트 발생 안 함
-      ignorePermissionErrors: true, // 권한 오류 무시
-      depth: 1, // 성능 위해 1로 제한. 어처피 파일/폴더이름과 썸네일만 확인하면 됨
-      awaitWriteFinish: false, // 파일 변경완료를 기다리지 않음 (내용변경은 무시하기 때문에 괜찮을 듯)
-    });
-
-    // 파일 또는 디렉토리 추가/삭제 시
-    watcher.on("add", (path) => {
-      console.log(`파일 추가됨: ${path}. 캐시 무효화 예약됨.`);
-      onPotentialChange();
-    });
-    watcher.on("addDir", (path) => {
-      console.log(`디렉토리 추가됨: ${path}. 캐시 무효화 예약됨.`);
-      onPotentialChange();
-    });
-    watcher.on("unlink", (path) => {
-      console.log(`파일 삭제됨: ${path}. 캐시 무효화 예약됨.`);
-      onPotentialChange();
-    });
-    watcher.on("unlinkDir", (path) => {
-      console.log(`디렉토리 삭제됨: ${path}. 캐시 무효화 예약됨.`);
-      onPotentialChange();
-    });
-
-    watcher.on("error", (error) => console.error(`Watcher error: ${error}`));
-    watcher.on("ready", () => console.log("초기 스캔 완료. 변경 감시 중..."));
-
-    process.on("SIGTERM", async () => {
-      await watcher.close();
-    });
-
-    return watcher;
-  } catch (error) {
-    console.error("Watcher 생성 중 오류:", error);
-    return null;
-  }
-}
 
 function findThumbnails(
   files: DirentLike[]
@@ -287,16 +272,28 @@ const getListData = async ({
   sources,
   exclude,
   thumbnailFolder,
+  hideZipFile,
 }: {
   sources: string[];
   exclude: string[];
   thumbnailFolder?: string;
+  hideZipFile: boolean;
 }): Promise<GameData[]> => {
   // 중복 제거 및 유효한 경로 필터링
-  const cacheKey = createCacheKey(sources, exclude, thumbnailFolder);
+  const cacheKey = createCacheKey({
+    sources,
+    exclude,
+    thumbnailFolder,
+    hideZipFile,
+  });
+
+  const isCacheDirty = await checkCacheDirty(
+    [...sources, thumbnailFolder],
+    cacheKey
+  );
 
   // 캐시 상태 확인 및 캐시 로드 시도
-  if (!config.isCacheDirty) {
+  if (!isCacheDirty) {
     const cachedList = await loadFromCache(cacheKey);
     if (cachedList) {
       console.log("유효한 캐시 데이터 반환:", cacheKey);
@@ -321,28 +318,41 @@ const getListData = async ({
           })
       )
     )
-  )
-    .flat()
-    // 제외 경로 체크
-    .filter((file) => !exclude.includes(file.path.replaceAll("/", "\\")))
-    // DirentLike 객체로 변환
-    .map((entry) => ({
+  ).flat();
+
+  const list: DirentLike[] = [];
+  for (const entry of allFiles) {
+    // 제외 파일 체크
+    if (exclude.includes(entry.path.replaceAll("/", "\\"))) {
+      continue;
+    }
+
+    // zip 파일 제외 여부 확인 후 파일 타입 검사
+    if (
+      hideZipFile &&
+      entry.dirent.isFile() &&
+      COMPRESS_FILE_TYPE.some((ext) => entry.path.toLowerCase().endsWith(ext))
+    ) {
+      continue;
+    }
+
+    list.push({
       name: entry.name,
       parentPath: entry.path
         .substring(0, entry.path.length - entry.name.length - 1)
         .replaceAll("/", "\\"),
       isFile: () => entry.dirent.isFile(),
       isDirectory: () => entry.dirent.isDirectory(),
-    }));
+    });
+  }
 
   // 썸네일 찾기
-  const processedList = findThumbnails(allFiles);
+  const processedList: GameData[] = findThumbnails(list);
 
   // 결과 캐싱 및 상태 플래그 업데이트
   // 성능을 위해 파일 작업은 데이터 먼저 전달한 뒤 내부적으로 처리
   saveToCache(cacheKey, processedList).then(() => {
-    config.isCacheDirty = false; // 데이터 생성 및 캐싱 완료 후 플래그 리셋
-    console.log("데이터 재생성 및 캐싱 완료. 변경 플래그: false.");
+    console.log("데이터 재생성 및 캐싱 완료");
   });
 
   return processedList;
