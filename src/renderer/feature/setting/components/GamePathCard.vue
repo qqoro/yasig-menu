@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { Icon } from "@iconify/vue";
-import { Button } from "../../../components/ui/button";
+import PopOverButton from "../../../components/PopOverButton.vue";
 import { Card, CardContent, CardHeader } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
 import { useApi } from "../../../composable/useApi";
@@ -38,9 +37,11 @@ const updateInputValue = (index: number, value: string) => {
   <Card>
     <CardHeader class="flex justify-between items-center">
       <div class="text-lg">게임 경로 설정</div>
-      <Button size="icon" variant="outline" @click="add">
-        <Icon icon="solar:add-folder-bold-duotone" />
-      </Button>
+      <PopOverButton
+        icon="solar:add-folder-bold-duotone"
+        message="경로 추가"
+        @click="add"
+      />
     </CardHeader>
     <CardContent class="flex flex-col gap-2">
       <div
@@ -53,16 +54,17 @@ const updateInputValue = (index: number, value: string) => {
           @update:model-value="(v) => updateInputValue(index, v as string)"
           placeholder="경로"
         />
-        <Button
-          size="icon"
-          variant="outline"
+        <PopOverButton
+          icon="solar:move-to-folder-bold-duotone"
+          message="경로 열기"
           @click="openFolder(modelValue[index])"
-        >
-          <Icon icon="solar:move-to-folder-bold-duotone" />
-        </Button>
-        <Button size="icon" variant="destructive" @click="deleteSource(index)">
-          <Icon icon="solar:trash-bin-minimalistic-2-bold-duotone" />
-        </Button>
+        />
+        <PopOverButton
+          variant="destructive"
+          icon="solar:trash-bin-minimalistic-2-bold-duotone"
+          message="경로 삭제"
+          @click="deleteSource(index)"
+        />
       </div>
     </CardContent>
   </Card>

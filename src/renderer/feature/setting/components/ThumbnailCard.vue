@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
+import PopOverButton from "../../../components/PopOverButton.vue";
 import { Button } from "../../../components/ui/button";
 import { Card, CardContent, CardHeader } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
@@ -71,13 +72,11 @@ const openFolder = (path: string) => {
             @update:model-value="(v) => emit('update:modelValue', [modelValue[0], v as string])"
             placeholder="새로운 저장 경로를 입력하세요."
           />
-          <Button
-            size="icon"
-            variant="outline"
+          <PopOverButton
+            icon="solar:move-to-folder-bold-duotone"
+            message="폴더 열기"
             @click="openFolder(modelValue[1])"
-          >
-            <Icon icon="solar:move-to-folder-bold-duotone" />
-          </Button>
+          />
         </div>
       </div>
       <div class="flex flex-col gap-2">
