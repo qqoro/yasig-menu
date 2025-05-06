@@ -78,6 +78,10 @@ const changelog = [
       `RJ, BJ, VJ 코드 지원 및 속도 개선`,
     ],
   ],
+  [
+    "1.1.1",
+    [`썸네일 확장자 버그 수정`, `게임 실행 오류 수정`, `썸네일 업로드 기능`],
+  ],
 ].toReversed() as [string, string[]][];
 </script>
 

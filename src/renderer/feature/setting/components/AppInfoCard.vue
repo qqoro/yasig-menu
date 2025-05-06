@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
+import { toast } from "vue-sonner";
 import { Button } from "../../../components/ui/button";
 import {
   Card,
@@ -16,6 +17,11 @@ const emit = defineEmits<{
   (e: "openChangelog"): void;
   (e: "toggleDevTools"): void;
 }>();
+
+const copyAppVersion = async () => {
+  await window.navigator.clipboard.writeText(props.appVersion);
+  toast.info("앱 버전을 복사했습니다.");
+};
 </script>
 
 <template>
@@ -24,7 +30,9 @@ const emit = defineEmits<{
       <div class="text-lg">앱 정보</div>
     </CardHeader>
     <CardContent class="flex flex-col gap-2 text-sm">
-      <p>앱 버전 : {{ props.appVersion }}</p>
+      <button class="inline w-fit hover:bg-slate-200" @click="copyAppVersion">
+        앱 버전 : {{ props.appVersion }}
+      </button>
     </CardContent>
     <CardFooter class="flex justify-start items-center gap-2 flex-wrap">
       <Button as-child variant="outline">

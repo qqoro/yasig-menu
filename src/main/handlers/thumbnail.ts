@@ -18,7 +18,7 @@ app.on("window-all-closed", async function () {
 
 ipcMain.on(
   IpcRendererSend.ThumbnailDownload,
-  async (e, { filePath, cookie, search, savePath }) => {
+  async (e, { filePath, cookie, search, savePath, file }) => {
     let page: Page | undefined;
 
     const fileInfo = await stat(filePath);
@@ -32,6 +32,19 @@ ipcMain.on(
 
     try {
       console.log("download requested!", filePath);
+
+      if (file) {
+        const { data, ext } = file;
+
+        const thumbnailName = savePath
+          ? join(savePath, fileName) + ext
+          : await getThumbnailName({
+              filePath,
+              thumbnailExt: ext,
+            });
+        await writeFile(thumbnailName, Buffer.from(data));
+        return;
+      }
 
       if (!browser) {
         const list = chromeLauncher.Launcher.getInstallations();
@@ -102,6 +115,14 @@ ipcMain.on(
                   filePath,
                   thumbnailExt,
                 });
+            console.log(
+              "download best src >>>",
+              fileName,
+              thumbnailName,
+              thumbnailExt,
+              "||",
+              bestSrc
+            );
             await saveFromUrl({
               fileName: thumbnailName,
               imgUrl: bestSrc,
@@ -398,8 +419,15 @@ async function saveFromUrl({
   fileName: string;
   imgUrl: string;
 }) {
-  const arrayBuffer = await (await fetch(imgUrl)).arrayBuffer();
+  const response = await fetch(imgUrl);
+  const arrayBuffer = await response.arrayBuffer();
   const data = Buffer.from(arrayBuffer);
+
+  const type = response.headers.get("Content-Type");
+  if (!/\.(.{3,4})$/i.test(fileName) && type?.startsWith("image")) {
+    const ext = type.split("/").at(-1);
+    fileName += `.${ext}`;
+  }
 
   return await writeFile(fileName, data, {
     encoding: "base64",

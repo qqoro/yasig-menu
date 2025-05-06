@@ -85,7 +85,9 @@ ipcMain.on(IpcRendererSend.Play, async (e, filePath: string) => {
       if (
         file.isDirectory() ||
         !file.name.toLowerCase().endsWith(".exe") ||
-        exclude.some((ex) => file.name.startsWith(ex.toLowerCase()))
+        exclude.some((ex) =>
+          file.name.toLowerCase().startsWith(ex.toLowerCase())
+        )
       ) {
         continue;
       }

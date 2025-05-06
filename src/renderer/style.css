@@ -224,3 +224,7 @@
     scrollbar-color: var(--sb-thumb-color) var(--sb-track-color);
   }
 }
+
+::selection {
+  background: #3ace0063;
+}
