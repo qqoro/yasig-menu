@@ -11,15 +11,22 @@ import {
   CardFooter,
   CardHeader,
 } from "../../../components/ui/card";
+import { Dialog } from "../../../components/ui/dialog";
+import DialogContent from "../../../components/ui/dialog/DialogContent.vue";
+import DialogDescription from "../../../components/ui/dialog/DialogDescription.vue";
+import DialogHeader from "../../../components/ui/dialog/DialogHeader.vue";
+import DialogTitle from "../../../components/ui/dialog/DialogTitle.vue";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../../../components/ui/dropdown-menu";
+import { Input } from "../../../components/ui/input";
 import { useApi } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
-import { COMPRESS_FILE_TYPE } from "../../../constants";
+import { useFile } from "../../../composable/useFile";
+import { COMPRESS_FILE_TYPE, IMAGE_FILE_TYPE } from "../../../constants";
 import { IpcMainSend, IpcRendererSend } from "../../../events";
 import { cn } from "../../../lib/utils";
 import { useGameHistory } from "../../../store/game-history-store";
@@ -38,6 +45,7 @@ const game = useGame();
 const gameHistory = useGameHistory();
 
 const api = useApi();
+const open = ref(false);
 const loading = ref(false);
 // 썸네일 변경 후에도 캐시된 이미지가 노출되는 경우 때문에 가짜 쿼리스트링 추가가
 const fakeQueryId = ref(0);
@@ -51,6 +59,10 @@ const isCompressFile = computed(() => {
   const lowerPath = props.path.toLowerCase();
   return COMPRESS_FILE_TYPE.some((ext) => lowerPath.endsWith(ext));
 });
+const { file, changeHandler } = useFile(
+  IMAGE_FILE_TYPE,
+  "이미지 파일을 업로드 해 주세요."
+);
 
 const downloadThumbnail = (filePath: string) => {
   loading.value = true;
@@ -66,6 +78,31 @@ const downloadThumbnail = (filePath: string) => {
 const deleteThumbnail = (filePath: string) => {
   api.send(IpcRendererSend.ThumbnailDelete, filePath);
   game.loadList();
+};
+
+const uploadThumbnail = async () => {
+  if (!file.value) {
+    toast.error("이미지 파일을 업로드 해 주세요.");
+    return;
+  }
+
+  loading.value = true;
+  open.value = false;
+  const [useSavePath, savePath] = setting.changeThumbnailFolder;
+  api.send(IpcRendererSend.ThumbnailDownload, {
+    filePath: props.path,
+    cookie: setting.cookie,
+    search: [...setting.search],
+    savePath: useSavePath ? savePath : undefined,
+    file: {
+      data: await file.value.arrayBuffer(),
+      ext:
+        "." +
+        (file.value.name.split(".").at(-1) ??
+          file.value.type.split("/").at(-1) ??
+          ""),
+    },
+  });
 };
 
 const play = (filePath: string) => {
@@ -232,6 +269,10 @@ watch(loading, () => {
             <Icon icon="solar:refresh-circle-bold-duotone" />
             <span>썸네일 다시 다운로드</span>
           </DropdownMenuItem>
+          <DropdownMenuItem @click="open = true">
+            <Icon icon="solar:gallery-edit-bold-duotone" />
+            <span>이미지 변경</span>
+          </DropdownMenuItem>
           <DropdownMenuItem v-if="isRJCodeExist?.[0]" as-child>
             <a
               :href="`https://www.dlsite.com/maniax/work/=/product_id/${isRJCodeExist?.[0]}.html`"
@@ -249,5 +290,25 @@ watch(loading, () => {
         </DropdownMenuContent>
       </DropdownMenu>
     </CardFooter>
+    <Dialog :open="open" @update:open="(value) => (open = value)">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>썸네일 변경</DialogTitle>
+          <DialogDescription
+            >썸네일을 업로드하거나 URL을 입력하여 다운로드 받을 수
+            있습니다.</DialogDescription
+          >
+        </DialogHeader>
+        <div class="flex flex-col gap-2 text-sm">
+          <p class="text-sm">보유하고 있는 썸네일 파일을 업로드합니다.</p>
+          <Input type="file" accept="image/*" @change="changeHandler" />
+          <Button @click="uploadThumbnail">업로드</Button>
+          <!-- <hr class="my-2" />
+          <p>썸네일을 다운로드 받을 수 있는 URL을 입력합니다.</p>
+          <Input placeholder="다운로드 받을 수 있는 전체 URL" />
+          <Button>URL에서 다운로드</Button> -->
+        </div>
+      </DialogContent>
+    </Dialog>
   </Card>
 </template>

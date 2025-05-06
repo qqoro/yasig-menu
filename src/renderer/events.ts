@@ -94,6 +94,17 @@ export interface IpcRendererEventMap
           cookie: string;
           search: [string, string];
           savePath?: string;
+          /**
+           * 해당 값이 존재하는 경우 검색을 시도하지 않고 바로 해당 파일을 업로드합니다.
+           */
+          file?: {
+            data: ArrayBuffer;
+            ext: string;
+          };
+          /**
+           * 해당 값이 존재하는 경우 검색을 시도하지 않고 바로 주소에서 다운로드합니다.
+           */
+          url?: string;
         }
       ];
       [IpcRendererSend.ThumbnailDelete]: [string];

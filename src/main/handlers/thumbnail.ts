@@ -18,7 +18,7 @@ app.on("window-all-closed", async function () {
 
 ipcMain.on(
   IpcRendererSend.ThumbnailDownload,
-  async (e, { filePath, cookie, search, savePath }) => {
+  async (e, { filePath, cookie, search, savePath, file }) => {
     let page: Page | undefined;
 
     const fileInfo = await stat(filePath);
@@ -32,6 +32,19 @@ ipcMain.on(
 
     try {
       console.log("download requested!", filePath);
+
+      if (file) {
+        const { data, ext } = file;
+
+        const thumbnailName = savePath
+          ? join(savePath, fileName) + ext
+          : await getThumbnailName({
+              filePath,
+              thumbnailExt: ext,
+            });
+        await writeFile(thumbnailName, Buffer.from(data));
+        return;
+      }
 
       if (!browser) {
         const list = chromeLauncher.Launcher.getInstallations();
