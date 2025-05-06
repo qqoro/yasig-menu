@@ -13,6 +13,6 @@ export const useEvent = <T extends IpcMainSend>(
     api.addListener(event, callback);
   });
   onUnmounted(() => {
-    api.removeAllListeners(event);
+    api.removeListener(event, callback);
   });
 };
