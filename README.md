@@ -1,6 +1,7 @@
 # 야식 메뉴판
 
 [![GitHub Release](https://img.shields.io/github/v/release/qqoro/yasig-menu?style=flat)](https://github.com/qqoro/yasig-menu/releases/latest)
+![GitHub Downloads](https://img.shields.io/github/downloads/qqoro/yasig-menu/total)
 
 ![앱 메인 화면](./screenshot/main.png)
 
@@ -10,8 +11,8 @@
 
 - **게임 라이브러리 관리**: 여러 폴더에 분산된 게임들을 한 곳에서 관리
 - **직관적인 UI**: 모던하고 사용하기 쉬운 인터페이스로 게임을 시각적으로 탐색
-- **썸네일 관리**: 게임 썸네일 자동 다운로드 및 고해상도 뷰어 제공
-- **검색 기능**: Ctrl+F를 통한 빠른 게임 검색 (퍼지 검색 지원)
+- **썸네일 관리**: 게임 썸네일 다운로드 및 삭제
+- **검색 기능**: Ctrl+F를 통한 빠른 게임 검색
 - **최근 플레이**: 최근에 플레이한 게임을 별도로 표시하여 빠른 접근 제공
 - **게임 실행 및 관리**: 간편한 클릭으로 게임 실행 또는 폴더 위치 열기
 - **클리어 표시**: 완료한 게임 표시 기능으로 라이브러리 관리 개선
