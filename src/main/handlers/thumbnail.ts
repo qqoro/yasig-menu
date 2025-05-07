@@ -18,7 +18,7 @@ app.on("window-all-closed", async function () {
 
 ipcMain.on(
   IpcRendererSend.ThumbnailDownload,
-  async (e, { filePath, cookie, search, savePath, file }) => {
+  async (e, { filePath, cookie, search, savePath, file, url }) => {
     let page: Page | undefined;
 
     const fileInfo = await stat(filePath);
@@ -43,6 +43,18 @@ ipcMain.on(
               thumbnailExt: ext,
             });
         await writeFile(thumbnailName, Buffer.from(data));
+        return;
+      }
+
+      if (url) {
+        const thumbnailExt = extname(url.substring(0, url.indexOf("?")));
+        const thumbnailName = savePath
+          ? join(savePath, fileName) + thumbnailExt
+          : await getThumbnailName({
+              filePath,
+              thumbnailExt,
+            });
+        await saveFromUrl({ fileName: thumbnailName, imgUrl: url });
         return;
       }
 

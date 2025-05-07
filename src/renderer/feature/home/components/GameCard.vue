@@ -63,6 +63,7 @@ const { file, changeHandler } = useFile(
   IMAGE_FILE_TYPE,
   "이미지 파일을 업로드 해 주세요."
 );
+const url = ref("");
 
 const downloadThumbnail = (filePath: string) => {
   loading.value = true;
@@ -78,6 +79,12 @@ const downloadThumbnail = (filePath: string) => {
 const deleteThumbnail = (filePath: string) => {
   api.send(IpcRendererSend.ThumbnailDelete, filePath);
   game.loadList();
+};
+
+const openChangeThumbnailDialog = (value: boolean) => {
+  open.value = value;
+  file.value = undefined;
+  url.value = "";
 };
 
 const uploadThumbnail = async () => {
@@ -102,6 +109,29 @@ const uploadThumbnail = async () => {
           file.value.type.split("/").at(-1) ??
           ""),
     },
+  });
+};
+
+const downloadThumbnailFromUrl = (filePath: string) => {
+  try {
+    if (!url.value.trim()) {
+      throw Error();
+    }
+    new URL(url.value);
+  } catch {
+    toast.error("올바른 URL 전체를 입력해주세요.");
+    return;
+  }
+
+  loading.value = true;
+  open.value = false;
+  const [useSavePath, savePath] = setting.changeThumbnailFolder;
+  api.send(IpcRendererSend.ThumbnailDownload, {
+    filePath,
+    cookie: setting.cookie,
+    search: [...setting.search],
+    savePath: useSavePath ? savePath : undefined,
+    url: url.value,
   });
 };
 
@@ -290,7 +320,7 @@ watch(loading, () => {
         </DropdownMenuContent>
       </DropdownMenu>
     </CardFooter>
-    <Dialog :open="open" @update:open="(value) => (open = value)">
+    <Dialog v-if="open" :open="open" @update:open="openChangeThumbnailDialog">
       <DialogContent>
         <DialogHeader>
           <DialogTitle>썸네일 변경</DialogTitle>
@@ -303,10 +333,12 @@ watch(loading, () => {
           <p class="text-sm">보유하고 있는 썸네일 파일을 업로드합니다.</p>
           <Input type="file" accept="image/*" @change="changeHandler" />
           <Button @click="uploadThumbnail">업로드</Button>
-          <!-- <hr class="my-2" />
+          <hr class="my-2" />
           <p>썸네일을 다운로드 받을 수 있는 URL을 입력합니다.</p>
-          <Input placeholder="다운로드 받을 수 있는 전체 URL" />
-          <Button>URL에서 다운로드</Button> -->
+          <Input v-model="url" placeholder="다운로드 받을 수 있는 전체 URL" />
+          <Button @click="downloadThumbnailFromUrl(path)"
+            >URL에서 다운로드</Button
+          >
         </div>
       </DialogContent>
     </Dialog>
