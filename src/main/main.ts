@@ -7,6 +7,7 @@ import {
   session,
   shell,
 } from "electron";
+import windowStateKeeper from "electron-window-state";
 import { join } from "path";
 import {
   IpcMainEventMap,
@@ -39,10 +40,16 @@ export const ipcMain: Omit<IpcMain, "on"> & {
 } = ipcMainOrigin;
 
 function createWindow() {
+  let mainWindowState = windowStateKeeper({
+    defaultWidth: 1000,
+    defaultHeight: 800,
+  });
+
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    useContentSize: true,
+    x: mainWindowState.x,
+    y: mainWindowState.y,
+    width: mainWindowState.width,
+    height: mainWindowState.height,
     icon: join(import.meta.dirname, "./static/icon.ico"),
     titleBarStyle: "hidden",
     webPreferences: {
@@ -53,13 +60,29 @@ function createWindow() {
     },
   });
   mainWindow.setMenu(null);
+  mainWindowState.manage(mainWindow);
 
   if (process.env.NODE_ENV === "development") {
     const rendererPort = process.argv[2];
-    mainWindow.loadURL(`http://localhost:${rendererPort}`);
+    mainWindow.loadURL(`http://localhost:${rendererPort}`).then(() => {
+      send(IpcMainSend.WindowStatusChange, mainWindow.isMaximized());
+    });
     mainWindow.webContents.openDevTools();
+    // 개발 환경에서만 상태 저장 수동 (개발의 경우 정상 종료가 아니라 상태 저장이 안됨)
+    const handleDevWindowStore = () => {
+      mainWindowState.saveState(mainWindow);
+    };
+    mainWindow
+      .addListener("move", handleDevWindowStore)
+      .addListener("resize", handleDevWindowStore)
+      .addListener("maximize", handleDevWindowStore)
+      .addListener("unmaximize", handleDevWindowStore);
   } else {
-    mainWindow.loadFile(join(app.getAppPath(), "renderer", "index.html"));
+    mainWindow
+      .loadFile(join(app.getAppPath(), "renderer", "index.html"))
+      .then(() => {
+        send(IpcMainSend.WindowStatusChange, mainWindow.isMaximized());
+      });
   }
 
   mainWindow.on("maximize", () => {

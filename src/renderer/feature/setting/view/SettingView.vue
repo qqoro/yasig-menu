@@ -33,6 +33,7 @@ import SearchKeywordCard from "../components/SearchKeywordCard.vue";
 import ThumbnailCard from "../components/ThumbnailCard.vue";
 
 import log from "electron-log";
+import PlayExcludeCard from "../components/PlayExcludeCard.vue";
 const console = log;
 
 const setting = useSetting();
@@ -49,6 +50,7 @@ const dark = ref(setting.dark);
 const cookie = ref(setting.cookie);
 const exclude = ref(setting.exclude);
 const search = ref(setting.search);
+const playExclude = ref(setting.playExclude);
 const appVersion = ref("");
 
 const open = ref(false);
@@ -92,6 +94,8 @@ const save = () => {
   setting.saveCookie(cookie.value);
   setting.saveExclude(exclude.value);
   setting.saveSearch(search.value);
+  playExclude.value = playExclude.value.filter((v) => v.trim());
+  setting.savePlayExclude(playExclude.value);
   toast.success("설정을 저장했습니다.");
 };
 const updateCheck = () => {
@@ -122,6 +126,7 @@ const exportSetting = async () => {
     cookie: setting.cookie,
     exclude: setting.exclude,
     search: setting.search,
+    playExclude: setting.playExclude,
     clearGame: game.clearGame,
     recentGame: game.recentGame,
   } satisfies SettingData & GameHistoryData;
@@ -172,6 +177,10 @@ const importSetting = async () => {
       search.value = data.search;
       setting.saveSearch(data.search);
     }
+    if (data.playExclude !== undefined) {
+      playExclude.value = data.playExclude;
+      setting.savePlayExclude(data.playExclude);
+    }
 
     if (data.clearGame !== undefined) {
       game.saveClearGame(data.clearGame);
@@ -217,6 +226,7 @@ const resetSetting = () => {
   cookie.value = setting.cookie;
   exclude.value = setting.exclude;
   search.value = setting.search;
+  playExclude.value = setting.playExclude;
   if (appVersion.value) {
     Data.set("version", appVersion.value);
   }
@@ -250,6 +260,7 @@ watch(blur, () => {
     <CookieCard v-model="cookie" />
     <SearchKeywordCard v-model="search" />
     <ExcludeGameCard v-model="exclude" />
+    <PlayExcludeCard v-model="playExclude" />
     <AppInfoCard
       :appVersion="appVersion"
       @updateCheck="updateCheck"
