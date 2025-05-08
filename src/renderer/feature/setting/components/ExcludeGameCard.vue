@@ -34,7 +34,7 @@ const removeExclude = (index: number) => {
           </Button>
         </li>
       </ul>
-      <div v-if="modelValue.length === 0" class="text-muted-foreground">
+      <div v-if="modelValue.length === 0" class="text-muted-foreground text-sm">
         숨겨진 게임이 아직 없습니다.
       </div>
     </CardContent>

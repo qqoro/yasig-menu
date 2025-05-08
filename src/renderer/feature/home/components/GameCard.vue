@@ -140,7 +140,7 @@ const play = (filePath: string) => {
   gameHistory.saveRecentGame([
     ...new Set([...gameHistory.recentGame, filePath]),
   ]);
-  api.send(IpcRendererSend.Play, filePath);
+  api.send(IpcRendererSend.Play, filePath, [...setting.playExclude]);
 };
 
 const openFolder = (filePath: string) => {

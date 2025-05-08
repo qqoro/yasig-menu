@@ -77,8 +77,7 @@ ipcMain.on(IpcRendererSend.CleanCache, async () => {
   }
 });
 
-const exclude = ["notification_helper", "UnityCrashHandler64"];
-ipcMain.on(IpcRendererSend.Play, async (e, filePath: string) => {
+ipcMain.on(IpcRendererSend.Play, async (e, filePath, exclude = []) => {
   try {
     const folderList = await readdir(filePath, { withFileTypes: true });
     for (const file of folderList) {

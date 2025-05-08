@@ -76,6 +76,17 @@ export const useSetting = defineStore("setting", () => {
     Data.setJSON("search", newSearch);
     console.log("search saved!", search.value);
   };
+  const playExclude = ref<string[]>(
+    Data.getJSON("playExclude") ?? [
+      "notification_helper",
+      "UnityCrashHandler64",
+    ]
+  );
+  const savePlayExclude = (newPlayExclude: string[]) => {
+    playExclude.value = newPlayExclude;
+    Data.setJSON("playExclude", newPlayExclude);
+    console.log("playExclude saved!", playExclude.value);
+  };
 
   const reset = () => {
     zoom.value = Data.getJSON("zoom") ?? 50;
@@ -92,6 +103,10 @@ export const useSetting = defineStore("setting", () => {
     cookie.value = Data.getJSON("cookie") ?? "";
     exclude.value = Data.getJSON("exclude") ?? [];
     search.value = Data.getJSON("search") ?? ["", ""];
+    playExclude.value = Data.getJSON("playExclude") ?? [
+      "notification_helper",
+      "UnityCrashHandler64",
+    ];
   };
 
   return {
@@ -116,6 +131,8 @@ export const useSetting = defineStore("setting", () => {
     addExclude,
     search,
     saveSearch,
+    playExclude,
+    savePlayExclude,
 
     reset,
   };

@@ -105,6 +105,7 @@ const copy = async () => {
     <CardContent class="flex flex-col gap-2">
       <Input
         :model-value="modelValue"
+        placeholder="쿠키를 입력하세요."
         @update:model-value="(v) => emit('update:modelValue', v as string)"
       ></Input>
     </CardContent>

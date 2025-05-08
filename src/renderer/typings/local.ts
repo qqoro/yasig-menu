@@ -19,6 +19,7 @@ export interface SettingData {
   cookie: string;
   exclude: string[];
   search: [string, string];
+  playExclude: string[];
 }
 
 export interface GameHistoryData {

@@ -84,7 +84,7 @@ export interface IpcRendererEventMap
       ];
       [IpcRendererSend.CleanCache]: [];
 
-      [IpcRendererSend.Play]: [string];
+      [IpcRendererSend.Play]: [path: string, exclude?: string[]];
       [IpcRendererSend.OpenFolder]: [string];
       [IpcRendererSend.Hide]: [string];
 
