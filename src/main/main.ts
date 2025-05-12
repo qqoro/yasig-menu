@@ -146,3 +146,4 @@ app.on("window-all-closed", function () {
 import("./handlers/home.js");
 import("./handlers/thumbnail.js");
 import("./handlers/update.js");
+import("./handlers/dlsite.js");
