@@ -5,6 +5,7 @@ import fg from "fast-glob";
 import { mkdir, readdir, readFile, rm, stat, writeFile } from "fs/promises";
 import { extname, join } from "path";
 import { COMPRESS_FILE_TYPE } from "../constants.js";
+import { db, InsertGame } from "../db.js";
 import { IpcMainSend, IpcRendererSend } from "../events.js";
 import { ipcMain, send } from "../main.js";
 
@@ -13,12 +14,14 @@ interface DirentLike {
   parentPath: string;
   isFile: () => boolean;
   isDirectory: () => boolean;
+  isCompressFile: boolean;
 }
 
 export interface GameData {
   path: string;
   title: string;
   thumbnail?: string;
+  isCompressFile: boolean;
 }
 
 /**
@@ -212,9 +215,12 @@ const loadFromCache = async (key: string): Promise<GameData[] | null> => {
   }
 };
 
-function findThumbnails(
-  files: DirentLike[]
-): { path: string; title: string; thumbnail?: string }[] {
+function findThumbnails(files: DirentLike[]): {
+  path: string;
+  title: string;
+  thumbnail?: string;
+  isCompressFile: boolean;
+}[] {
   const imageExtensions = [
     ".jpg",
     ".jpeg",
@@ -225,7 +231,12 @@ function findThumbnails(
     ".avif",
     ".svg",
   ];
-  const result: { path: string; title: string; thumbnail?: string }[] = [];
+  const result: {
+    path: string;
+    title: string;
+    thumbnail?: string;
+    isCompressFile: boolean;
+  }[] = [];
 
   files.forEach((file) => {
     // 이미지 파일 인 경우 스킵
@@ -251,6 +262,7 @@ function findThumbnails(
           path: join(file.parentPath, file.name),
           title: baseName,
           thumbnail: join(thumbnailFile.parentPath, thumbnail),
+          isCompressFile: file.isCompressFile,
         });
         return;
       }
@@ -260,6 +272,7 @@ function findThumbnails(
       path,
       title: baseName,
       thumbnail: undefined,
+      isCompressFile: file.isCompressFile,
     });
   });
 
@@ -328,15 +341,6 @@ const getListData = async ({
       continue;
     }
 
-    // zip 파일 제외 여부 확인 후 파일 타입 검사
-    if (
-      hideZipFile &&
-      entry.dirent.isFile() &&
-      COMPRESS_FILE_TYPE.some((ext) => entry.path.toLowerCase().endsWith(ext))
-    ) {
-      continue;
-    }
-
     list.push({
       name: entry.name,
       parentPath: entry.path
@@ -344,6 +348,11 @@ const getListData = async ({
         .replaceAll("/", "\\"),
       isFile: () => entry.dirent.isFile(),
       isDirectory: () => entry.dirent.isDirectory(),
+      isCompressFile:
+        entry.dirent.isFile() &&
+        COMPRESS_FILE_TYPE.some((ext) =>
+          entry.path.toLowerCase().endsWith(ext)
+        ),
     });
   }
 
@@ -355,6 +364,30 @@ const getListData = async ({
   saveToCache(cacheKey, processedList).then(() => {
     console.log("데이터 재생성 및 캐싱 완료");
   });
+
+  await db
+    .insert(
+      processedList.map(
+        (data) =>
+          ({
+            path: data.path,
+            title: data.title,
+            thumbnail: data.thumbnail ?? null,
+            rjCode: /[RBV]J\d{6,8}/i.exec(data.title)?.[1] ?? null,
+            isCompressFile: data.isCompressFile,
+          } satisfies InsertGame)
+      )
+    )
+    .into("games")
+    .onConflict("path")
+    .merge({
+      // excluded.<columnName> 사용 시 insert문에 사용했던 데이터 사용됨
+      title: db.raw("excluded.title"),
+      thumbnail: db.raw("excluded.thumbnail"),
+      updatedAt: db.fn.now(),
+    });
+
+  console.log(await db.select().from("games").limit(10));
 
   return processedList;
 };

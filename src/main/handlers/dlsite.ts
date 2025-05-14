@@ -25,10 +25,17 @@ export async function loadInfo(id: string) {
   const makerName = body.querySelector(
     "#work_maker > tr > td > span > a"
   )?.textContent;
-  const genre = body.querySelector(".main_genre");
-  const tags = genre?.querySelectorAll("a").map((e) => e.textContent);
+
+  const category = body.querySelector(
+    "#category_type > a:nth-child(1) > span"
+  )?.textContent;
+  const tags = body
+    .querySelector(".main_genre")
+    ?.querySelectorAll("a")
+    .map((e) => e.textContent);
 
   console.log("publishDate", publishDate);
   console.log("makerName", makerName);
+  console.log("category", category);
   console.log("tags", tags);
 }

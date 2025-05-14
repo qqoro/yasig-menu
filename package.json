@@ -14,10 +14,11 @@
     "build:port": "tsc --noEmit && node scripts/build.js && electron-builder --win portable --publish=never",
     "build:win": "tsc --noEmit && node scripts/build.js && electron-builder --win --publish=never",
     "build:port:win": "tsc --noEmit && node scripts/build.js && electron-builder --win portable --publish=never",
-    "prepare": "husky"
+    "prepare": "husky && electron-rebuild -f -w better-sqlite3"
   },
   "type": "module",
   "devDependencies": {
+    "@electron/rebuild": "^4.0.1",
     "@iconify/vue": "^4.3.0",
     "@types/node": "^22.14.1",
     "@types/semver": "^7.7.0",
@@ -35,15 +36,15 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.4",
     "@vueuse/core": "^13.1.0",
-    "cheerio": "^1.0.0",
+    "better-sqlite3": "^11.10.0",
     "chrome-launcher": "^1.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "dexie": "^4.0.11",
     "electron-log": "^5.3.3",
     "electron-updater": "^6.6.2",
     "electron-window-state": "^5.0.3",
     "fast-glob": "^3.3.3",
+    "knex": "^3.1.0",
     "lucide-vue-next": "^0.488.0",
     "node-html-parser": "^7.0.1",
     "pinia": "^3.0.2",
@@ -64,6 +65,7 @@
       "vue-demi"
     ],
     "onlyBuiltDependencies": [
+      "better-sqlite3",
       "electron",
       "puppeteer"
     ]
