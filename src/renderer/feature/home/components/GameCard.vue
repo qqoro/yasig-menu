@@ -3,6 +3,7 @@ import { Icon } from "@iconify/vue";
 import log from "electron-log";
 import { computed, ref, watch } from "vue";
 import { toast } from "vue-sonner";
+import type { Game } from "../../../../main/db/db";
 import { IpcMainSend, IpcRendererSend } from "../../../../main/events";
 import PopOverButton from "../../../components/PopOverButton.vue";
 import { Button } from "../../../components/ui/button";
@@ -27,15 +28,14 @@ import { Input } from "../../../components/ui/input";
 import { useApi } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
 import { useFile } from "../../../composable/useFile";
-import { COMPRESS_FILE_TYPE, IMAGE_FILE_TYPE } from "../../../constants";
+import { IMAGE_FILE_TYPE } from "../../../constants";
 import { cn } from "../../../lib/utils";
 import { useGameHistory } from "../../../store/game-history-store";
 import { useGame } from "../../../store/game-store";
 import { useSetting } from "../../../store/setting-store";
-import { GameData } from "../../../typings/local";
 const console = log;
 
-const props = defineProps<GameData & { recent?: boolean; memo?: string }>();
+const props = defineProps<Game>();
 const emit = defineEmits<{
   viewThumbnail: [title: string, thumbnailPath: string];
   writeMemo: [path: string, title: string];
@@ -50,15 +50,15 @@ const loading = ref(false);
 // 썸네일 변경 후에도 캐시된 이미지가 노출되는 경우 때문에 가짜 쿼리스트링 추가가
 const fakeQueryId = ref(0);
 const isRJCodeExist = computed(() => /RJ\d{6,8}/i.exec(props.title));
-const isCompressFile = computed(() => {
-  // title 파싱 시 파일유무 확인하며, 파일인 경우 확장자를 제외하기 때문에
-  // 파일이라면 경로가 제목과 같게 끝날 수 없음
-  if (props.path.endsWith(props.title)) {
-    return false;
-  }
-  const lowerPath = props.path.toLowerCase();
-  return COMPRESS_FILE_TYPE.some((ext) => lowerPath.endsWith(ext));
-});
+// const isCompressFile = computed(() => {
+//   // title 파싱 시 파일유무 확인하며, 파일인 경우 확장자를 제외하기 때문에
+//   // 파일이라면 경로가 제목과 같게 끝날 수 없음
+//   if (props.path.endsWith(props.title)) {
+//     return false;
+//   }
+//   const lowerPath = props.path.toLowerCase();
+//   return COMPRESS_FILE_TYPE.some((ext) => lowerPath.endsWith(ext));
+// });
 const { file, changeHandler } = useFile(
   IMAGE_FILE_TYPE,
   "이미지 파일을 업로드 해 주세요."
@@ -136,46 +136,27 @@ const downloadThumbnailFromUrl = (filePath: string) => {
 };
 
 const play = (filePath: string) => {
-  console.log(filePath);
-  gameHistory.saveRecentGame([
-    ...new Set([...gameHistory.recentGame, filePath]),
-  ]);
   api.send(IpcRendererSend.Play, filePath, [...setting.playExclude]);
+  game.loadList();
 };
 
 const openFolder = (filePath: string) => {
-  console.log(filePath);
   api.send(IpcRendererSend.OpenFolder, filePath);
 };
 
 const hide = (filePath: string) => {
-  console.log(filePath);
-  setting.addExclude(filePath);
-  toast.info(`${props.title}을 숨김 처리 했습니다.`);
+  api.send(IpcRendererSend.Hide, { path: filePath, isHidden: true });
   game.loadList();
 };
 
 const clear = (filePath: string) => {
-  console.log(filePath);
-  if (gameHistory.clearGame.includes(filePath)) {
-    gameHistory.saveClearGame(
-      [...gameHistory.clearGame].filter((v) => v !== filePath)
-    );
-  } else {
-    gameHistory.saveClearGame([
-      ...new Set([...gameHistory.clearGame, filePath]),
-    ]);
-    // 게임 클리어 시 최근게임에서 제거
-    removeRecent(filePath);
-  }
+  api.send(IpcRendererSend.Clear, { path: filePath, isClear: !props.isClear });
+  game.loadList();
 };
 
 const removeRecent = (filePath: string) => {
-  if (gameHistory.recentGame.includes(filePath)) {
-    gameHistory.saveRecentGame(
-      [...gameHistory.recentGame].filter((v) => v !== filePath)
-    );
-  }
+  api.send(IpcRendererSend.Recent, { path: filePath, isRecent: false });
+  game.loadList();
 };
 
 const titleFontSize = computed(() => {
@@ -200,7 +181,7 @@ watch(loading, () => {
   <Card
     :class="
       cn('p-0 overflow-hidden hover:bg-green-50 gap-1 w-96 transition-all', {
-        'opacity-50 hover:opacity-100': cleared,
+        'opacity-50 hover:opacity-100': isClear,
       })
     "
   >
@@ -265,9 +246,9 @@ watch(loading, () => {
         @click="hide(path)"
       />
       <PopOverButton
-        :icon="cleared ? 'solar:flag-bold-duotone' : 'solar:flag-line-duotone'"
+        :icon="isClear ? 'solar:flag-bold-duotone' : 'solar:flag-line-duotone'"
         :message="
-          cleared
+          isClear
             ? '이 게임을 클리어하지 않음으로 표시합니다.'
             : '이 게임을 클리어로 표시합니다.'
         "
@@ -313,7 +294,7 @@ watch(loading, () => {
               <span>RJ 사이트 열기</span>
             </a>
           </DropdownMenuItem>
-          <DropdownMenuItem v-if="recent" @click="removeRecent(path)">
+          <DropdownMenuItem v-if="isRecent" @click="removeRecent(path)">
             <Icon icon="solar:eraser-bold-duotone" />
             <span>최근 플레이 기록 삭제</span>
           </DropdownMenuItem>

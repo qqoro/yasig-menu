@@ -1,11 +1,9 @@
-import chokidar from "chokidar";
-import { createHash } from "crypto";
 import { app, shell } from "electron";
 import fg from "fast-glob";
-import { mkdir, readdir, readFile, rm, stat, writeFile } from "fs/promises";
+import { readdir, rm, stat } from "fs/promises";
 import { extname, join } from "path";
 import { COMPRESS_FILE_TYPE } from "../constants.js";
-import { db, InsertGame } from "../db.js";
+import { db, Game, InsertGame } from "../db/db.js";
 import { IpcMainSend, IpcRendererSend } from "../events.js";
 import { ipcMain, send } from "../main.js";
 
@@ -24,26 +22,8 @@ export interface GameData {
   isCompressFile: boolean;
 }
 
-/**
- * 캐싱 및 파일 변경 감지 설정
- *
- * 썸네일이나, 폴더 경로, 파일 등이 변경되었을 경우 해당 값을 업데이트 해야 함
- *
- * - 파일 이름 변경, 추가, 삭제 시 : `isCacheDirty = true`
- * - 폴더 경로 변경 시 : `watcher`, `watcherSource` 업데이트
- */
-export const config: {
-  isCacheDirty: boolean;
-  watcher: chokidar.FSWatcher | null;
-  watcherSource: string[] | null;
-  exclude: string[];
-} = {
-  isCacheDirty: true,
-  watcher: null,
-  watcherSource: null,
-  exclude: [],
-};
-
+// 게임목록 조회
+// TODO: sources, exclude, thumbnailPath 등 db로 변경 예정, 파라미터에서 받지 않게 고쳐야 함
 ipcMain.on(
   IpcRendererSend.LoadList,
   async (e, { sources, exclude, thumbnailFolder, hideZipFile }) => {
@@ -60,6 +40,7 @@ ipcMain.on(
   }
 );
 
+// 캐시 삭제 (제거 예정, 캐시 대신 DB사용)
 ipcMain.on(IpcRendererSend.CleanCache, async () => {
   try {
     const cacheDir = join(app.getPath("userData"), ".cache");
@@ -80,7 +61,9 @@ ipcMain.on(IpcRendererSend.CleanCache, async () => {
   }
 });
 
+// 게임 실행
 ipcMain.on(IpcRendererSend.Play, async (e, filePath, exclude = []) => {
+  await db("games").update({ isRecent: true }).where({ path: filePath });
   try {
     const folderList = await readdir(filePath, { withFileTypes: true });
     for (const file of folderList) {
@@ -120,98 +103,62 @@ ipcMain.on(IpcRendererSend.Play, async (e, filePath, exclude = []) => {
   }
 });
 
+// 게임 폴더 열기
 ipcMain.on(IpcRendererSend.OpenFolder, (e, filePath: string) => {
   shell.showItemInFolder(filePath);
 });
 
-const cacheDir = join(app.getPath("userData"), ".cache");
+// 게임 폴더 열기
+ipcMain.on(IpcRendererSend.Hide, async (e, { path, isHidden }) => {
+  await db("games").update({ isHidden }).where({ path });
+});
 
-const createCacheKey = ({
-  sources,
-  exclude,
-  thumbnailFolder,
-  hideZipFile,
-}: {
-  sources: string[];
-  exclude: string[];
-  thumbnailFolder?: string;
-  hideZipFile: boolean;
-}): string => {
-  return createHash("md5")
-    .update(JSON.stringify({ sources, exclude, thumbnailFolder, hideZipFile }))
-    .digest("hex");
-};
+// 게임 클리어 체크
+ipcMain.on(IpcRendererSend.Clear, async (e, { path, isClear }) => {
+  await db("games").update({ isClear }).where({ path });
+});
+
+// 게임에 메모 작성
+ipcMain.on(IpcRendererSend.Memo, async (e, { path, memo }) => {
+  await db("games").update({ memo }).where({ path });
+});
 
 /**
  * 캐시 유효성 검사, 이 값이 `true`인 경우 캐시를 재생성 해야 함.
  *
  * @param sources 파일, 썸네일 경로들
- * @param cacheKey 캐시 키
  * @returns 캐시 유효성 검사 결과
  */
-const checkCacheDirty = async (
-  sources: (string | undefined)[],
-  cacheKey: string
-) => {
+const checkCacheDirty = async (sources: (string | undefined)[]) => {
   try {
-    const cacheFilePath = join(cacheDir, `${cacheKey}.json`);
-    const [cacheInfo, ...sourcesInfo] = await Promise.all(
-      ([cacheFilePath, ...sources.filter((v) => !!v)] as string[]).map((path) =>
-        stat(path)
-      )
+    const [result] = await db("games")
+      .select()
+      .max("createdAt")
+      .max("updatedAt");
+
+    // 조회된 날짜 값에서 string > date > epoch number로 변경
+    const updateEpoch = Math.max(
+      ...Object.values(result)
+        .filter((v) => v)
+        .map(
+          (v) =>
+            new Date(v as unknown as string).getTime() -
+            new Date().getTimezoneOffset() * 60 * 1000
+        ),
+      0
+    );
+    const sourcesInfo = await Promise.all(
+      (sources.filter((v) => !!v) as string[]).map((path) => stat(path))
     );
 
+    // DB업데이트 시간과 소스 폴더의 수정 시간 비교
     return (
-      cacheInfo.mtimeMs <=
-      Math.max(...sourcesInfo.map((source) => source.mtimeMs))
+      updateEpoch <= Math.max(...sourcesInfo.map((source) => source.mtimeMs))
     );
   } catch (error) {
+    // 비교 실패 시 새로 생성 요청
     console.log("cache load fail!", error);
     return true;
-  }
-};
-
-/**
- * 캐시 키 이름으로 json 파일 생성
- *
- * @param key 캐시 파일 명
- * @param data 저장할 데이터
- */
-const saveToCache = async (
-  key: string,
-  data: Record<string, any>
-): Promise<void> => {
-  try {
-    await mkdir(cacheDir, { recursive: true });
-    const cacheFilePath = join(cacheDir, `${key}.json`);
-    await writeFile(cacheFilePath, JSON.stringify(data), "utf8");
-    console.log("데이터 캐시 저장 완료:", cacheFilePath);
-  } catch (error) {
-    console.error("캐시 저장 중 오류:", error);
-  }
-};
-
-/**
- * 캐시 데이터를 불러옴
- *
- * @param key 캐시 파일명
- * @returns 캐시 데이터
- */
-const loadFromCache = async (key: string): Promise<GameData[] | null> => {
-  const cacheFile = join(cacheDir, `${key}.json`);
-
-  try {
-    // 파일 존재 여부 먼저 확인
-    const data = await readFile(cacheFile, "utf8");
-    console.log("캐시 파일 로드 성공:", cacheFile);
-    return JSON.parse(data);
-  } catch (error) {
-    // 파일이 없거나 (ENOENT) 읽기 오류 시 null 반환
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
-      console.error(`캐시 로드 중 오류 (${cacheFile}):`, error);
-    }
-
-    return null;
   }
 };
 
@@ -292,31 +239,20 @@ const getListData = async ({
   exclude: string[];
   thumbnailFolder?: string;
   hideZipFile: boolean;
-}): Promise<GameData[]> => {
-  // 중복 제거 및 유효한 경로 필터링
-  const cacheKey = createCacheKey({
-    sources,
-    exclude,
-    thumbnailFolder,
-    hideZipFile,
-  });
-
-  const isCacheDirty = await checkCacheDirty(
-    [...sources, thumbnailFolder],
-    cacheKey
-  );
+}): Promise<Game[]> => {
+  const isCacheDirty = await checkCacheDirty([...sources, thumbnailFolder]);
 
   // 캐시 상태 확인 및 캐시 로드 시도
   if (!isCacheDirty) {
-    const cachedList = await loadFromCache(cacheKey);
-    if (cachedList) {
-      console.log("유효한 캐시 데이터 반환:", cacheKey);
-      return cachedList;
+    const q = db("games").select().whereNot({ isHidden: true });
+    if (hideZipFile) {
+      q.where({ isCompressFile: false });
     }
+    return await q;
   }
 
   // 캐시가 없거나 무효화된 경우 데이터 재생성
-  console.log("데이터 재생성 시작:", cacheKey);
+  console.log("데이터 재생성 시작");
 
   const allFiles = (
     await Promise.all(
@@ -336,11 +272,6 @@ const getListData = async ({
 
   const list: DirentLike[] = [];
   for (const entry of allFiles) {
-    // 제외 파일 체크
-    if (exclude.includes(entry.path.replaceAll("/", "\\"))) {
-      continue;
-    }
-
     list.push({
       name: entry.name,
       parentPath: entry.path
@@ -359,12 +290,6 @@ const getListData = async ({
   // 썸네일 찾기
   const processedList: GameData[] = findThumbnails(list);
 
-  // 결과 캐싱 및 상태 플래그 업데이트
-  // 성능을 위해 파일 작업은 데이터 먼저 전달한 뒤 내부적으로 처리
-  saveToCache(cacheKey, processedList).then(() => {
-    console.log("데이터 재생성 및 캐싱 완료");
-  });
-
   await db
     .insert(
       processedList.map(
@@ -375,6 +300,7 @@ const getListData = async ({
             thumbnail: data.thumbnail ?? null,
             rjCode: /[RBV]J\d{6,8}/i.exec(data.title)?.[1] ?? null,
             isCompressFile: data.isCompressFile,
+            isHidden: exclude.includes(data.path.replaceAll("/", "\\")),
           } satisfies InsertGame)
       )
     )
@@ -387,7 +313,9 @@ const getListData = async ({
       updatedAt: db.fn.now(),
     });
 
-  console.log(await db.select().from("games").limit(10));
-
-  return processedList;
+  const q = db("games").select().whereNot({ isHidden: true });
+  if (hideZipFile) {
+    q.where({ isCompressFile: false });
+  }
+  return await q;
 };

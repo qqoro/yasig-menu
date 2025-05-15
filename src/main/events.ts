@@ -1,4 +1,5 @@
 import { ToastT } from "vue-sonner";
+import { Game } from "./db/db.js";
 
 type EnforceAllKeys<
   E extends IpcMainSend | IpcRendererSend,
@@ -26,9 +27,7 @@ export interface IpcMainEventMap
       [IpcMainSend.UpdateDownloadProgress]: [number];
       [IpcMainSend.VersionChecked]: [string];
 
-      [IpcMainSend.LoadedList]: [
-        { path: string; title: string; thumbnail?: string }[]
-      ];
+      [IpcMainSend.LoadedList]: [Game[]];
       [IpcMainSend.Message]: [
         {
           type: "success" | "info" | "warning" | "error";
@@ -56,6 +55,7 @@ export enum IpcRendererSend {
   Play = "Play",
   OpenFolder = "OpenFolder",
   Hide = "Hide",
+  Recent = "Recent",
   Clear = "Clear",
   Memo = "Memo",
 
@@ -88,7 +88,8 @@ export interface IpcRendererEventMap
 
       [IpcRendererSend.Play]: [path: string, exclude?: string[]];
       [IpcRendererSend.OpenFolder]: [path: string];
-      [IpcRendererSend.Hide]: [path: string];
+      [IpcRendererSend.Hide]: [{ path: string; isHidden: boolean }];
+      [IpcRendererSend.Recent]: [{ path: string; isRecent: boolean }];
       [IpcRendererSend.Clear]: [{ path: string; isClear: boolean }];
       [IpcRendererSend.Memo]: [{ path: string; memo: string | null }];
 

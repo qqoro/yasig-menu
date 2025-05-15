@@ -14,6 +14,7 @@ if (!(await db.schema.hasTable("games"))) {
     games.string("title").notNullable();
     games.string("thumbnail").nullable().defaultTo(null);
     games.string("rjCode").nullable().defaultTo(null);
+    games.string("memo").nullable().defaultTo(null);
     games.date("publishDate").nullable().defaultTo(null);
     games.string("makerName").nullable().defaultTo(null);
     games.string("category").nullable().defaultTo(null);
@@ -23,10 +24,12 @@ if (!(await db.schema.hasTable("games"))) {
     games.boolean("isClear").defaultTo(false);
     games.boolean("isRecent").defaultTo(false);
     games.boolean("isCompressFile").defaultTo(false);
-    games.datetime("createdAt").defaultTo(db.fn.now());
-    games.datetime("updatedAt").nullable();
+    games.timestamp("createdAt", { useTz: false }).defaultTo(db.fn.now());
+    games.timestamp("updatedAt", { useTz: false }).nullable();
   });
 }
+
+type SqliteBoolean = 0 | 1 | boolean;
 
 interface TableBaseColumn {
   createdAt: Date | Knex.Raw;
@@ -38,10 +41,15 @@ export interface Game extends TableBaseColumn {
   title: string;
   thumbnail: string | null;
   rjCode: string | null;
-  isHidden: boolean;
-  isClear: boolean;
-  isRecent: boolean;
-  isCompressFile: boolean;
+  memo: string | null;
+  publishDate: Date | Knex.Raw | null;
+  makerName: string | null;
+  category: string | null;
+  tags: string | null;
+  isHidden: SqliteBoolean;
+  isClear: SqliteBoolean;
+  isRecent: SqliteBoolean;
+  isCompressFile: SqliteBoolean;
 }
 export type InsertGame = Pick<Game, "path" | "title"> & Partial<Game>;
 export type UpdateGame = Partial<Game>;

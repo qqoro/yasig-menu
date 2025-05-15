@@ -171,32 +171,85 @@ const gameExist = computed(
             class="max-w-full overflow-x-auto flex flex-row items-center gap-4"
           >
             <GameCard
-              v-for="({ path, title, thumbnail, cleared }, index) in game
-                .searchFilteredList.recent"
+              v-for="(
+                {
+                  path,
+                  title,
+                  thumbnail,
+                  category,
+                  createdAt,
+                  isClear,
+                  isCompressFile,
+                  isHidden,
+                  isRecent,
+                  memo,
+                  makerName,
+                  publishDate,
+                  rjCode,
+                  tags,
+                  updatedAt,
+                },
+                index
+              ) in game.searchFilteredList.recent"
               class="shrink-0"
               :key="path + index"
               :path="path"
               :title="title"
               :thumbnail="thumbnail"
-              :cleared="cleared"
-              :recent="true"
-              :memo="
-                memoData[path] ? '메모 내용:\n' + memoData[path] : undefined
-              "
+              :category="category"
+              :isClear="isClear"
+              :isCompressFile="isCompressFile"
+              :isHidden="isHidden"
+              :isRecent="isRecent"
+              :created-at="createdAt"
+              :memo="memo"
+              :makerName="makerName"
+              :publishDate="publishDate"
+              :rjCode="rjCode"
+              :tags="tags"
+              :updatedAt="updatedAt"
               @view-thumbnail="viewGameCard"
               @write-memo="viewGameMemo"
             />
           </div>
         </div>
         <GameCard
-          v-for="({ path, title, thumbnail, cleared }, index) in game
-            .searchFilteredList.games"
+          v-for="(
+            {
+              path,
+              title,
+              thumbnail,
+              category,
+              createdAt,
+              isClear,
+              isCompressFile,
+              isHidden,
+              isRecent,
+              memo,
+              makerName,
+              publishDate,
+              rjCode,
+              tags,
+              updatedAt,
+            },
+            index
+          ) in game.searchFilteredList.games"
           :key="path + index"
           :path="path"
           :title="title"
           :thumbnail="thumbnail"
-          :cleared="cleared"
-          :memo="memoData[path] ? '메모 내용:\n' + memoData[path] : undefined"
+          :category="category"
+          :isClear="isClear"
+          :isCompressFile="isCompressFile"
+          :isHidden="isHidden"
+          :isRecent="isRecent"
+          :created-at="createdAt"
+          :memo="memo"
+          :makerName="makerName"
+          :publishDate="publishDate"
+          :rjCode="rjCode"
+          :tags="tags"
+          :updatedAt="updatedAt"
           @view-thumbnail="viewGameCard"
           @write-memo="viewGameMemo"
         />

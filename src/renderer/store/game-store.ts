@@ -2,12 +2,12 @@ import log from "electron-log";
 import { defineStore, storeToRefs } from "pinia";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
+import { Game } from "../../main/db/db";
 import { IpcMainSend, IpcRendererSend } from "../../main/events";
 import { useApi } from "../composable/useApi";
 import { useEvent } from "../composable/useEvent";
 import { Sort } from "../constants";
 import { searchFuzzy, sortRJCode } from "../lib/search";
-import { GameData } from "../typings/local";
 import { useGameHistory } from "./game-history-store";
 import { useSearch } from "./search-store";
 import { useSetting } from "./setting-store";
@@ -16,7 +16,7 @@ const console = log;
 export const useGame = defineStore("game", () => {
   const loading = ref(true);
   const hideZipFile = ref(false);
-  const list = ref<{ path: string; title: string; thumbnail?: string }[]>([]);
+  const list = ref<Game[]>([]);
   const showCount = ref(20);
   const moreLoad = (count: number) => {
     showCount.value += count;
@@ -50,8 +50,8 @@ export const useGame = defineStore("game", () => {
     const setting = useSetting();
     const game = useGameHistory();
 
-    const recent: GameData[] = [];
-    const games: GameData[] = [];
+    const recent: Game[] = [];
+    const games: Game[] = [];
     const regex = searchRegex.value; // 메모이제이션된 정규식 사용
 
     for (const item of sortedList.value) {
@@ -96,18 +96,15 @@ export const useGame = defineStore("game", () => {
     });
   };
 
-  useEvent(
-    IpcMainSend.LoadedList,
-    (e, data: { path: string; title: string; thumbnail?: string }[]) => {
-      // 데이터 동일한 경우 캐싱된 computed값 재사용 위해 변경하지 않음
-      if (JSON.stringify(list.value) === JSON.stringify(data)) {
-        return;
-      }
-
-      list.value = data;
-      loading.value = false;
+  useEvent(IpcMainSend.LoadedList, (e, data) => {
+    // 데이터 동일한 경우 캐싱된 computed값 재사용 위해 변경하지 않음
+    if (JSON.stringify(list.value) === JSON.stringify(data)) {
+      return;
     }
-  );
+
+    list.value = data;
+    loading.value = false;
+  });
   useEvent(IpcMainSend.ThumbnailDone, () => {
     loadList();
   });
