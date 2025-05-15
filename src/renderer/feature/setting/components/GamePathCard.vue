@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { IpcRendererSend } from "../../../../main/events";
 import PopOverButton from "../../../components/PopOverButton.vue";
 import { Card, CardContent, CardHeader } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
 import { useApi } from "../../../composable/useApi";
-import { IpcRendererSend } from "../../../events";
 
 const props = defineProps<{ modelValue: string[] }>();
 const emit = defineEmits<{

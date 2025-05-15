@@ -4,7 +4,7 @@ import {
   IpcMainSend,
   IpcRendererEventMap,
   IpcRendererSend,
-} from "../events";
+} from "../../main/events";
 
 type Send = <T extends IpcRendererSend>(
   channel: T,

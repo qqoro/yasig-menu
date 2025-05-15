@@ -6,6 +6,7 @@ import { storeToRefs } from "pinia";
 import { ref, watch } from "vue";
 import { RouterView, useRoute } from "vue-router";
 import { toast } from "vue-sonner";
+import { IpcMainSend, IpcRendererSend } from "../../../main/events";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +39,6 @@ import {
 import { useApi } from "../../composable/useApi";
 import { useEvent } from "../../composable/useEvent";
 import { Sort } from "../../constants";
-import { IpcMainSend, IpcRendererSend } from "../../events";
 import { cn, wait } from "../../lib/utils";
 import { useGame } from "../../store/game-store";
 import { useSearch } from "../../store/search-store";

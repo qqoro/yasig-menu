@@ -3,6 +3,7 @@ import { Icon } from "@iconify/vue";
 import log from "electron-log";
 import { computed, ref, watch } from "vue";
 import { toast } from "vue-sonner";
+import { IpcMainSend, IpcRendererSend } from "../../../../main/events";
 import PopOverButton from "../../../components/PopOverButton.vue";
 import { Button } from "../../../components/ui/button";
 import {
@@ -27,7 +28,6 @@ import { useApi } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
 import { useFile } from "../../../composable/useFile";
 import { COMPRESS_FILE_TYPE, IMAGE_FILE_TYPE } from "../../../constants";
-import { IpcMainSend, IpcRendererSend } from "../../../events";
 import { cn } from "../../../lib/utils";
 import { useGameHistory } from "../../../store/game-history-store";
 import { useGame } from "../../../store/game-store";

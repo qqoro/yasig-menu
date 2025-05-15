@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
+import { IpcMainSend, IpcRendererSend } from "../main/events";
 import Changelog from "./components/Changelog.vue";
 import { useApi } from "./composable/useApi";
 import { useEvent } from "./composable/useEvent";
 import { useWindowEvent } from "./composable/useWindowEvent";
-import { IpcMainSend, IpcRendererSend } from "./events";
 
 const api = useApi();
 const open = ref(false);

@@ -56,6 +56,8 @@ export enum IpcRendererSend {
   Play = "Play",
   OpenFolder = "OpenFolder",
   Hide = "Hide",
+  Clear = "Clear",
+  Memo = "Memo",
 
   ThumbnailDownload = "ThumbnailDownload",
   ThumbnailDelete = "ThumbnailDelete",
@@ -85,8 +87,10 @@ export interface IpcRendererEventMap
       [IpcRendererSend.CleanCache]: [];
 
       [IpcRendererSend.Play]: [path: string, exclude?: string[]];
-      [IpcRendererSend.OpenFolder]: [string];
-      [IpcRendererSend.Hide]: [string];
+      [IpcRendererSend.OpenFolder]: [path: string];
+      [IpcRendererSend.Hide]: [path: string];
+      [IpcRendererSend.Clear]: [{ path: string; isClear: boolean }];
+      [IpcRendererSend.Memo]: [{ path: string; memo: string | null }];
 
       [IpcRendererSend.ThumbnailDownload]: [
         {

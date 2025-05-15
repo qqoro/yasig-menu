@@ -2,6 +2,7 @@
 import { Icon } from "@iconify/vue";
 import { onMounted, ref, watch } from "vue";
 import { toast } from "vue-sonner";
+import { IpcMainSend, IpcRendererSend } from "../../../../main/events";
 import Changelog from "../../../components/Changelog.vue";
 import PageTitle from "../../../components/PageTitle.vue";
 import {
@@ -18,7 +19,6 @@ import {
 import { Button } from "../../../components/ui/button";
 import { useApi } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
-import { IpcMainSend, IpcRendererSend } from "../../../events";
 import Data from "../../../lib/data";
 import { useGameHistory } from "../../../store/game-history-store";
 import { useSearch } from "../../../store/search-store";
