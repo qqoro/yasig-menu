@@ -162,12 +162,7 @@ const checkCacheDirty = async (sources: (string | undefined)[]) => {
   }
 };
 
-function findThumbnails(files: DirentLike[]): {
-  path: string;
-  title: string;
-  thumbnail?: string;
-  isCompressFile: boolean;
-}[] {
+function findThumbnails(files: DirentLike[]) {
   const imageExtensions = [
     ".jpg",
     ".jpeg",
@@ -181,6 +176,7 @@ function findThumbnails(files: DirentLike[]): {
   const result: {
     path: string;
     title: string;
+    source: string;
     thumbnail?: string;
     isCompressFile: boolean;
   }[] = [];
@@ -208,6 +204,7 @@ function findThumbnails(files: DirentLike[]): {
         result.push({
           path: join(file.parentPath, file.name),
           title: baseName,
+          source: file.parentPath,
           thumbnail: join(thumbnailFile.parentPath, thumbnail),
           isCompressFile: file.isCompressFile,
         });
@@ -218,6 +215,7 @@ function findThumbnails(files: DirentLike[]): {
     result.push({
       path,
       title: baseName,
+      source: file.parentPath,
       thumbnail: undefined,
       isCompressFile: file.isCompressFile,
     });
@@ -240,6 +238,10 @@ const getListData = async ({
   thumbnailFolder?: string;
   hideZipFile: boolean;
 }): Promise<Game[]> => {
+  if (!sources || sources.length === 0) {
+    return [];
+  }
+
   const isCacheDirty = await checkCacheDirty([...sources, thumbnailFolder]);
 
   // 캐시 상태 확인 및 캐시 로드 시도
@@ -288,7 +290,7 @@ const getListData = async ({
   }
 
   // 썸네일 찾기
-  const processedList: GameData[] = findThumbnails(list);
+  const processedList = findThumbnails(list);
 
   await db
     .insert(
@@ -297,6 +299,7 @@ const getListData = async ({
           ({
             path: data.path,
             title: data.title,
+            source: data.source,
             thumbnail: data.thumbnail ?? null,
             rjCode: /[RBV]J\d{6,8}/i.exec(data.title)?.[1] ?? null,
             isCompressFile: data.isCompressFile,
