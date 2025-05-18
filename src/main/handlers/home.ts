@@ -6,6 +6,7 @@ import { COMPRESS_FILE_TYPE } from "../constants.js";
 import { db, Game, InsertGame } from "../db/db.js";
 import { IpcMainSend, IpcRendererSend } from "../events.js";
 import { ipcMain, send } from "../main.js";
+import { loadSetting } from "./setting.js";
 
 interface DirentLike {
   name: string;
@@ -23,22 +24,20 @@ export interface GameData {
 }
 
 // 게임목록 조회
-// TODO: sources, exclude, thumbnailPath 등 db로 변경 예정, 파라미터에서 받지 않게 고쳐야 함
-ipcMain.on(
-  IpcRendererSend.LoadList,
-  async (e, { sources, exclude, thumbnailFolder, hideZipFile }) => {
-    console.time("getListData");
-    const list = await getListData({
-      sources,
-      exclude,
-      thumbnailFolder,
-      hideZipFile,
-    });
-    console.timeEnd("getListData");
+ipcMain.on(IpcRendererSend.LoadList, async (e, { hideZipFile = false }) => {
+  const setting = await loadSetting();
+  console.time("getListData");
+  const list = await getListData({
+    sources: setting.applySources,
+    thumbnailFolder: setting.changeThumbnailFolder
+      ? setting.newThumbnailFolder
+      : undefined,
+    hideZipFile,
+  });
+  console.timeEnd("getListData");
 
-    send(IpcMainSend.LoadedList, list);
-  }
-);
+  send(IpcMainSend.LoadedList, list);
+});
 
 // 캐시 삭제 (제거 예정, 캐시 대신 DB사용)
 ipcMain.on(IpcRendererSend.CleanCache, async () => {
@@ -229,16 +228,15 @@ function findThumbnails(files: DirentLike[]) {
  */
 const getListData = async ({
   sources,
-  exclude,
   thumbnailFolder,
   hideZipFile,
 }: {
   sources: string[];
-  exclude: string[];
   thumbnailFolder?: string;
   hideZipFile: boolean;
 }): Promise<Game[]> => {
   if (!sources || sources.length === 0) {
+    console.error("source is empty!!!!!!!!!!!!!!!!!!!!!!");
     return [];
   }
 
@@ -246,7 +244,7 @@ const getListData = async ({
 
   // 캐시 상태 확인 및 캐시 로드 시도
   if (!isCacheDirty) {
-    const q = db("games").select().whereNot({ isHidden: true });
+    const q = db("games").select();
     if (hideZipFile) {
       q.where({ isCompressFile: false });
     }
@@ -303,7 +301,6 @@ const getListData = async ({
             thumbnail: data.thumbnail ?? null,
             rjCode: /[RBV]J\d{6,8}/i.exec(data.title)?.[1] ?? null,
             isCompressFile: data.isCompressFile,
-            isHidden: exclude.includes(data.path.replaceAll("/", "\\")),
           } satisfies InsertGame)
       )
     )
@@ -312,11 +309,14 @@ const getListData = async ({
     .merge({
       // excluded.<columnName> 사용 시 insert문에 사용했던 데이터 사용됨
       title: db.raw("excluded.title"),
+      source: db.raw("excluded.source"),
       thumbnail: db.raw("excluded.thumbnail"),
+      rjCode: db.raw("excluded.rjCode"),
+      isCompressFile: db.raw("excluded.isCompressFile"),
       updatedAt: db.fn.now(),
     });
 
-  const q = db("games").select().whereNot({ isHidden: true });
+  const q = db("games").select();
   if (hideZipFile) {
     q.where({ isCompressFile: false });
   }

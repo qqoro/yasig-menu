@@ -8,7 +8,6 @@ import { useApi } from "../composable/useApi";
 import { useEvent } from "../composable/useEvent";
 import { Sort } from "../constants";
 import { searchFuzzy, sortRJCode } from "../lib/search";
-import { useGameHistory } from "./game-history-store";
 import { useSearch } from "./search-store";
 import { useSetting } from "./setting-store";
 const console = log;
@@ -48,27 +47,27 @@ export const useGame = defineStore("game", () => {
 
   const searchFilteredList = computed(() => {
     const setting = useSetting();
-    const game = useGameHistory();
 
     const recent: Game[] = [];
     const games: Game[] = [];
     const regex = searchRegex.value; // 메모이제이션된 정규식 사용
 
     for (const item of sortedList.value) {
+      // 숨김게임 패스
+      if (item.isHidden) {
+        continue;
+      }
       // 검색 정규식 있는 경우 체크 후 건너뛰기
       if (regex && !regex.test(item.title.replaceAll(" ", ""))) {
         continue;
       }
 
-      const isRecent =
-        game.recentGame.includes(item.path) && setting.home.showRecent;
       const gameData = {
         ...item,
-        cleared: game.clearGame.includes(item.path),
       };
 
       // 최근 목록 사용 + 검색어 없을때만 표시
-      if (isRecent && !regex) {
+      if (item.isRecent && !regex) {
         // 개수 제한이 있거나, 아직 recent 목록이 showCount 미만일 때만 추가
         if (setting.home.showAll || recent.length < showCount.value) {
           recent.push(gameData);
@@ -86,24 +85,19 @@ export const useGame = defineStore("game", () => {
 
   const api = useApi();
   const loadList = () => {
-    const setting = useSetting();
-    const [isChange, thumbnailFolder] = setting.changeThumbnailFolder;
     api.send(IpcRendererSend.LoadList, {
-      sources: [...setting.applySources],
-      exclude: [...setting.exclude],
-      thumbnailFolder: isChange ? thumbnailFolder : undefined,
       hideZipFile: hideZipFile.value,
     });
   };
 
   useEvent(IpcMainSend.LoadedList, (e, data) => {
+    loading.value = false;
     // 데이터 동일한 경우 캐싱된 computed값 재사용 위해 변경하지 않음
     if (JSON.stringify(list.value) === JSON.stringify(data)) {
       return;
     }
 
     list.value = data;
-    loading.value = false;
   });
   useEvent(IpcMainSend.ThumbnailDone, () => {
     loadList();

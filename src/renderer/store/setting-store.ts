@@ -4,6 +4,7 @@ import { ref } from "vue";
 import { IpcMainSend, IpcRendererSend } from "../../main/events";
 import { api, sendApi } from "../composable/useApi";
 import Data from "../lib/data";
+import { useGame } from "./game-store";
 const console = log;
 
 export const useSetting = defineStore("setting", () => {
@@ -74,10 +75,10 @@ export const useSetting = defineStore("setting", () => {
   };
   const exclude = ref<string[]>([]);
   const saveExclude = (newExclude: string[]) => {
+    const removed = exclude.value.filter((v) => !newExclude.includes(v));
     exclude.value = newExclude;
-    Data.setJSON("exclude", newExclude);
-    api.send(IpcRendererSend.UpdateSetting, {
-      exclude: JSON.stringify(newExclude),
+    removed.forEach((path) => {
+      api.send(IpcRendererSend.Hide, { path, isHidden: false });
     });
     console.log("exclude saved!", exclude.value);
   };
@@ -118,10 +119,12 @@ export const useSetting = defineStore("setting", () => {
       settingData.newThumbnailFolder,
     ];
     cookie.value = settingData.cookie;
-    exclude.value = settingData.exclude;
+    const game = useGame();
+    exclude.value = game.list
+      .filter((game) => game.isHidden)
+      .map((game) => game.path);
     search.value = settingData.search;
     playExclude.value = settingData.playExclude;
-    console.log("settingData", settingData);
 
     loading.value = false;
   };

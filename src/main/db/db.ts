@@ -37,7 +37,6 @@ if (!(await db.schema.hasTable("setting"))) {
     setting.boolean("changeThumbnailFolder").defaultTo(false).notNullable();
     setting.string("newThumbnailFolder").defaultTo("").notNullable();
     setting.string("cookie").defaultTo("").notNullable();
-    setting.string("exclude").defaultTo(JSON.stringify([])).notNullable();
     setting
       .string("search")
       .defaultTo(JSON.stringify(["", ""]))
@@ -89,7 +88,6 @@ export interface Setting extends TableBaseColumn {
   changeThumbnailFolder: SqliteBoolean;
   newThumbnailFolder: string;
   cookie: string;
-  exclude: string[];
   search: [string, string];
   playExclude: string[];
 }
@@ -99,7 +97,6 @@ export interface InsertSetting extends Partial<TableBaseColumn> {
   changeThumbnailFolder?: SqliteBoolean;
   newThumbnailFolder?: string;
   cookie?: string;
-  exclude?: string;
   search?: string;
   playExclude?: string;
 }

@@ -85,10 +85,14 @@ export interface IpcRendererEventMap
 
       [IpcRendererSend.LoadList]: [
         {
-          sources: string[];
-          exclude: string[];
-          thumbnailFolder?: string;
-          hideZipFile: boolean;
+          /**
+           * @default false
+           */
+          hideZipFile?: boolean;
+          /**
+           * @default false
+           */
+          isHidden?: boolean;
         }
       ];
       [IpcRendererSend.CleanCache]: [];

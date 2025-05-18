@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
 import { storeToRefs } from "pinia";
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import PageTitle from "../../../components/PageTitle.vue";
 import Button from "../../../components/ui/button/Button.vue";
 import {
@@ -77,6 +77,10 @@ useWindowEvent("focus", () => {
 const gameExist = computed(
   () => !(setting.sources.length === 0 || game.list.length === 0)
 );
+
+onMounted(() => {
+  game.loadList();
+});
 </script>
 
 <template>

@@ -35,7 +35,7 @@ import { useGame } from "../../../store/game-store";
 import { useSetting } from "../../../store/setting-store";
 const console = log;
 
-const props = defineProps<Game>();
+const props = defineProps<Omit<Game, "source">>();
 const emit = defineEmits<{
   viewThumbnail: [title: string, thumbnailPath: string];
   writeMemo: [path: string, title: string];
@@ -50,15 +50,6 @@ const loading = ref(false);
 // 썸네일 변경 후에도 캐시된 이미지가 노출되는 경우 때문에 가짜 쿼리스트링 추가가
 const fakeQueryId = ref(0);
 const isRJCodeExist = computed(() => /RJ\d{6,8}/i.exec(props.title));
-// const isCompressFile = computed(() => {
-//   // title 파싱 시 파일유무 확인하며, 파일인 경우 확장자를 제외하기 때문에
-//   // 파일이라면 경로가 제목과 같게 끝날 수 없음
-//   if (props.path.endsWith(props.title)) {
-//     return false;
-//   }
-//   const lowerPath = props.path.toLowerCase();
-//   return COMPRESS_FILE_TYPE.some((ext) => lowerPath.endsWith(ext));
-// });
 const { file, changeHandler } = useFile(
   IMAGE_FILE_TYPE,
   "이미지 파일을 업로드 해 주세요."
