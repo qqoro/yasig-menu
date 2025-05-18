@@ -1,5 +1,5 @@
 import { ToastT } from "vue-sonner";
-import { Game } from "./db/db.js";
+import { Game, Setting, UpdateSetting } from "./db/db.js";
 
 type EnforceAllKeys<
   E extends IpcMainSend | IpcRendererSend,
@@ -14,6 +14,8 @@ export enum IpcMainSend {
 
   LoadedList = "LoadedList",
   Message = "Message",
+
+  LoadedSetting = "LoadedSetting",
 
   ThumbnailDone = "ThumbnailDone",
 }
@@ -35,6 +37,8 @@ export interface IpcMainEventMap
         } & Omit<ToastT, "id" | "type">
       ];
 
+      [IpcMainSend.LoadedSetting]: [setting: Setting];
+
       [IpcMainSend.ThumbnailDone]: [string];
     }
   > {}
@@ -51,6 +55,9 @@ export enum IpcRendererSend {
 
   LoadList = "LoadList",
   CleanCache = "CleanCache",
+
+  LoadSetting = "LoadSetting",
+  UpdateSetting = "UpdateSetting",
 
   Play = "Play",
   OpenFolder = "OpenFolder",
@@ -85,6 +92,9 @@ export interface IpcRendererEventMap
         }
       ];
       [IpcRendererSend.CleanCache]: [];
+
+      [IpcRendererSend.LoadSetting]: [];
+      [IpcRendererSend.UpdateSetting]: [data: UpdateSetting];
 
       [IpcRendererSend.Play]: [path: string, exclude?: string[]];
       [IpcRendererSend.OpenFolder]: [path: string];

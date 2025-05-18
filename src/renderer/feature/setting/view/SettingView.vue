@@ -232,8 +232,15 @@ const resetSetting = () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   api.send(IpcRendererSend.VersionCheck);
+  await setting.init();
+  sources.value = [...setting.sources];
+  changeThumbnailFolder.value = [...setting.changeThumbnailFolder];
+  cookie.value = setting.cookie;
+  exclude.value = setting.exclude;
+  search.value = setting.search;
+  playExclude.value = setting.playExclude;
 });
 useEvent(IpcMainSend.VersionChecked, (e, version: string) => {
   appVersion.value = version;
@@ -250,25 +257,32 @@ watch(blur, () => {
       <div>설정</div>
     </PageTitle>
 
-    <GamePathCard v-model="sources" />
-    <HomeCard v-model:all="home.showAll" v-model:recent="home.showRecent" />
-    <ThumbnailCard
-      v-model="changeThumbnailFolder"
-      v-model:blur="blur"
-      v-model:dark="dark"
-    />
-    <CookieCard v-model="cookie" />
-    <SearchKeywordCard v-model="search" />
-    <ExcludeGameCard v-model="exclude" />
-    <PlayExcludeCard v-model="playExclude" />
-    <AppInfoCard
-      :appVersion="appVersion"
-      @updateCheck="updateCheck"
-      @openLogFolder="openLogFolder"
-      @cleanCache="cleanCache"
-      @openChangelog="openChangelog"
-      @toggleDevTools="api.send(IpcRendererSend.ToggleDevTools)"
-    />
+    <template v-if="setting.loading">
+      <div class="w-full h-full flex justify-center items-center">
+        <Icon icon="svg-spinners:ring-resize" class="m-8 size-20" />
+      </div>
+    </template>
+    <template v-else>
+      <GamePathCard v-model="sources" />
+      <HomeCard v-model:all="home.showAll" v-model:recent="home.showRecent" />
+      <ThumbnailCard
+        v-model="changeThumbnailFolder"
+        v-model:blur="blur"
+        v-model:dark="dark"
+      />
+      <CookieCard v-model="cookie" />
+      <SearchKeywordCard v-model="search" />
+      <ExcludeGameCard v-model="exclude" />
+      <PlayExcludeCard v-model="playExclude" />
+      <AppInfoCard
+        :appVersion="appVersion"
+        @updateCheck="updateCheck"
+        @openLogFolder="openLogFolder"
+        @cleanCache="cleanCache"
+        @openChangelog="openChangelog"
+        @toggleDevTools="api.send(IpcRendererSend.ToggleDevTools)"
+      />
+    </template>
 
     <div class="flex justify-center items-center gap-4">
       <Button variant="outline" @click="exportSetting">
@@ -314,12 +328,10 @@ watch(blur, () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-
     <Button class="sticky bottom-2 right-0 save-button-shadow" @click="save">
       <Icon icon="solar:diskette-bold-duotone" />
       저장
     </Button>
-
     <Changelog v-model:open="open" />
   </main>
 </template>

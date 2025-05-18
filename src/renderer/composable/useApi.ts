@@ -19,7 +19,7 @@ export const useApi = () => {
 
 export const api = window.require("electron").ipcRenderer as Omit<
   IpcRenderer,
-  "send"
+  "send" | "on" | "once"
 > & {
   send: Send;
   on: <T extends IpcMainSend>(
@@ -30,4 +30,22 @@ export const api = window.require("electron").ipcRenderer as Omit<
     channel: T,
     listener: (event: IpcRendererEvent, ...args: IpcMainEventMap[T]) => void
   ) => void;
+};
+
+export const sendApi = <T extends IpcRendererSend, R extends IpcMainSend>(
+  channel: T,
+  receiveChannel: R,
+  ...args: IpcRendererEventMap[T]
+): Promise<IpcMainEventMap[R]> => {
+  return new Promise((resolve, reject) => {
+    api.send(channel, ...args);
+    const callback = (e: IpcRendererEvent, ...data: IpcMainEventMap[R]) => {
+      resolve(data);
+    };
+    api.once(receiveChannel, callback);
+    setTimeout(() => {
+      api.removeListener(receiveChannel, callback);
+      reject(new Error("응답시간을 초과하였습니다."));
+    }, 5000);
+  });
 };

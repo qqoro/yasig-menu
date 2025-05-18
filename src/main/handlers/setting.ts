@@ -1,0 +1,25 @@
+import { db } from "../db/db.js";
+import { IpcMainSend, IpcRendererSend } from "../events.js";
+import { ipcMain, send } from "../main.js";
+
+ipcMain.on(IpcRendererSend.LoadSetting, async (e) => {
+  const data = await db("setting").select().limit(1);
+  console.log("main loaded setting, ", data);
+  Object.keys(data[0]).forEach((key) => {
+    try {
+      // 빈 문자열은 JSON파싱시 오류나므로 스킵
+      if (data[0][key] === "" || ["createdAt", "updatedAt"].includes(key)) {
+        return;
+      }
+
+      data[0][key] = JSON.parse(data[0][key]);
+    } catch (error) {
+      console.log(key, error);
+    }
+  });
+  send(IpcMainSend.LoadedSetting, data[0]);
+});
+
+ipcMain.on(IpcRendererSend.UpdateSetting, async (e, data) => {
+  await db("setting").update(data);
+});

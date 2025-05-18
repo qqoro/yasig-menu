@@ -1,28 +1,34 @@
 import log from "electron-log";
 import { defineStore } from "pinia";
 import { ref } from "vue";
+import { IpcMainSend, IpcRendererSend } from "../../main/events";
+import { api, sendApi } from "../composable/useApi";
 import Data from "../lib/data";
 const console = log;
 
 export const useSetting = defineStore("setting", () => {
+  const loading = ref(true);
   const zoom = ref<number>(Data.getJSON("zoom") ?? 50);
   const saveZoom = (newZoom: number) => {
     zoom.value = newZoom;
     Data.setJSON("zoom", newZoom);
     console.log("zoom saved!", zoom.value);
   };
-  const sources = ref<string[]>(Data.getJSON("sources") ?? []);
+  const sources = ref<string[]>([]);
   const saveSources = (newSources: string[]) => {
     sources.value = newSources;
-    Data.setJSON("sources", newSources);
+    api.send(IpcRendererSend.UpdateSetting, {
+      sources: JSON.stringify(newSources),
+      applySources: JSON.stringify(newSources),
+    });
     console.log("sources saved!", sources.value);
   };
-  const applySources = ref<string[]>(
-    Data.getJSON("applySources") ?? [...sources.value] ?? []
-  );
+  const applySources = ref<string[]>([...sources.value]);
   const saveApplySources = (newApplySources: string[]) => {
     applySources.value = newApplySources;
-    Data.setJSON("applySources", newApplySources);
+    api.send(IpcRendererSend.UpdateSetting, {
+      applySources: JSON.stringify(newApplySources),
+    });
     console.log("applySources saved!", applySources.value);
   };
   const home = ref<{ showAll: boolean; showRecent: boolean }>(
@@ -33,14 +39,16 @@ export const useSetting = defineStore("setting", () => {
     Data.setJSON("home", newHome);
     console.log("home saved!", home.value);
   };
-  const changeThumbnailFolder = ref<[boolean, string]>(
-    Data.getJSON("changeThumbnailFolder") ?? [false, ""]
-  );
+  const changeThumbnailFolder = ref<[boolean, string]>([false, ""]);
   const saveChangeThumbnailFolder = (
     newChangeThumbnailFolder: [boolean, string]
   ) => {
     changeThumbnailFolder.value = newChangeThumbnailFolder;
     Data.setJSON("changeThumbnailFolder", newChangeThumbnailFolder);
+    api.send(IpcRendererSend.UpdateSetting, {
+      changeThumbnailFolder: !!newChangeThumbnailFolder[0],
+      newThumbnailFolder: newChangeThumbnailFolder[1],
+    });
     console.log("changeThumbnailFolder saved!", changeThumbnailFolder.value);
   };
   const blur = ref<boolean>(Data.getJSON("blur") ?? false);
@@ -55,44 +63,73 @@ export const useSetting = defineStore("setting", () => {
     Data.setJSON("dark", newDark);
     console.log("dark saved!", dark.value);
   };
-  const cookie = ref<string>(Data.getJSON("cookie") ?? "");
+  const cookie = ref<string>("");
   const saveCookie = (newCookie: string) => {
     cookie.value = newCookie;
     Data.setJSON("cookie", newCookie);
+    api.send(IpcRendererSend.UpdateSetting, {
+      cookie: newCookie,
+    });
     console.log("cookie saved!", cookie.value);
   };
-  const exclude = ref<string[]>(Data.getJSON("exclude") ?? []);
+  const exclude = ref<string[]>([]);
   const saveExclude = (newExclude: string[]) => {
     exclude.value = newExclude;
     Data.setJSON("exclude", newExclude);
+    api.send(IpcRendererSend.UpdateSetting, {
+      exclude: JSON.stringify(newExclude),
+    });
     console.log("exclude saved!", exclude.value);
   };
   const addExclude = (item: string) => {
     saveExclude([...exclude.value, item]);
   };
-  const search = ref<[string, string]>(Data.getJSON("search") ?? ["", ""]);
+  const search = ref<[string, string]>(["", ""]);
   const saveSearch = (newSearch: [string, string]) => {
     search.value = newSearch;
     Data.setJSON("search", newSearch);
+    api.send(IpcRendererSend.UpdateSetting, {
+      search: JSON.stringify(newSearch),
+    });
     console.log("search saved!", search.value);
   };
-  const playExclude = ref<string[]>(
-    Data.getJSON("playExclude") ?? [
-      "notification_helper",
-      "UnityCrashHandler64",
-    ]
-  );
+  const playExclude = ref<string[]>([
+    "notification_helper",
+    "UnityCrashHandler64",
+  ]);
   const savePlayExclude = (newPlayExclude: string[]) => {
     playExclude.value = newPlayExclude;
-    Data.setJSON("playExclude", newPlayExclude);
+    api.send(IpcRendererSend.UpdateSetting, {
+      playExclude: JSON.stringify(newPlayExclude),
+    });
     console.log("playExclude saved!", playExclude.value);
+  };
+
+  const init = async () => {
+    loading.value = true;
+    const [settingData] = await sendApi(
+      IpcRendererSend.LoadSetting,
+      IpcMainSend.LoadedSetting
+    );
+    sources.value = settingData.sources;
+    applySources.value = settingData.applySources;
+    changeThumbnailFolder.value = [
+      !!settingData.changeThumbnailFolder,
+      settingData.newThumbnailFolder,
+    ];
+    cookie.value = settingData.cookie;
+    exclude.value = settingData.exclude;
+    search.value = settingData.search;
+    playExclude.value = settingData.playExclude;
+    console.log("settingData", settingData);
+
+    loading.value = false;
   };
 
   const reset = () => {
     zoom.value = Data.getJSON("zoom") ?? 50;
-    sources.value = Data.getJSON("sources") ?? [];
-    applySources.value =
-      Data.getJSON("applySources") ?? [...sources.value] ?? [];
+    sources.value = [];
+    applySources.value = Data.getJSON("applySources") ?? [...sources.value];
     home.value = Data.getJSON("home") ?? { showAll: false, showRecent: true };
     changeThumbnailFolder.value = Data.getJSON("changeThumbnailFolder") ?? [
       false,
@@ -100,16 +137,16 @@ export const useSetting = defineStore("setting", () => {
     ];
     blur.value = Data.getJSON("blur") ?? false;
     dark.value = Data.getJSON("dark") ?? false;
-    cookie.value = Data.getJSON("cookie") ?? "";
-    exclude.value = Data.getJSON("exclude") ?? [];
-    search.value = Data.getJSON("search") ?? ["", ""];
-    playExclude.value = Data.getJSON("playExclude") ?? [
-      "notification_helper",
-      "UnityCrashHandler64",
-    ];
+    cookie.value = "";
+    exclude.value = [];
+    search.value = ["", ""];
+    playExclude.value = ["notification_helper", "UnityCrashHandler64"];
+    init();
   };
 
   return {
+    loading,
+
     zoom,
     saveZoom,
     sources,
@@ -134,6 +171,7 @@ export const useSetting = defineStore("setting", () => {
     playExclude,
     savePlayExclude,
 
+    init,
     reset,
   };
 });

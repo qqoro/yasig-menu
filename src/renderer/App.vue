@@ -5,6 +5,7 @@ import Changelog from "./components/Changelog.vue";
 import { useApi } from "./composable/useApi";
 import { useEvent } from "./composable/useEvent";
 import { useWindowEvent } from "./composable/useWindowEvent";
+import { useSetting } from "./store/setting-store";
 
 const api = useApi();
 const open = ref(false);
@@ -24,6 +25,7 @@ useWindowEvent("keydown", (event) => {
 
 onMounted(() => {
   api.send(IpcRendererSend.VersionCheck);
+  useSetting().init();
 });
 useEvent(IpcMainSend.VersionChecked, (e, version) => {
   const appLatestVersion = localStorage.getItem("version");

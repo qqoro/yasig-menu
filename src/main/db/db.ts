@@ -30,6 +30,32 @@ if (!(await db.schema.hasTable("games"))) {
   });
 }
 
+if (!(await db.schema.hasTable("setting"))) {
+  await db.schema.createTable("setting", (setting) => {
+    setting.string("sources").defaultTo(JSON.stringify([])).notNullable();
+    setting.string("applySources").defaultTo(JSON.stringify([])).nullable();
+    setting.boolean("changeThumbnailFolder").defaultTo(false).notNullable();
+    setting.string("newThumbnailFolder").defaultTo("").notNullable();
+    setting.string("cookie").defaultTo("").notNullable();
+    setting.string("exclude").defaultTo(JSON.stringify([])).notNullable();
+    setting
+      .string("search")
+      .defaultTo(JSON.stringify(["", ""]))
+      .notNullable();
+    setting
+      .string("playExclude")
+      .defaultTo(JSON.stringify(["notification_helper", "UnityCrashHandler64"]))
+      .notNullable();
+    setting.timestamp("createdAt", { useTz: false }).defaultTo(db.fn.now());
+    setting.timestamp("updatedAt", { useTz: false }).nullable();
+  });
+}
+
+// setting값 초기 설정
+if ((await db("setting").count({ count: "*" }))[0]["count"] === 0) {
+  await db("setting").insert({});
+}
+
 type SqliteBoolean = 0 | 1 | boolean;
 
 interface TableBaseColumn {
@@ -57,8 +83,31 @@ export type InsertGame = Pick<Game, "path" | "title" | "source"> &
   Partial<Game>;
 export type UpdateGame = Partial<Game>;
 
+export interface Setting extends TableBaseColumn {
+  sources: string[];
+  applySources: string[];
+  changeThumbnailFolder: SqliteBoolean;
+  newThumbnailFolder: string;
+  cookie: string;
+  exclude: string[];
+  search: [string, string];
+  playExclude: string[];
+}
+export interface InsertSetting extends Partial<TableBaseColumn> {
+  sources?: string;
+  applySources?: string;
+  changeThumbnailFolder?: SqliteBoolean;
+  newThumbnailFolder?: string;
+  cookie?: string;
+  exclude?: string;
+  search?: string;
+  playExclude?: string;
+}
+export type UpdateSetting = Partial<InsertSetting>;
+
 declare module "knex/types/tables.js" {
   interface Tables {
     games: Knex.CompositeTableType<Game, InsertGame, UpdateGame>;
+    setting: Knex.CompositeTableType<Setting, InsertSetting, UpdateSetting>;
   }
 }

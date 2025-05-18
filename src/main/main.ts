@@ -147,3 +147,4 @@ import("./handlers/home.js");
 import("./handlers/thumbnail.js");
 import("./handlers/update.js");
 import("./handlers/dlsite.js");
+import("./handlers/setting.js");
