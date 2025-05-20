@@ -48,7 +48,7 @@ export const useSetting = defineStore("setting", () => {
     Data.setJSON("changeThumbnailFolder", newChangeThumbnailFolder);
     api.send(IpcRendererSend.UpdateSetting, {
       changeThumbnailFolder: !!newChangeThumbnailFolder[0],
-      newThumbnailFolder: newChangeThumbnailFolder[1],
+      newThumbnailFolder: JSON.stringify(newChangeThumbnailFolder[1]),
     });
     console.log("changeThumbnailFolder saved!", changeThumbnailFolder.value);
   };
@@ -69,7 +69,7 @@ export const useSetting = defineStore("setting", () => {
     cookie.value = newCookie;
     Data.setJSON("cookie", newCookie);
     api.send(IpcRendererSend.UpdateSetting, {
-      cookie: newCookie,
+      cookie: JSON.stringify(newCookie),
     });
     console.log("cookie saved!", cookie.value);
   };

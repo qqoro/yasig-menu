@@ -1,12 +1,16 @@
+import { app } from "electron";
 import type { Knex } from "knex";
 import knex from "knex";
+import { resolve } from "path";
 
 export const db = knex({
   client: "better-sqlite3",
-  // TODO: 개발 완료 후 파일로 변경
-  connection: ":memory:",
+  connection: resolve(app.getPath("userData"), "database.db"),
   useNullAsDefault: true,
 });
+
+// sqlite3 외래키 활성화
+await db.raw(`PRAGMA foreign_keys = ON`);
 
 if (!(await db.schema.hasTable("games"))) {
   await db.schema.createTable("games", (games) => {
@@ -27,6 +31,23 @@ if (!(await db.schema.hasTable("games"))) {
     games.boolean("isCompressFile").defaultTo(false);
     games.timestamp("createdAt", { useTz: false }).defaultTo(db.fn.now());
     games.timestamp("updatedAt", { useTz: false }).nullable();
+  });
+}
+
+if (!(await db.schema.hasTable("tags"))) {
+  await db.schema.createTable("tags", (tags) => {
+    tags.increments("seq").primary();
+    tags.string("tag", 200).notNullable();
+  });
+}
+
+if (!(await db.schema.hasTable("gameTags"))) {
+  await db.schema.createTable("gameTags", (gameTags) => {
+    gameTags.string("gamePath").notNullable();
+    gameTags.string("tagSeq").notNullable();
+    gameTags.foreign("gamePath").references("games.path");
+    gameTags.foreign("tagSeq").references("tags.seq");
+    gameTags.primary(["gamePath", "tagSeq"]);
   });
 }
 
@@ -82,6 +103,16 @@ export type InsertGame = Pick<Game, "path" | "title" | "source"> &
   Partial<Game>;
 export type UpdateGame = Partial<Game>;
 
+export interface Tag {
+  seq: number;
+  tag: string;
+}
+
+export interface GameTag {
+  gamePath: string;
+  tagSeq: number;
+}
+
 export interface Setting extends TableBaseColumn {
   sources: string[];
   applySources: string[];
@@ -105,6 +136,9 @@ export type UpdateSetting = Partial<InsertSetting>;
 declare module "knex/types/tables.js" {
   interface Tables {
     games: Knex.CompositeTableType<Game, InsertGame, UpdateGame>;
+    tags: Knex.CompositeTableType<Tag, Tag, Tag>;
+    gameTags: Knex.CompositeTableType<GameTag, GameTag, GameTag>;
     setting: Knex.CompositeTableType<Setting, InsertSetting, UpdateSetting>;
   }
 }
+
