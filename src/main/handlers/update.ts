@@ -3,10 +3,9 @@ import log from "electron-log";
 import * as ElectronUpdater from "electron-updater";
 import { dirname } from "path";
 import { IpcMainSend, IpcRendererSend } from "../events.js";
-import { ipcMain, send } from "../main.js";
+import { console, ipcMain, send } from "../main.js";
 const { autoUpdater } = (ElectronUpdater as any)
   .default as typeof ElectronUpdater;
-const console = log;
 
 let startDownload = false;
 ipcMain.on(IpcRendererSend.UpdateCheck, async () => {

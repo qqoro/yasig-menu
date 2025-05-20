@@ -1,6 +1,6 @@
 import { db } from "../db/db.js";
 import { IpcMainSend, IpcRendererSend } from "../events.js";
-import { ipcMain, send } from "../main.js";
+import { console, ipcMain, send } from "../main.js";
 
 export const loadSetting = async () => {
   const data = await db("setting").select().limit(1);
@@ -13,7 +13,8 @@ export const loadSetting = async () => {
 
       data[0][key] = JSON.parse(data[0][key]);
     } catch (error) {
-      console.log(key, error);
+      console.error("JSON parsing error:", "key", key, "value", data[0][key]);
+      console.error(error);
     }
   });
   return data[0];

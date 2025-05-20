@@ -4,10 +4,7 @@ import { rm, stat, writeFile } from "fs/promises";
 import { basename, extname, join } from "path";
 import puppeteer, { Browser, Page } from "puppeteer-core";
 import { IpcMainEventMap, IpcMainSend, IpcRendererSend } from "../events.js";
-import { ipcMain, send } from "../main.js";
-
-import log from "electron-log";
-const console = log;
+import { console, ipcMain, send } from "../main.js";
 
 let browser: Browser | undefined;
 
