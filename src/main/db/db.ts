@@ -29,6 +29,7 @@ if (!(await db.schema.hasTable("games"))) {
     games.boolean("isClear").defaultTo(false);
     games.boolean("isRecent").defaultTo(false);
     games.boolean("isCompressFile").defaultTo(false);
+    games.boolean("isLoadedInfo").defaultTo(false);
     games.timestamp("createdAt", { useTz: false }).defaultTo(db.fn.now());
     games.timestamp("updatedAt", { useTz: false }).nullable();
   });
@@ -36,7 +37,7 @@ if (!(await db.schema.hasTable("games"))) {
 
 if (!(await db.schema.hasTable("tags"))) {
   await db.schema.createTable("tags", (tags) => {
-    tags.increments("seq").primary();
+    tags.string("id").primary();
     tags.string("tag", 200).notNullable();
   });
 }
@@ -44,10 +45,10 @@ if (!(await db.schema.hasTable("tags"))) {
 if (!(await db.schema.hasTable("gameTags"))) {
   await db.schema.createTable("gameTags", (gameTags) => {
     gameTags.string("gamePath").notNullable();
-    gameTags.string("tagSeq").notNullable();
+    gameTags.string("tagId").notNullable();
     gameTags.foreign("gamePath").references("games.path");
-    gameTags.foreign("tagSeq").references("tags.seq");
-    gameTags.primary(["gamePath", "tagSeq"]);
+    gameTags.foreign("tagId").references("tags.id");
+    gameTags.primary(["gamePath", "tagId"]);
   });
 }
 
@@ -98,19 +99,20 @@ export interface Game extends TableBaseColumn {
   isClear: SqliteBoolean;
   isRecent: SqliteBoolean;
   isCompressFile: SqliteBoolean;
+  isLoadedInfo: SqliteBoolean;
 }
 export type InsertGame = Pick<Game, "path" | "title" | "source"> &
   Partial<Game>;
 export type UpdateGame = Partial<Game>;
 
 export interface Tag {
-  seq: number;
+  id: string;
   tag: string;
 }
 
 export interface GameTag {
   gamePath: string;
-  tagSeq: number;
+  tagId: string;
 }
 
 export interface Setting extends TableBaseColumn {
@@ -141,4 +143,3 @@ declare module "knex/types/tables.js" {
     setting: Knex.CompositeTableType<Setting, InsertSetting, UpdateSetting>;
   }
 }
-

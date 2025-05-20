@@ -290,6 +290,15 @@ const getListData = async ({
   // 썸네일 찾기
   const processedList = findThumbnails(list);
 
+  // path가 존재하지 않는 데이터는 삭제
+  await db("games")
+    .delete()
+    .whereNotIn(
+      "path",
+      processedList.map((item) => item.path)
+    );
+
+  // 신규 데이터 삽입 및 기존데이터 업데이트
   await db
     .insert(
       processedList.map(
@@ -299,7 +308,7 @@ const getListData = async ({
             title: data.title,
             source: data.source,
             thumbnail: data.thumbnail ?? null,
-            rjCode: /[RBV]J\d{6,8}/i.exec(data.title)?.[1] ?? null,
+            rjCode: /[RBV]J\d{6,8}/i.exec(data.title)?.[0] ?? null,
             isCompressFile: data.isCompressFile,
           } satisfies InsertGame)
       )
