@@ -20,10 +20,9 @@ import { Button } from "../../../components/ui/button";
 import { useApi } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
 import Data from "../../../lib/data";
-import { useGameHistory } from "../../../store/game-history-store";
 import { useSearch } from "../../../store/search-store";
 import { useSetting } from "../../../store/setting-store";
-import { GameHistoryData, SettingData } from "../../../typings/local";
+import { SettingData } from "../../../typings/local";
 import AppInfoCard from "../components/AppInfoCard.vue";
 import CookieCard from "../components/CookieCard.vue";
 import ExcludeGameCard from "../components/ExcludeGameCard.vue";
@@ -37,7 +36,6 @@ import PlayExcludeCard from "../components/PlayExcludeCard.vue";
 const console = log;
 
 const setting = useSetting();
-const game = useGameHistory();
 const api = useApi();
 
 const sources = ref([...setting.sources]);
@@ -127,9 +125,7 @@ const exportSetting = async () => {
     exclude: setting.exclude,
     search: setting.search,
     playExclude: setting.playExclude,
-    clearGame: game.clearGame,
-    recentGame: game.recentGame,
-  } satisfies SettingData & GameHistoryData;
+  } satisfies SettingData;
   await window.navigator.clipboard.writeText(JSON.stringify(data, null, 4));
   toast.success("설정이 클립보드에 복사되었습니다.");
 };
@@ -137,7 +133,7 @@ const exportSetting = async () => {
 const importSetting = async () => {
   try {
     const dataText = await window.navigator.clipboard.readText();
-    const data = JSON.parse(dataText) as Partial<SettingData & GameHistoryData>;
+    const data = JSON.parse(dataText) as Partial<SettingData>;
 
     if (data.zoom !== undefined) {
       setting.saveZoom(data.zoom);
@@ -182,13 +178,6 @@ const importSetting = async () => {
       setting.savePlayExclude(data.playExclude);
     }
 
-    if (data.clearGame !== undefined) {
-      game.saveClearGame(data.clearGame);
-    }
-    if (data.recentGame !== undefined) {
-      game.saveRecentGame(data.recentGame);
-    }
-
     console.log("설정 데이터", data);
     toast.success("설정이 클립보드에 복원되었습니다.");
   } catch (error) {
@@ -215,7 +204,6 @@ const importSetting = async () => {
 const resetSetting = () => {
   localStorage.clear();
   setting.reset();
-  game.reset();
   useSearch().reset();
 
   sources.value = setting.sources;

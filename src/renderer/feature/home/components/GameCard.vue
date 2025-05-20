@@ -30,7 +30,6 @@ import { useEvent } from "../../../composable/useEvent";
 import { useFile } from "../../../composable/useFile";
 import { IMAGE_FILE_TYPE } from "../../../constants";
 import { cn } from "../../../lib/utils";
-import { useGameHistory } from "../../../store/game-history-store";
 import { useGame } from "../../../store/game-store";
 import { useSetting } from "../../../store/setting-store";
 const console = log;
@@ -42,7 +41,6 @@ const emit = defineEmits<{
 }>();
 const setting = useSetting();
 const game = useGame();
-const gameHistory = useGameHistory();
 
 const api = useApi();
 const open = ref(false);
