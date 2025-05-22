@@ -34,7 +34,7 @@ import { useGame } from "../../../store/game-store";
 import { useSetting } from "../../../store/setting-store";
 const console = log;
 
-const props = defineProps<Omit<Game, "source">>();
+const props = defineProps<Omit<Game, "source" | "isLoadedInfo">>();
 const emit = defineEmits<{
   viewThumbnail: [title: string, thumbnailPath: string];
   writeMemo: [path: string, title: string];

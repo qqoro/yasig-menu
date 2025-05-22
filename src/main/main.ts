@@ -7,8 +7,10 @@ import {
   session,
   shell,
 } from "electron";
+import log from "electron-log";
 import windowStateKeeper from "electron-window-state";
 import { join } from "path";
+import { dbManager } from "./db/db-manager.js";
 import {
   IpcMainEventMap,
   IpcMainSend,
@@ -17,7 +19,6 @@ import {
 } from "./events.js";
 import windowsInit from "./handlers/windows.js";
 
-import log from "electron-log";
 log.initialize();
 export const console = log;
 
@@ -116,7 +117,17 @@ function createWindow() {
   windowsInit(mainWindow);
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  try {
+    // 안전한 데이터베이스 초기화 (재시도 포함)
+    await dbManager.initialize();
+    console.log("데이터베이스 초기화 완료");
+  } catch (error) {
+    console.error("데이터베이스 초기화 최종 실패:", error);
+    // 데이터베이스 초기화 실패 시에도 앱을 시작하도록 하지만 오류 로그 출력
+    // 사용자에게 알림을 표시할 수도 있음
+  }
+
   createWindow();
 
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
@@ -140,6 +151,17 @@ app.whenReady().then(() => {
 app.on("window-all-closed", function () {
   if (process.platform !== "darwin") {
     app.quit();
+  }
+});
+
+// 애플리케이션 종료 시 데이터베이스 연결 정리
+app.on("before-quit", async (event) => {
+  try {
+    // 데이터베이스 연결 종료
+    await dbManager.destroy();
+    console.log("데이터베이스 연결 종료 완료");
+  } catch (error) {
+    console.error("데이터베이스 연결 종료 실패:", error);
   }
 });
 

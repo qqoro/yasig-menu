@@ -45,7 +45,7 @@ export const sendApi = <T extends IpcRendererSend, R extends IpcMainSend>(
     api.once(receiveChannel, callback);
     setTimeout(() => {
       api.removeListener(receiveChannel, callback);
-      reject(new Error("응답시간을 초과하였습니다."));
+      reject(new Error(channel + ": 응답시간을 초과하였습니다."));
     }, 5000);
   });
 };

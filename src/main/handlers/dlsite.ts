@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { parse } from "node-html-parser";
-import { db } from "../db/db.js";
+import { db } from "../db/db-manager.js";
 
 export async function loadInfo(id: string) {
   const html = await fetch(

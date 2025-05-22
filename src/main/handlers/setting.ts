@@ -1,4 +1,4 @@
-import { db } from "../db/db.js";
+import { db } from "../db/db-manager.js";
 import { IpcMainSend, IpcRendererSend } from "../events.js";
 import { console, ipcMain, send } from "../main.js";
 
