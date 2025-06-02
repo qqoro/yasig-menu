@@ -4,7 +4,7 @@ import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { Game } from "../../main/db/db";
 import { IpcMainSend, IpcRendererSend } from "../../main/events";
-import { useApi } from "../composable/useApi";
+import { sendApi } from "../composable/useApi";
 import { useEvent } from "../composable/useEvent";
 import { Sort } from "../constants";
 import { searchFuzzy, sortRJCode } from "../lib/search";
@@ -83,14 +83,15 @@ export const useGame = defineStore("game", () => {
     return { recent, games };
   });
 
-  const api = useApi();
-  const loadList = () => {
-    api.send(IpcRendererSend.LoadList, {
-      hideZipFile: hideZipFile.value,
-    });
-  };
-
-  useEvent(IpcMainSend.LoadedList, (e, data) => {
+  const loadList = async () => {
+    const [, data] = await sendApi(
+      IpcRendererSend.LoadList,
+      IpcMainSend.LoadedList,
+      {
+        hideZipFile: hideZipFile.value,
+        isHidden: false,
+      }
+    );
     loading.value = false;
     // 데이터 동일한 경우 캐싱된 computed값 재사용 위해 변경하지 않음
     if (JSON.stringify(list.value) === JSON.stringify(data)) {
@@ -98,7 +99,8 @@ export const useGame = defineStore("game", () => {
     }
 
     list.value = data;
-  });
+  };
+
   useEvent(IpcMainSend.ThumbnailDone, () => {
     loadList();
   });

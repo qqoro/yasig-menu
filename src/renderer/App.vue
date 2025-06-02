@@ -2,13 +2,12 @@
 import { onMounted, ref } from "vue";
 import { IpcMainSend, IpcRendererSend } from "../main/events";
 import Changelog from "./components/Changelog.vue";
-import { useApi } from "./composable/useApi";
+import { send } from "./composable/useApi";
 import { useEvent } from "./composable/useEvent";
 import { useWindowEvent } from "./composable/useWindowEvent";
 import { useGame } from "./store/game-store";
 import { useSetting } from "./store/setting-store";
 
-const api = useApi();
 const game = useGame();
 const setting = useSetting();
 
@@ -28,11 +27,11 @@ useWindowEvent("keydown", (event) => {
 });
 
 onMounted(() => {
-  api.send(IpcRendererSend.VersionCheck);
+  send(IpcRendererSend.VersionCheck);
   game.loadList();
   setting.init();
 });
-useEvent(IpcMainSend.VersionChecked, (e, version) => {
+useEvent(IpcMainSend.VersionChecked, (e, id, version) => {
   const appLatestVersion = localStorage.getItem("version");
   if (appLatestVersion === version) {
     return;

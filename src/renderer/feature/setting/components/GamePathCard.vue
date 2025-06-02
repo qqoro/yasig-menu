@@ -3,21 +3,19 @@ import { IpcRendererSend } from "../../../../main/events";
 import PopOverButton from "../../../components/PopOverButton.vue";
 import { Card, CardContent, CardHeader } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
-import { useApi } from "../../../composable/useApi";
+import { send } from "../../../composable/useApi";
 
 const props = defineProps<{ modelValue: string[] }>();
 const emit = defineEmits<{
   (e: "update:modelValue", value: string[]): void;
 }>();
 
-const api = useApi();
-
 const add = () => {
   emit("update:modelValue", [...props.modelValue, ""]);
 };
 
 const openFolder = (path: string) => {
-  api.send(IpcRendererSend.OpenFolder, path);
+  send(IpcRendererSend.OpenFolder, path);
 };
 
 const deleteSource = (index: number) => {

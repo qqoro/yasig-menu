@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import {
   app,
   BrowserWindow,
@@ -66,9 +67,13 @@ function createWindow() {
   if (process.env.NODE_ENV === "development") {
     const rendererPort = process.argv[2];
     mainWindow.loadURL(`http://localhost:${rendererPort}`).then(() => {
-      send(IpcMainSend.WindowStatusChange, mainWindow.isMaximized());
+      send(
+        IpcMainSend.WindowStatusChange,
+        randomUUID(),
+        mainWindow.isMaximized()
+      );
     });
-    mainWindow.webContents.openDevTools();
+    mainWindow.webContents.openDevTools({ mode: "detach" });
     // 개발 환경에서만 상태 저장 수동 (개발의 경우 정상 종료가 아니라 상태 저장이 안됨)
     const handleDevWindowStore = () => {
       mainWindowState.saveState(mainWindow);
@@ -82,21 +87,37 @@ function createWindow() {
     mainWindow
       .loadFile(join(app.getAppPath(), "renderer", "index.html"))
       .then(() => {
-        send(IpcMainSend.WindowStatusChange, mainWindow.isMaximized());
+        send(
+          IpcMainSend.WindowStatusChange,
+          randomUUID(),
+          mainWindow.isMaximized()
+        );
       });
   }
 
   mainWindow.on("maximize", () => {
     console.log("maximize");
-    send(IpcMainSend.WindowStatusChange, mainWindow.isMaximized());
+    send(
+      IpcMainSend.WindowStatusChange,
+      randomUUID(),
+      mainWindow.isMaximized()
+    );
   });
   mainWindow.on("unmaximize", () => {
     console.log("unmaximize");
-    send(IpcMainSend.WindowStatusChange, mainWindow.isMaximized());
+    send(
+      IpcMainSend.WindowStatusChange,
+      randomUUID(),
+      mainWindow.isMaximized()
+    );
   });
   mainWindow.on("enter-full-screen", () => {
     console.log("enter-full-screen");
-    send(IpcMainSend.WindowStatusChange, mainWindow.isMaximized());
+    send(
+      IpcMainSend.WindowStatusChange,
+      randomUUID(),
+      mainWindow.isMaximized()
+    );
   });
 
   mainWindow.webContents.setWindowOpenHandler((details) => {

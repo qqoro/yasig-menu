@@ -17,7 +17,7 @@ import {
   AlertDialogTrigger,
 } from "../../../components/ui/alert-dialog";
 import { Button } from "../../../components/ui/button";
-import { useApi } from "../../../composable/useApi";
+import { send } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
 import Data from "../../../lib/data";
 import { useSearch } from "../../../store/search-store";
@@ -36,7 +36,6 @@ import PlayExcludeCard from "../components/PlayExcludeCard.vue";
 const console = log;
 
 const setting = useSetting();
-const api = useApi();
 
 const sources = ref([...setting.sources]);
 const home = ref({ ...setting.home });
@@ -97,15 +96,15 @@ const save = () => {
   toast.success("설정을 저장했습니다.");
 };
 const updateCheck = () => {
-  api.send(IpcRendererSend.UpdateCheck);
+  send(IpcRendererSend.UpdateCheck);
 };
 
 const openLogFolder = () => {
-  api.send(IpcRendererSend.OpenLogFolder);
+  send(IpcRendererSend.OpenLogFolder);
 };
 
 const cleanCache = () => {
-  api.send(IpcRendererSend.CleanCache);
+  send(IpcRendererSend.CleanCache);
 };
 
 const openChangelog = () => {
@@ -221,7 +220,7 @@ const resetSetting = () => {
 };
 
 onMounted(async () => {
-  api.send(IpcRendererSend.VersionCheck);
+  send(IpcRendererSend.VersionCheck);
   await setting.init();
   sources.value = [...setting.sources];
   changeThumbnailFolder.value = [...setting.changeThumbnailFolder];
@@ -230,7 +229,7 @@ onMounted(async () => {
   search.value = setting.search;
   playExclude.value = setting.playExclude;
 });
-useEvent(IpcMainSend.VersionChecked, (e, version: string) => {
+useEvent(IpcMainSend.VersionChecked, (e, id, version) => {
   appVersion.value = version;
 });
 
@@ -268,7 +267,7 @@ watch(blur, () => {
         @openLogFolder="openLogFolder"
         @cleanCache="cleanCache"
         @openChangelog="openChangelog"
-        @toggleDevTools="api.send(IpcRendererSend.ToggleDevTools)"
+        @toggleDevTools="send(IpcRendererSend.ToggleDevTools)"
       />
     </template>
 

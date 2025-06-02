@@ -2,7 +2,7 @@ import log from "electron-log";
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { IpcMainSend, IpcRendererSend } from "../../main/events";
-import { api, sendApi } from "../composable/useApi";
+import { send, sendApi } from "../composable/useApi";
 import Data from "../lib/data";
 import { useGame } from "./game-store";
 const console = log;
@@ -18,7 +18,7 @@ export const useSetting = defineStore("setting", () => {
   const sources = ref<string[]>([]);
   const saveSources = (newSources: string[]) => {
     sources.value = newSources;
-    api.send(IpcRendererSend.UpdateSetting, {
+    send(IpcRendererSend.UpdateSetting, {
       sources: JSON.stringify(newSources),
       applySources: JSON.stringify(newSources),
     });
@@ -27,7 +27,7 @@ export const useSetting = defineStore("setting", () => {
   const applySources = ref<string[]>([...sources.value]);
   const saveApplySources = (newApplySources: string[]) => {
     applySources.value = newApplySources;
-    api.send(IpcRendererSend.UpdateSetting, {
+    send(IpcRendererSend.UpdateSetting, {
       applySources: JSON.stringify(newApplySources),
     });
     console.log("applySources saved!", applySources.value);
@@ -46,7 +46,7 @@ export const useSetting = defineStore("setting", () => {
   ) => {
     changeThumbnailFolder.value = newChangeThumbnailFolder;
     Data.setJSON("changeThumbnailFolder", newChangeThumbnailFolder);
-    api.send(IpcRendererSend.UpdateSetting, {
+    send(IpcRendererSend.UpdateSetting, {
       changeThumbnailFolder: !!newChangeThumbnailFolder[0],
       newThumbnailFolder: JSON.stringify(newChangeThumbnailFolder[1]),
     });
@@ -68,7 +68,7 @@ export const useSetting = defineStore("setting", () => {
   const saveCookie = (newCookie: string) => {
     cookie.value = newCookie;
     Data.setJSON("cookie", newCookie);
-    api.send(IpcRendererSend.UpdateSetting, {
+    send(IpcRendererSend.UpdateSetting, {
       cookie: JSON.stringify(newCookie),
     });
     console.log("cookie saved!", cookie.value);
@@ -78,7 +78,7 @@ export const useSetting = defineStore("setting", () => {
     const removed = exclude.value.filter((v) => !newExclude.includes(v));
     exclude.value = newExclude;
     removed.forEach((path) => {
-      api.send(IpcRendererSend.Hide, { path, isHidden: false });
+      send(IpcRendererSend.Hide, { path, isHidden: false });
     });
     console.log("exclude saved!", exclude.value);
   };
@@ -89,7 +89,7 @@ export const useSetting = defineStore("setting", () => {
   const saveSearch = (newSearch: [string, string]) => {
     search.value = newSearch;
     Data.setJSON("search", newSearch);
-    api.send(IpcRendererSend.UpdateSetting, {
+    send(IpcRendererSend.UpdateSetting, {
       search: JSON.stringify(newSearch),
     });
     console.log("search saved!", search.value);
@@ -100,7 +100,7 @@ export const useSetting = defineStore("setting", () => {
   ]);
   const savePlayExclude = (newPlayExclude: string[]) => {
     playExclude.value = newPlayExclude;
-    api.send(IpcRendererSend.UpdateSetting, {
+    send(IpcRendererSend.UpdateSetting, {
       playExclude: JSON.stringify(newPlayExclude),
     });
     console.log("playExclude saved!", playExclude.value);
@@ -108,7 +108,7 @@ export const useSetting = defineStore("setting", () => {
 
   const init = async () => {
     loading.value = true;
-    const [settingData] = await sendApi(
+    const [, settingData] = await sendApi(
       IpcRendererSend.LoadSetting,
       IpcMainSend.LoadedSetting
     );

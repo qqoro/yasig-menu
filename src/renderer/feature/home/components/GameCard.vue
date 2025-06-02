@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "../../../components/ui/dropdown-menu";
 import { Input } from "../../../components/ui/input";
-import { useApi } from "../../../composable/useApi";
+import { send } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
 import { useFile } from "../../../composable/useFile";
 import { IMAGE_FILE_TYPE } from "../../../constants";
@@ -42,7 +42,6 @@ const emit = defineEmits<{
 const setting = useSetting();
 const game = useGame();
 
-const api = useApi();
 const open = ref(false);
 const loading = ref(false);
 // 썸네일 변경 후에도 캐시된 이미지가 노출되는 경우 때문에 가짜 쿼리스트링 추가가
@@ -57,7 +56,7 @@ const url = ref("");
 const downloadThumbnail = (filePath: string) => {
   loading.value = true;
   const [useSavePath, savePath] = setting.changeThumbnailFolder;
-  api.send(IpcRendererSend.ThumbnailDownload, {
+  send(IpcRendererSend.ThumbnailDownload, {
     filePath,
     cookie: setting.cookie,
     search: [...setting.search],
@@ -66,7 +65,7 @@ const downloadThumbnail = (filePath: string) => {
 };
 
 const deleteThumbnail = (filePath: string) => {
-  api.send(IpcRendererSend.ThumbnailDelete, filePath);
+  send(IpcRendererSend.ThumbnailDelete, filePath);
   game.loadList();
 };
 
@@ -85,7 +84,7 @@ const uploadThumbnail = async () => {
   loading.value = true;
   open.value = false;
   const [useSavePath, savePath] = setting.changeThumbnailFolder;
-  api.send(IpcRendererSend.ThumbnailDownload, {
+  send(IpcRendererSend.ThumbnailDownload, {
     filePath: props.path,
     cookie: setting.cookie,
     search: [...setting.search],
@@ -115,7 +114,7 @@ const downloadThumbnailFromUrl = (filePath: string) => {
   loading.value = true;
   open.value = false;
   const [useSavePath, savePath] = setting.changeThumbnailFolder;
-  api.send(IpcRendererSend.ThumbnailDownload, {
+  send(IpcRendererSend.ThumbnailDownload, {
     filePath,
     cookie: setting.cookie,
     search: [...setting.search],
@@ -125,26 +124,26 @@ const downloadThumbnailFromUrl = (filePath: string) => {
 };
 
 const play = (filePath: string) => {
-  api.send(IpcRendererSend.Play, filePath, [...setting.playExclude]);
+  send(IpcRendererSend.Play, filePath, [...setting.playExclude]);
   game.loadList();
 };
 
 const openFolder = (filePath: string) => {
-  api.send(IpcRendererSend.OpenFolder, filePath);
+  send(IpcRendererSend.OpenFolder, filePath);
 };
 
 const hide = (filePath: string) => {
-  api.send(IpcRendererSend.Hide, { path: filePath, isHidden: true });
+  send(IpcRendererSend.Hide, { path: filePath, isHidden: true });
   game.loadList();
 };
 
 const clear = (filePath: string) => {
-  api.send(IpcRendererSend.Clear, { path: filePath, isClear: !props.isClear });
+  send(IpcRendererSend.Clear, { path: filePath, isClear: !props.isClear });
   game.loadList();
 };
 
 const removeRecent = (filePath: string) => {
-  api.send(IpcRendererSend.Recent, { path: filePath, isRecent: false });
+  send(IpcRendererSend.Recent, { path: filePath, isRecent: false });
   game.loadList();
 };
 
@@ -152,7 +151,7 @@ const titleFontSize = computed(() => {
   return Math.max(16 / (setting.zoom * 0.02), 16);
 });
 
-useEvent(IpcMainSend.ThumbnailDone, (e, filePath) => {
+useEvent(IpcMainSend.ThumbnailDone, (e, id, filePath) => {
   if (filePath !== props.path) {
     return;
   }

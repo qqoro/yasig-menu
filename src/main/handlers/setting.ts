@@ -20,11 +20,11 @@ export const loadSetting = async () => {
   return data[0];
 };
 
-ipcMain.on(IpcRendererSend.LoadSetting, async (e) => {
+ipcMain.on(IpcRendererSend.LoadSetting, async (e, id) => {
   const data = await loadSetting();
-  send(IpcMainSend.LoadedSetting, data);
+  send(IpcMainSend.LoadedSetting, id, data);
 });
 
-ipcMain.on(IpcRendererSend.UpdateSetting, async (e, data) => {
+ipcMain.on(IpcRendererSend.UpdateSetting, async (e, id, data) => {
   await db("setting").update(data);
 });

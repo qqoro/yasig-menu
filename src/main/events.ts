@@ -24,22 +24,23 @@ export interface IpcMainEventMap
   extends EnforceAllKeys<
     IpcMainSend,
     {
-      [IpcMainSend.WindowStatusChange]: [boolean];
-      [IpcMainSend.UpdateChecked]: [boolean];
-      [IpcMainSend.UpdateDownloadProgress]: [number];
-      [IpcMainSend.VersionChecked]: [string];
+      [IpcMainSend.WindowStatusChange]: [id: string, boolean];
+      [IpcMainSend.UpdateChecked]: [id: string, boolean];
+      [IpcMainSend.UpdateDownloadProgress]: [id: string, number];
+      [IpcMainSend.VersionChecked]: [id: string, string];
 
-      [IpcMainSend.LoadedList]: [Game[]];
+      [IpcMainSend.LoadedList]: [id: string, Game[]];
       [IpcMainSend.Message]: [
+        id: string,
         {
           type: "success" | "info" | "warning" | "error";
           message: string;
         } & Omit<ToastT, "id" | "type">
       ];
 
-      [IpcMainSend.LoadedSetting]: [setting: Setting];
+      [IpcMainSend.LoadedSetting]: [id: string, setting: Setting];
 
-      [IpcMainSend.ThumbnailDone]: [string];
+      [IpcMainSend.ThumbnailDone]: [id: string, string];
     }
   > {}
 
@@ -74,16 +75,17 @@ export interface IpcRendererEventMap
   extends EnforceAllKeys<
     IpcRendererSend,
     {
-      [IpcRendererSend.WindowMinimize]: [];
-      [IpcRendererSend.WindowMaximizeToggle]: [];
-      [IpcRendererSend.WindowClose]: [];
-      [IpcRendererSend.UpdateCheck]: [];
-      [IpcRendererSend.VersionCheck]: [];
-      [IpcRendererSend.ToggleDevTools]: [];
-      [IpcRendererSend.OpenLogFolder]: [];
-      [IpcRendererSend.Restart]: [];
+      [IpcRendererSend.WindowMinimize]: [id: string];
+      [IpcRendererSend.WindowMaximizeToggle]: [id: string];
+      [IpcRendererSend.WindowClose]: [id: string];
+      [IpcRendererSend.UpdateCheck]: [id: string];
+      [IpcRendererSend.VersionCheck]: [id: string];
+      [IpcRendererSend.ToggleDevTools]: [id: string];
+      [IpcRendererSend.OpenLogFolder]: [id: string];
+      [IpcRendererSend.Restart]: [id: string];
 
       [IpcRendererSend.LoadList]: [
+        id: string,
         {
           /**
            * @default false
@@ -95,19 +97,26 @@ export interface IpcRendererEventMap
           isHidden?: boolean;
         }
       ];
-      [IpcRendererSend.CleanCache]: [];
+      [IpcRendererSend.CleanCache]: [id: string];
 
-      [IpcRendererSend.LoadSetting]: [];
-      [IpcRendererSend.UpdateSetting]: [data: UpdateSetting];
+      [IpcRendererSend.LoadSetting]: [id: string];
+      [IpcRendererSend.UpdateSetting]: [id: string, data: UpdateSetting];
 
-      [IpcRendererSend.Play]: [path: string, exclude?: string[]];
-      [IpcRendererSend.OpenFolder]: [path: string];
-      [IpcRendererSend.Hide]: [{ path: string; isHidden: boolean }];
-      [IpcRendererSend.Recent]: [{ path: string; isRecent: boolean }];
-      [IpcRendererSend.Clear]: [{ path: string; isClear: boolean }];
-      [IpcRendererSend.Memo]: [{ path: string; memo: string | null }];
+      [IpcRendererSend.Play]: [id: string, path: string, exclude?: string[]];
+      [IpcRendererSend.OpenFolder]: [id: string, path: string];
+      [IpcRendererSend.Hide]: [id: string, { path: string; isHidden: boolean }];
+      [IpcRendererSend.Recent]: [
+        id: string,
+        { path: string; isRecent: boolean }
+      ];
+      [IpcRendererSend.Clear]: [id: string, { path: string; isClear: boolean }];
+      [IpcRendererSend.Memo]: [
+        id: string,
+        { path: string; memo: string | null }
+      ];
 
       [IpcRendererSend.ThumbnailDownload]: [
+        id: string,
         {
           filePath: string;
           cookie: string;
@@ -126,6 +135,6 @@ export interface IpcRendererEventMap
           url?: string;
         }
       ];
-      [IpcRendererSend.ThumbnailDelete]: [string];
+      [IpcRendererSend.ThumbnailDelete]: [id: string, path: string];
     }
   > {}

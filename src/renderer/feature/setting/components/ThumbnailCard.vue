@@ -12,7 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../../../components/ui/tooltip";
-import { useApi } from "../../../composable/useApi";
+import { send } from "../../../composable/useApi";
 
 defineProps<{
   modelValue: [boolean, string];
@@ -25,9 +25,8 @@ const emit = defineEmits<{
   (e: "update:dark", value: boolean): void;
 }>();
 
-const api = useApi();
 const openFolder = (path: string) => {
-  api.send(IpcRendererSend.OpenFolder, path);
+  send(IpcRendererSend.OpenFolder, path);
 };
 </script>
 

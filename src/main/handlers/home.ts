@@ -25,35 +25,39 @@ export interface GameData {
 }
 
 // 게임목록 조회
-ipcMain.on(IpcRendererSend.LoadList, async (e, { hideZipFile = false }) => {
-  const setting = await loadSetting();
-  console.time("getListData");
-  const list = await getListData({
-    sources: setting.applySources,
-    thumbnailFolder: setting.changeThumbnailFolder
-      ? setting.newThumbnailFolder
-      : undefined,
-    hideZipFile,
-  });
-  console.timeEnd("getListData");
+ipcMain.on(
+  IpcRendererSend.LoadList,
+  async (e, id, { hideZipFile, isHidden }) => {
+    const setting = await loadSetting();
+    console.time("getListData");
+    const list = await getListData({
+      sources: setting.applySources,
+      thumbnailFolder: setting.changeThumbnailFolder
+        ? setting.newThumbnailFolder
+        : undefined,
+      hideZipFile,
+      isHidden,
+    });
+    console.timeEnd("getListData");
 
-  send(IpcMainSend.LoadedList, list);
-});
+    send(IpcMainSend.LoadedList, id, list);
+  }
+);
 
 // 캐시 삭제 (제거 예정, 캐시 대신 DB사용)
-ipcMain.on(IpcRendererSend.CleanCache, async () => {
+ipcMain.on(IpcRendererSend.CleanCache, async (e, id) => {
   try {
     const cacheDir = join(app.getPath("userData"), ".cache");
 
     const files = await readdir(cacheDir);
     files.forEach((file) => rm(join(cacheDir, file)));
 
-    send(IpcMainSend.Message, {
+    send(IpcMainSend.Message, id, {
       type: "success",
       message: "성공적으로 캐시를 삭제했습니다.",
     });
   } catch (error) {
-    send(IpcMainSend.Message, {
+    send(IpcMainSend.Message, id, {
       type: "error",
       message: "캐시를 삭제하던 중 오류가 발생했습니다.",
       description: (error as Error).stack,
@@ -62,7 +66,7 @@ ipcMain.on(IpcRendererSend.CleanCache, async () => {
 });
 
 // 게임 실행
-ipcMain.on(IpcRendererSend.Play, async (e, filePath, exclude = []) => {
+ipcMain.on(IpcRendererSend.Play, async (e, id, filePath, exclude = []) => {
   await db("games").update({ isRecent: true }).where({ path: filePath });
   try {
     const folderList = await readdir(filePath, { withFileTypes: true });
@@ -79,13 +83,13 @@ ipcMain.on(IpcRendererSend.Play, async (e, filePath, exclude = []) => {
 
       const game = join(filePath, file.name);
       shell.openPath(game);
-      send(IpcMainSend.Message, {
+      send(IpcMainSend.Message, id, {
         type: "success",
         message: `${game} 파일을 실행했습니다. 잠시만 기다려주세요.`,
       });
       return;
     }
-    send(IpcMainSend.Message, {
+    send(IpcMainSend.Message, id, {
       type: "warning",
       message: "실행파일을 찾지 못했습니다. 폴더 열기를 사용해 실행해주세요.",
     });
@@ -95,7 +99,7 @@ ipcMain.on(IpcRendererSend.Play, async (e, filePath, exclude = []) => {
       return;
     }
     console.error("error!", error);
-    send(IpcMainSend.Message, {
+    send(IpcMainSend.Message, id, {
       type: "warning",
       message: `게임 실행에 실패했습니다.`,
       description: (error as Error).stack,
@@ -109,17 +113,17 @@ ipcMain.on(IpcRendererSend.OpenFolder, (e, filePath: string) => {
 });
 
 // 게임 폴더 열기
-ipcMain.on(IpcRendererSend.Hide, async (e, { path, isHidden }) => {
+ipcMain.on(IpcRendererSend.Hide, async (e, id, { path, isHidden }) => {
   await db("games").update({ isHidden }).where({ path });
 });
 
 // 게임 클리어 체크
-ipcMain.on(IpcRendererSend.Clear, async (e, { path, isClear }) => {
+ipcMain.on(IpcRendererSend.Clear, async (e, id, { path, isClear }) => {
   await db("games").update({ isClear }).where({ path });
 });
 
 // 게임에 메모 작성
-ipcMain.on(IpcRendererSend.Memo, async (e, { path, memo }) => {
+ipcMain.on(IpcRendererSend.Memo, async (e, id, { path, memo }) => {
   await db("games").update({ memo }).where({ path });
 });
 
@@ -224,6 +228,7 @@ function findThumbnails(files: DirentLike[]) {
   return result;
 }
 
+let initialized = false;
 /**
  * 캐시된 데이터를 가져오거나, 캐시가 없거나 무효화된 경우 새로 생성합니다.
  */
@@ -231,23 +236,30 @@ const getListData = async ({
   sources,
   thumbnailFolder,
   hideZipFile,
+  isHidden,
 }: {
   sources: string[];
   thumbnailFolder?: string;
-  hideZipFile: boolean;
+  hideZipFile?: boolean;
+  isHidden?: boolean;
 }): Promise<Game[]> => {
   if (!sources || sources.length === 0) {
     console.error("source is empty!!!!!!!!!!!!!!!!!!!!!!");
     return [];
   }
 
-  const isCacheDirty = await checkCacheDirty([...sources, thumbnailFolder]);
+  const isCacheDirty =
+    !initialized || (await checkCacheDirty([...sources, thumbnailFolder]));
+  initialized = true;
 
   // 캐시 상태 확인 및 캐시 로드 시도
   if (!isCacheDirty) {
     const q = db("games").select();
     if (hideZipFile) {
       q.where({ isCompressFile: false });
+    }
+    if (isHidden !== undefined) {
+      q.where({ isHidden: isHidden });
     }
     return await q;
   }
@@ -329,6 +341,9 @@ const getListData = async ({
   const q = db("games").select();
   if (hideZipFile) {
     q.where({ isCompressFile: false });
+  }
+  if (isHidden !== undefined) {
+    q.where({ isHidden: isHidden });
   }
   return await q;
 };
