@@ -4,7 +4,6 @@ import { ref } from "vue";
 import { IpcMainSend, IpcRendererSend } from "../../main/events";
 import { send, sendApi } from "../composable/useApi";
 import Data from "../lib/data";
-import { useGame } from "./game-store";
 const console = log;
 
 export const useSetting = defineStore("setting", () => {
@@ -119,10 +118,12 @@ export const useSetting = defineStore("setting", () => {
       settingData.newThumbnailFolder,
     ];
     cookie.value = settingData.cookie;
-    const game = useGame();
-    exclude.value = game.list
-      .filter((game) => game.isHidden)
-      .map((game) => game.path);
+    const [, game] = await sendApi(
+      IpcRendererSend.LoadList,
+      IpcMainSend.LoadedList,
+      { hideZipFile: false, isHidden: true }
+    );
+    exclude.value = game.map((game) => game.path);
     search.value = settingData.search;
     playExclude.value = settingData.playExclude;
 
