@@ -5,8 +5,9 @@ import { extname, join } from "path";
 import { COMPRESS_FILE_TYPE } from "../constants.js";
 import { db } from "../db/db-manager.js";
 import { Game, InsertGame } from "../db/db.js";
-import { IpcMainSend, IpcRendererSend } from "../events.js";
+import { IpcMainSend, IpcRendererSend, WhereGame } from "../events.js";
 import { ipcMain, send } from "../main.js";
+import { toLikeQuery } from "../utils.js";
 import { loadSetting } from "./setting.js";
 
 interface DirentLike {
@@ -25,24 +26,21 @@ export interface GameData {
 }
 
 // 게임목록 조회
-ipcMain.on(
-  IpcRendererSend.LoadList,
-  async (e, id, { hideZipFile, isHidden }) => {
-    const setting = await loadSetting();
-    console.time("getListData");
-    const list = await getListData({
-      sources: setting.applySources,
-      thumbnailFolder: setting.changeThumbnailFolder
-        ? setting.newThumbnailFolder
-        : undefined,
-      hideZipFile,
-      isHidden,
-    });
-    console.timeEnd("getListData");
+ipcMain.on(IpcRendererSend.LoadList, async (e, id, options) => {
+  const setting = await loadSetting();
 
-    send(IpcMainSend.LoadedList, id, list);
-  }
-);
+  console.time("getListData " + id);
+  const list = await getListData({
+    sources: setting.applySources,
+    thumbnailFolder: setting.changeThumbnailFolder
+      ? setting.newThumbnailFolder
+      : undefined,
+    ...(options ?? {}),
+  });
+  console.timeEnd("getListData " + id);
+
+  send(IpcMainSend.LoadedList, id, list);
+});
 
 // 캐시 삭제 (제거 예정, 캐시 대신 DB사용)
 ipcMain.on(IpcRendererSend.CleanCache, async (e, id) => {
@@ -235,14 +233,19 @@ let initialized = false;
 const getListData = async ({
   sources,
   thumbnailFolder,
-  hideZipFile,
+
+  category,
+  isClear,
+  isCompressFile,
   isHidden,
+  isRecent,
+  makerName,
+  tags,
+  title,
 }: {
   sources: string[];
   thumbnailFolder?: string;
-  hideZipFile?: boolean;
-  isHidden?: boolean;
-}): Promise<Game[]> => {
+} & WhereGame): Promise<Game[]> => {
   if (!sources || sources.length === 0) {
     console.error("source is empty!!!!!!!!!!!!!!!!!!!!!!");
     return [];
@@ -255,11 +258,32 @@ const getListData = async ({
   // 캐시 상태 확인 및 캐시 로드 시도
   if (!isCacheDirty) {
     const q = db("games").select();
-    if (hideZipFile) {
+    if (category) {
+      q.where({ category: category });
+    }
+    if (isClear !== undefined) {
+      q.where({ isClear: isClear });
+    }
+    if (isCompressFile) {
       q.where({ isCompressFile: false });
+    }
+    if (isCompressFile !== undefined) {
+      q.where({ isCompressFile: isCompressFile });
     }
     if (isHidden !== undefined) {
       q.where({ isHidden: isHidden });
+    }
+    if (isRecent !== undefined) {
+      q.where({ isRecent: isRecent });
+    }
+    if (makerName) {
+      q.whereILike({ makerName: toLikeQuery(makerName) });
+    }
+    if (tags) {
+      q.whereILike({ tags: toLikeQuery(tags) });
+    }
+    if (title) {
+      q.whereILike({ title: toLikeQuery(title) });
     }
     return await q;
   }
@@ -339,11 +363,32 @@ const getListData = async ({
     });
 
   const q = db("games").select();
-  if (hideZipFile) {
+  if (category) {
+    q.where({ category: category });
+  }
+  if (isClear !== undefined) {
+    q.where({ isClear: isClear });
+  }
+  if (isCompressFile) {
     q.where({ isCompressFile: false });
+  }
+  if (isCompressFile !== undefined) {
+    q.where({ isCompressFile: isCompressFile });
   }
   if (isHidden !== undefined) {
     q.where({ isHidden: isHidden });
+  }
+  if (isRecent !== undefined) {
+    q.where({ isRecent: isRecent });
+  }
+  if (makerName) {
+    q.whereILike({ makerName: toLikeQuery(makerName) });
+  }
+  if (tags) {
+    q.whereILike({ tags: toLikeQuery(tags) });
+  }
+  if (title) {
+    q.whereILike({ title: toLikeQuery(title) });
   }
   return await q;
 };

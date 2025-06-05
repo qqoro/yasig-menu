@@ -84,19 +84,7 @@ export interface IpcRendererEventMap
       [IpcRendererSend.OpenLogFolder]: [id: string];
       [IpcRendererSend.Restart]: [id: string];
 
-      [IpcRendererSend.LoadList]: [
-        id: string,
-        {
-          /**
-           * @default false
-           */
-          hideZipFile?: boolean;
-          /**
-           * @default false
-           */
-          isHidden?: boolean;
-        }
-      ];
+      [IpcRendererSend.LoadList]: [id: string, options?: WhereGame];
       [IpcRendererSend.CleanCache]: [id: string];
 
       [IpcRendererSend.LoadSetting]: [id: string];
@@ -138,3 +126,17 @@ export interface IpcRendererEventMap
       [IpcRendererSend.ThumbnailDelete]: [id: string, path: string];
     }
   > {}
+
+export type WhereGame = Partial<
+  Pick<
+    Game,
+    | "title"
+    | "makerName"
+    | "category"
+    | "tags"
+    | "isHidden"
+    | "isClear"
+    | "isRecent"
+    | "isCompressFile"
+  >
+>;

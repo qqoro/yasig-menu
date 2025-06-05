@@ -41,6 +41,7 @@
     "vite": "^6.3.0"
   },
   "dependencies": {
+    "@internationalized/date": "^3.8.1",
     "@tailwindcss/vite": "^4.1.4",
     "@vueuse/core": "^13.1.0",
     "better-sqlite3": "^11.10.0",

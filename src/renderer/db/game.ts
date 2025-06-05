@@ -1,15 +1,18 @@
 import { db } from "../../main/db/db-manager";
-import { IpcMainSend, IpcRendererSend } from "../../main/events";
+import {
+  IpcMainSend,
+  IpcRendererEventMap,
+  IpcRendererSend,
+} from "../../main/events";
 import { sendApi } from "../composable/useApi";
 
-export async function getGameList(options?: {
-  hideZipFile: boolean;
-  isHidden: boolean;
-}) {
+export async function getGameList(
+  options?: IpcRendererEventMap[IpcRendererSend.LoadList][1]
+) {
   const [, data] = await sendApi(
     IpcRendererSend.LoadList,
     IpcMainSend.LoadedList,
-    options ?? {}
+    options
   );
   return data;
 }

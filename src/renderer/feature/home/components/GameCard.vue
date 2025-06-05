@@ -32,9 +32,11 @@ import { IMAGE_FILE_TYPE } from "../../../constants";
 import { cn } from "../../../lib/utils";
 import { useGame } from "../../../store/game-store";
 import { useSetting } from "../../../store/setting-store";
+import GameInfoDialog from "./GameInfoDialog.vue";
 const console = log;
 
 const props = defineProps<Omit<Game, "source" | "isLoadedInfo">>();
+console.log(props);
 const emit = defineEmits<{
   viewThumbnail: [title: string, thumbnailPath: string];
   writeMemo: [path: string, title: string];
@@ -43,6 +45,7 @@ const setting = useSetting();
 const game = useGame();
 
 const open = ref(false);
+const openInfo = ref(false);
 const loading = ref(false);
 // 썸네일 변경 후에도 캐시된 이미지가 노출되는 경우 때문에 가짜 쿼리스트링 추가가
 const fakeQueryId = ref(0);
@@ -286,6 +289,10 @@ watch(loading, () => {
             <Icon icon="solar:eraser-bold-duotone" />
             <span>최근 플레이 기록 삭제</span>
           </DropdownMenuItem>
+          <DropdownMenuItem @click="openInfo = true">
+            <Icon icon="solar:eraser-bold-duotone" />
+            <span>정보 수정</span>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </CardFooter>
@@ -311,5 +318,15 @@ watch(loading, () => {
         </div>
       </DialogContent>
     </Dialog>
+    <GameInfoDialog
+      v-model="openInfo"
+      :title="title"
+      :publish-date="publishDate"
+      :maker-name="makerName"
+      :category="category"
+      :tags="tags"
+      :memo="memo"
+      :is-clear="isClear"
+    />
   </Card>
 </template>
