@@ -352,17 +352,14 @@ const getListData = async ({
     const q = db("games")
       .select("games.*")
       .select(db.raw("group_concat(tags.tag, ', ') as tags"))
-      .join("gameTags", "games.path", "gameTags.gamePath")
-      .join("tags", "gameTags.tagId", "tags.id")
+      .leftJoin("gameTags", "games.path", "gameTags.gamePath")
+      .leftJoin("tags", "gameTags.tagId", "tags.id")
       .groupBy("games.path");
     if (category) {
       q.where({ category: category });
     }
     if (isClear !== undefined) {
       q.where({ isClear: isClear });
-    }
-    if (isCompressFile) {
-      q.where({ isCompressFile: false });
     }
     if (isCompressFile !== undefined) {
       q.where({ isCompressFile: isCompressFile });
@@ -462,8 +459,8 @@ const getListData = async ({
   const q = db("games")
     .select("games.*")
     .select(db.raw("group_concat(tags.tag, ', ') as tags"))
-    .join("gameTags", "games.path", "gameTags.gamePath")
-    .join("tags", "gameTags.tagId", "tags.id")
+    .leftJoin("gameTags", "games.path", "gameTags.gamePath")
+    .leftJoin("tags", "gameTags.tagId", "tags.id")
     .groupBy("games.path");
   if (category) {
     q.where({ category: category });

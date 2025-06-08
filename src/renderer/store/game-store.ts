@@ -3,10 +3,10 @@ import { defineStore, storeToRefs } from "pinia";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { Game } from "../../main/db/db";
-import { IpcMainSend, IpcRendererSend } from "../../main/events";
-import { sendApi } from "../composable/useApi";
+import { IpcMainSend } from "../../main/events";
 import { useEvent } from "../composable/useEvent";
 import { Sort } from "../constants";
+import { getGameList } from "../db/game";
 import { searchFuzzy, sortRJCode } from "../lib/search";
 import { useSearch } from "./search-store";
 import { useSetting } from "./setting-store";
@@ -84,14 +84,8 @@ export const useGame = defineStore("game", () => {
   });
 
   const loadList = async () => {
-    const [, data] = await sendApi(
-      IpcRendererSend.LoadList,
-      IpcMainSend.LoadedList,
-      {
-        hideZipFile: hideZipFile.value,
-        isHidden: false,
-      }
-    );
+    const data = await getGameList({ isHidden: false });
+    console.info("게임 목록 로드", data);
     loading.value = false;
     // 데이터 동일한 경우 캐싱된 computed값 재사용 위해 변경하지 않음
     if (JSON.stringify(list.value) === JSON.stringify(data)) {

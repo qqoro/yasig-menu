@@ -28,7 +28,7 @@ export async function up(knex: Knex): Promise<void> {
   if (!(await knex.schema.hasTable("tags"))) {
     await knex.schema.createTable("tags", (table) => {
       table.string("id", 50).primary();
-      table.string("tag", 200).notNullable();
+      table.string("tag", 200).notNullable().unique();
     });
   }
 
