@@ -1,4 +1,6 @@
 import { randomUUID } from "crypto";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat.js";
 import {
   app,
   BrowserWindow,
@@ -22,6 +24,7 @@ import windowsInit from "./handlers/windows.js";
 
 log.initialize();
 export const console = log;
+dayjs.extend(customParseFormat);
 
 let mainWindow: BrowserWindow;
 

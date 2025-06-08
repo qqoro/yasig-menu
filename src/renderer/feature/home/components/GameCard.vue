@@ -36,7 +36,6 @@ import GameInfoDialog from "./GameInfoDialog.vue";
 const console = log;
 
 const props = defineProps<Omit<Game, "source" | "isLoadedInfo">>();
-console.log(props);
 const emit = defineEmits<{
   viewThumbnail: [title: string, thumbnailPath: string];
   writeMemo: [path: string, title: string];
@@ -320,6 +319,7 @@ watch(loading, () => {
     </Dialog>
     <GameInfoDialog
       v-model="openInfo"
+      :path="path"
       :title="title"
       :publish-date="publishDate"
       :maker-name="makerName"

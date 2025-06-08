@@ -1,4 +1,4 @@
-import { db } from "../../main/db/db-manager";
+import { Game } from "../../main/db/db";
 import {
   IpcMainSend,
   IpcRendererEventMap,
@@ -17,8 +17,31 @@ export async function getGameList(
   return data;
 }
 
-export function thumbnailDownload() {
-  return db("setting").select().toQuery();
+export async function updateGame(
+  path: string,
+  gameData: Partial<
+    Pick<
+      Game,
+      | "title"
+      | "publishDate"
+      | "makerName"
+      | "category"
+      | "tags"
+      | "isClear"
+      | "memo"
+    >
+  >
+) {
+  const [, result] = await sendApi(
+    IpcRendererSend.UpdateGame,
+    IpcMainSend.Message,
+    { path, gameData }
+  );
+  return result;
 }
 
-console.log(thumbnailDownload());
+// export function thumbnailDownload() {
+//   return db("setting").select().toQuery();
+// }
+
+// console.log(thumbnailDownload());

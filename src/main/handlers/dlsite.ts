@@ -78,6 +78,7 @@ export async function saveInfo(path: string, rjCode: string) {
       .insert(tags?.map(({ id, name }) => ({ id, tag: name })))
       .onConflict()
       .ignore();
+    await tx("gameTags").delete().where({ gamePath: path });
     await tx("gameTags").insert(
       tags?.map((tag) => ({ gamePath: path, tagId: tag.id }))
     );
@@ -86,6 +87,8 @@ export async function saveInfo(path: string, rjCode: string) {
   await tx.commit();
 }
 
+// 개발용 전부 다시 로드코드
+// await db("games").update({ isLoadedInfo: false }).whereNotNull("rjCode");
 // TODO: 해당 내용을 자동으로 실행해야 함...
 // const notLoadedGames = await db("games")
 //   .select()

@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { app, shell } from "electron";
 import fg from "fast-glob";
 import { readdir, rm, stat } from "fs/promises";
@@ -123,6 +124,97 @@ ipcMain.on(IpcRendererSend.Clear, async (e, id, { path, isClear }) => {
 // 게임에 메모 작성
 ipcMain.on(IpcRendererSend.Memo, async (e, id, { path, memo }) => {
   await db("games").update({ memo }).where({ path });
+});
+
+// 게임 정보 업데이트
+ipcMain.on(IpcRendererSend.UpdateGame, async (e, id, { path, gameData }) => {
+  try {
+    // 게임이 존재하는지 먼저 확인
+    const existingGame = await db("games").select().where({ path }).first();
+
+    if (!existingGame) {
+      send(IpcMainSend.Message, id, {
+        type: "error",
+        message: "해당 게임을 찾을 수 없습니다.",
+        description: `Path: ${path}`,
+      });
+      return;
+    }
+
+    // 업데이트할 데이터 준비 (null이나 undefined 값 처리)
+    const updateData: any = {
+      updatedAt: db.fn.now(),
+    };
+
+    // 각 필드별로 값이 있는 경우에만 업데이트
+    if (gameData.title !== undefined) {
+      updateData.title = gameData.title;
+    }
+    if (gameData.publishDate !== undefined) {
+      updateData.publishDate = gameData.publishDate;
+    }
+    if (gameData.makerName !== undefined) {
+      updateData.makerName = gameData.makerName;
+    }
+    if (gameData.category !== undefined) {
+      updateData.category = gameData.category;
+    }
+    if (gameData.tags !== undefined) {
+      updateData.tags = gameData.tags;
+    }
+    if (gameData.memo !== undefined) {
+      updateData.memo = gameData.memo;
+    }
+
+    // 데이터베이스 업데이트 실행
+    const tx = await db.transaction();
+
+    const updatedRows = await tx("games").update(updateData).where({ path });
+    await tx("gameTags").delete().where({ gamePath: path });
+    if (updateData.tags) {
+      const tags: { id: string; tag: string }[] = updateData.tags
+        .split(",")
+        .map((tag: string) => ({
+          id: randomUUID(),
+          tag: tag.trim(),
+        }));
+      await tx("tags").insert(tags).onConflict().ignore();
+      const tagIds = await tx("tags")
+        .select("id")
+        .whereIn(
+          "tag",
+          tags.map((tag) => tag.tag)
+        );
+      await tx("gameTags").insert(
+        tagIds.map((tagId) => ({
+          gamePath: path,
+          tagId: tagId.id,
+        }))
+      );
+    }
+    await tx.commit();
+
+    if (updatedRows === 0) {
+      send(IpcMainSend.Message, id, {
+        type: "warning",
+        message:
+          "게임 정보가 업데이트되지 않았습니다. 변경사항이 없거나 게임을 찾을 수 없습니다.",
+      });
+      return;
+    }
+
+    send(IpcMainSend.Message, id, {
+      type: "success",
+      message: "게임 정보가 성공적으로 업데이트되었습니다.",
+    });
+  } catch (error) {
+    console.error("게임 정보 업데이트 실패:", error);
+    send(IpcMainSend.Message, id, {
+      type: "error",
+      message: "게임 정보 업데이트에 실패했습니다.",
+      description: (error as Error).message,
+    });
+  }
 });
 
 /**
@@ -257,7 +349,12 @@ const getListData = async ({
 
   // 캐시 상태 확인 및 캐시 로드 시도
   if (!isCacheDirty) {
-    const q = db("games").select();
+    const q = db("games")
+      .select("games.*")
+      .select(db.raw("group_concat(tags.tag, ', ') as tags"))
+      .join("gameTags", "games.path", "gameTags.gamePath")
+      .join("tags", "gameTags.tagId", "tags.id")
+      .groupBy("games.path");
     if (category) {
       q.where({ category: category });
     }
@@ -362,7 +459,12 @@ const getListData = async ({
       updatedAt: db.fn.now(),
     });
 
-  const q = db("games").select();
+  const q = db("games")
+    .select("games.*")
+    .select(db.raw("group_concat(tags.tag, ', ') as tags"))
+    .join("gameTags", "games.path", "gameTags.gamePath")
+    .join("tags", "gameTags.tagId", "tags.id")
+    .groupBy("games.path");
   if (category) {
     q.where({ category: category });
   }

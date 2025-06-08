@@ -27,7 +27,7 @@ export async function up(knex: Knex): Promise<void> {
   // tags 테이블 생성
   if (!(await knex.schema.hasTable("tags"))) {
     await knex.schema.createTable("tags", (table) => {
-      table.string("id").primary();
+      table.string("id", 50).primary();
       table.string("tag", 200).notNullable();
     });
   }
@@ -58,7 +58,9 @@ export async function up(knex: Knex): Promise<void> {
         .notNullable();
       table
         .string("playExclude")
-        .defaultTo(JSON.stringify(["notification_helper", "UnityCrashHandler64"]))
+        .defaultTo(
+          JSON.stringify(["notification_helper", "UnityCrashHandler64"])
+        )
         .notNullable();
       table.timestamp("createdAt", { useTz: false }).defaultTo(knex.fn.now());
       table.timestamp("updatedAt", { useTz: false }).nullable();
@@ -72,7 +74,10 @@ export async function up(knex: Knex): Promise<void> {
       newThumbnailFolder: "",
       cookie: "",
       search: JSON.stringify(["", ""]),
-      playExclude: JSON.stringify(["notification_helper", "UnityCrashHandler64"]),
+      playExclude: JSON.stringify([
+        "notification_helper",
+        "UnityCrashHandler64",
+      ]),
     });
   }
 }

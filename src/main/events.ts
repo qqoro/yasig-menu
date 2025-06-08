@@ -66,6 +66,7 @@ export enum IpcRendererSend {
   Recent = "Recent",
   Clear = "Clear",
   Memo = "Memo",
+  UpdateGame = "UpdateGame",
 
   ThumbnailDownload = "ThumbnailDownload",
   ThumbnailDelete = "ThumbnailDelete",
@@ -101,6 +102,23 @@ export interface IpcRendererEventMap
       [IpcRendererSend.Memo]: [
         id: string,
         { path: string; memo: string | null }
+      ];
+      [IpcRendererSend.UpdateGame]: [
+        id: string,
+        {
+          path: string;
+          gameData: Partial<
+            Pick<
+              Game,
+              | "title"
+              | "publishDate"
+              | "makerName"
+              | "category"
+              | "tags"
+              | "memo"
+            >
+          >;
+        }
       ];
 
       [IpcRendererSend.ThumbnailDownload]: [
