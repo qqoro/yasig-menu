@@ -121,7 +121,7 @@ export const useSetting = defineStore("setting", () => {
     const [, game] = await sendApi(
       IpcRendererSend.LoadList,
       IpcMainSend.LoadedList,
-      { hideZipFile: false, isHidden: true }
+      { isHidden: true }
     );
     exclude.value = game.map((game) => game.path);
     search.value = settingData.search;

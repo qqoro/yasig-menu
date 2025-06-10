@@ -40,6 +40,7 @@ import {
 import { off, on, send, sendApi } from "../../composable/useApi";
 import { useEvent } from "../../composable/useEvent";
 import { Sort } from "../../constants";
+import { thumbnailDownload } from "../../db/game";
 import { cn, wait } from "../../lib/utils";
 import { useGame } from "../../store/game-store";
 import { useSearch } from "../../store/search-store";
@@ -58,7 +59,7 @@ const selectRandomGame = async () => {
   const [, list] = await sendApi(
     IpcRendererSend.LoadList,
     IpcMainSend.LoadedList,
-    { hideZipFile: game.hideZipFile, isHidden: false }
+    { isHidden: false }
   );
   const data = list[Math.floor(list.length * Math.random())];
   search.searchWord = data.title;
@@ -109,8 +110,7 @@ const toggleApplySource = (e: Event, path: string, isExclude: boolean) => {
 };
 
 const applySources = storeToRefs(setting).applySources;
-const hideZipFile = storeToRefs(game).hideZipFile;
-watch([applySources, hideZipFile], () => {
+watch([applySources], () => {
   game.loadList();
 });
 
@@ -128,7 +128,7 @@ const thumbnailBatchDownload = async () => {
   const [, list] = await sendApi(
     IpcRendererSend.LoadList,
     IpcMainSend.LoadedList,
-    { hideZipFile: game.hideZipFile, isHidden: false }
+    { isHidden: false }
   );
   processQueue.value = list.filter((item) => item.thumbnail === undefined);
 
@@ -378,12 +378,6 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, id, percent) => {
                   setting.applySources.length === 0 ? "켜기" : "끄기"
                 }}</DropdownMenuItem
               >
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuCheckboxItem v-model="hideZipFile" @select.prevent>
-                <span>압축파일 제외</span>
-              </DropdownMenuCheckboxItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>

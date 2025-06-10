@@ -14,7 +14,6 @@ const console = log;
 
 export const useGame = defineStore("game", () => {
   const loading = ref(true);
-  const hideZipFile = ref(false);
   const list = ref<Game[]>([]);
   const showCount = ref(20);
   const moreLoad = (count: number) => {
@@ -103,13 +102,13 @@ export const useGame = defineStore("game", () => {
   const route = useRoute();
   watch(route, () => {
     showCount.value = 20;
+    // const setting = await getSetting();
   });
 
   loadList();
 
   return {
     loading,
-    hideZipFile,
     showCount,
     moreLoad,
     list,
