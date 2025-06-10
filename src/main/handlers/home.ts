@@ -66,7 +66,8 @@ ipcMain.on(IpcRendererSend.CleanCache, async (e, id) => {
 });
 
 // 게임 실행
-ipcMain.on(IpcRendererSend.Play, async (e, id, filePath, exclude = []) => {
+ipcMain.on(IpcRendererSend.Play, async (e, id, filePath) => {
+  const setting = await loadSetting();
   await db("games").update({ isRecent: true }).where({ path: filePath });
   try {
     const folderList = await readdir(filePath, { withFileTypes: true });
@@ -74,7 +75,7 @@ ipcMain.on(IpcRendererSend.Play, async (e, id, filePath, exclude = []) => {
       if (
         file.isDirectory() ||
         !file.name.toLowerCase().endsWith(".exe") ||
-        exclude.some((ex) =>
+        setting.playExclude.some((ex) =>
           file.name.toLowerCase().startsWith(ex.toLowerCase())
         )
       ) {

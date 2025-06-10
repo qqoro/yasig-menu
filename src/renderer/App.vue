@@ -6,10 +6,8 @@ import { send } from "./composable/useApi";
 import { useEvent } from "./composable/useEvent";
 import { useWindowEvent } from "./composable/useWindowEvent";
 import { useGame } from "./store/game-store";
-import { useSetting } from "./store/setting-store";
 
 const game = useGame();
-const setting = useSetting();
 
 const open = ref(false);
 
@@ -32,7 +30,6 @@ useWindowEvent("keydown", (event) => {
 onMounted(() => {
   send(IpcRendererSend.VersionCheck);
   game.loadList();
-  setting.init();
 });
 useEvent(IpcMainSend.VersionChecked, (e, id, version) => {
   const appLatestVersion = localStorage.getItem("version");

@@ -33,18 +33,20 @@ import { IMAGE_FILE_TYPE } from "../../../constants";
 import { thumbnailDownload } from "../../../db/game";
 import { cn } from "../../../lib/utils";
 import { useGame } from "../../../store/game-store";
-import { useSetting } from "../../../store/setting-store";
 import GameInfoDialog from "./GameInfoDialog.vue";
 const console = log;
 
 const props = defineProps<
-  Omit<Game, "source" | "isLoadedInfo"> & { zoom: number }
+  Omit<Game, "source" | "isLoadedInfo"> & {
+    zoom: number;
+    blur?: boolean;
+    dark?: boolean;
+  }
 >();
 const emit = defineEmits<{
   viewThumbnail: [title: string, thumbnailPath: string];
   writeMemo: [path: string, title: string];
 }>();
-const setting = useSetting();
 const game = useGame();
 
 const open = ref(false);
@@ -116,7 +118,7 @@ const downloadThumbnailFromUrl = (filePath: string) => {
 };
 
 const play = (filePath: string) => {
-  send(IpcRendererSend.Play, filePath, [...setting.playExclude]);
+  send(IpcRendererSend.Play, filePath);
   game.loadList();
 };
 
@@ -140,7 +142,7 @@ const removeRecent = (filePath: string) => {
 };
 
 const titleFontSize = computed(() => {
-  return Math.max(16 / (setting.zoom * 0.02), 16);
+  return Math.max(16 / (props.zoom * 0.02), 16);
 });
 
 useEvent(IpcMainSend.ThumbnailDone, (e, id, filePath) => {
@@ -175,8 +177,8 @@ watch(loading, () => {
         :class="
           cn(
             'object-cover w-full aspect-[4/3] hover:scale-110 transition-transform cursor-zoom-in',
-            { 'blur-md': setting.blur },
-            { 'brightness-0': setting.dark }
+            { 'blur-md': blur },
+            { 'brightness-0': dark }
           )
         "
         style="aspect-ratio: 4/3"

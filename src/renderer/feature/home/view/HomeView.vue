@@ -213,6 +213,8 @@ onMounted(() => {
               :tagIds="tagIds"
               :updatedAt="updatedAt"
               :zoom="zoom"
+              :blur="setting.blur"
+              :dark="setting.dark"
               @view-thumbnail="viewGameCard"
               @write-memo="viewGameMemo"
             />
@@ -258,6 +260,8 @@ onMounted(() => {
           :tagIds="tagIds"
           :updatedAt="updatedAt"
           :zoom="zoom"
+          :blur="setting.blur"
+          :dark="setting.dark"
           @view-thumbnail="viewGameCard"
           @write-memo="viewGameMemo"
         />

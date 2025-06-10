@@ -91,7 +91,7 @@ export interface IpcRendererEventMap
       [IpcRendererSend.LoadSetting]: [id: string];
       [IpcRendererSend.UpdateSetting]: [id: string, data: UpdateSetting];
 
-      [IpcRendererSend.Play]: [id: string, path: string, exclude?: string[]];
+      [IpcRendererSend.Play]: [id: string, path: string];
       [IpcRendererSend.OpenFolder]: [id: string, path: string];
       [IpcRendererSend.Hide]: [id: string, { path: string; isHidden: boolean }];
       [IpcRendererSend.Recent]: [
