@@ -43,6 +43,8 @@ useEvent(IpcMainSend.VersionChecked, (e, id, version) => {
 </script>
 
 <template>
-  <RouterView />
+  <Suspense>
+    <RouterView />
+  </Suspense>
   <Changelog v-model:open="open" />
 </template>

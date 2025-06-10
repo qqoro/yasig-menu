@@ -20,14 +20,14 @@ import {
   TooltipTrigger,
 } from "../../../components/ui/tooltip";
 import { useWindowEvent } from "../../../composable/useWindowEvent";
+import { getSetting } from "../../../db/setting";
 import Data from "../../../lib/data";
 import { cn } from "../../../lib/utils";
 import { useGame } from "../../../store/game-store";
 import { useSearch } from "../../../store/search-store";
-import { useSetting } from "../../../store/setting-store";
 import GameCard from "../components/GameCard.vue";
 
-const setting = useSetting();
+const setting = await getSetting();
 const game = useGame();
 const memoData = ref<Record<string, string>>(Data.getJSON("memo") ?? {});
 
@@ -163,9 +163,7 @@ onMounted(() => {
 
       <template v-else>
         <div
-          v-if="
-            setting.home.showRecent && game.searchFilteredList.recent.length > 0
-          "
+          v-if="setting.showRecent && game.searchFilteredList.recent.length > 0"
           class="w-full flex flex-col mb-4"
         >
           <h2 :style="{ zoom: (1 / (setting.zoom * 0.02)) * 1.2 }">
