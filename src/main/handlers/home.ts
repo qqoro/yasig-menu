@@ -107,7 +107,7 @@ ipcMain.on(IpcRendererSend.Play, async (e, id, filePath, exclude = []) => {
 });
 
 // 게임 폴더 열기
-ipcMain.on(IpcRendererSend.OpenFolder, (e, filePath: string) => {
+ipcMain.on(IpcRendererSend.OpenFolder, (e, id, filePath) => {
   shell.showItemInFolder(filePath);
 });
 
