@@ -362,6 +362,7 @@ const getListData = async ({
     const q = db("games")
       .select("games.*")
       .select(db.raw("group_concat(tags.tag, ', ') as tags"))
+      .select(db.raw("group_concat(tags.id, ',') as tagIds"))
       .leftJoin("gameTags", "games.path", "gameTags.gamePath")
       .leftJoin("tags", "gameTags.tagId", "tags.id")
       .groupBy("games.path");
@@ -482,6 +483,7 @@ const getListData = async ({
   const q = db("games")
     .select("games.*")
     .select(db.raw("group_concat(tags.tag, ', ') as tags"))
+    .select(db.raw("group_concat(tags.id, ',') as tagIds"))
     .leftJoin("gameTags", "games.path", "gameTags.gamePath")
     .leftJoin("tags", "gameTags.tagId", "tags.id")
     .groupBy("games.path");

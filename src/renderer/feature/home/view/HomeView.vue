@@ -189,6 +189,7 @@ onMounted(() => {
                   publishDate,
                   rjCode,
                   tags,
+                  tagIds,
                   updatedAt,
                 },
                 index
@@ -209,6 +210,7 @@ onMounted(() => {
               :publishDate="publishDate"
               :rjCode="rjCode"
               :tags="tags"
+              :tagIds="tagIds"
               :updatedAt="updatedAt"
               @view-thumbnail="viewGameCard"
               @write-memo="viewGameMemo"
@@ -232,6 +234,7 @@ onMounted(() => {
               publishDate,
               rjCode,
               tags,
+              tagIds,
               updatedAt,
             },
             index
@@ -251,6 +254,7 @@ onMounted(() => {
           :publishDate="publishDate"
           :rjCode="rjCode"
           :tags="tags"
+          :tagIds="tagIds"
           :updatedAt="updatedAt"
           @view-thumbnail="viewGameCard"
           @write-memo="viewGameMemo"

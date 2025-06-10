@@ -18,6 +18,7 @@ export interface Game extends TableBaseColumn {
   makerName: string | null;
   category: string | null;
   tags: string | null;
+  tagIds?: string | null;
   isHidden: SqliteBoolean;
   isClear: SqliteBoolean;
   isRecent: SqliteBoolean;
@@ -48,6 +49,7 @@ export interface Setting extends TableBaseColumn {
   showRecent: boolean;
   blur: boolean;
   dark: boolean;
+  zoom: number;
   search: [string, string];
   playExclude: string[];
 }
@@ -60,6 +62,7 @@ export interface InsertSetting extends Partial<TableBaseColumn> {
   showRecent?: SqliteBoolean;
   blur?: SqliteBoolean;
   dark?: SqliteBoolean;
+  zoom?: number;
   cookie?: string;
   search?: string;
   playExclude?: string;

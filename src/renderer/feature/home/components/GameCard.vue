@@ -6,6 +6,7 @@ import { toast } from "vue-sonner";
 import type { Game } from "../../../../main/db/db";
 import { IpcMainSend, IpcRendererSend } from "../../../../main/events";
 import PopOverButton from "../../../components/PopOverButton.vue";
+import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import {
   Card,
@@ -192,12 +193,21 @@ watch(loading, () => {
         class="size-32 max-md:size-24"
       />
     </CardHeader>
-    <CardContent
-      class="p-0 m-2 text-ellipsis text-nowrap overflow-hidden"
-      :title="title"
-      :style="`font-size: ${titleFontSize}px`"
-    >
-      {{ title }}
+    <CardContent class="p-0 m-2">
+      <div
+        class="text-ellipsis text-nowrap overflow-hidden"
+        :title="title"
+        :style="`font-size: ${titleFontSize}px`"
+      >
+        {{ title }}
+      </div>
+      {{ makerName }}
+
+      <template v-if="tagIds && tags">
+        <Badge v-for="(tagId, index) in tagIds.split(',')" :key="tagId">{{
+          tags.split(",")[index].trim()
+        }}</Badge>
+      </template>
     </CardContent>
     <CardFooter class="p-2 pt-0 flex gap-2">
       <PopOverButton
