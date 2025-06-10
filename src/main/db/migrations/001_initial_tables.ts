@@ -52,6 +52,10 @@ export async function up(knex: Knex): Promise<void> {
       table.boolean("changeThumbnailFolder").defaultTo(false).notNullable();
       table.string("newThumbnailFolder").defaultTo("").notNullable();
       table.string("cookie").defaultTo("").notNullable();
+      table.boolean("showAll").defaultTo(false).notNullable();
+      table.boolean("showRecent").defaultTo(true).notNullable();
+      table.boolean("blur").defaultTo(false).notNullable();
+      table.boolean("dark").defaultTo(false).notNullable();
       table
         .string("search")
         .defaultTo(JSON.stringify(["", ""]))

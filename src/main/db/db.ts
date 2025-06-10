@@ -44,6 +44,10 @@ export interface Setting extends TableBaseColumn {
   changeThumbnailFolder: SqliteBoolean;
   newThumbnailFolder: string;
   cookie: string;
+  showAll: boolean;
+  showRecent: boolean;
+  blur: boolean;
+  dark: boolean;
   search: [string, string];
   playExclude: string[];
 }
@@ -52,6 +56,10 @@ export interface InsertSetting extends Partial<TableBaseColumn> {
   applySources?: string;
   changeThumbnailFolder?: SqliteBoolean;
   newThumbnailFolder?: string;
+  showAll?: SqliteBoolean;
+  showRecent?: SqliteBoolean;
+  blur?: SqliteBoolean;
+  dark?: SqliteBoolean;
   cookie?: string;
   search?: string;
   playExclude?: string;
