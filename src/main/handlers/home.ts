@@ -9,6 +9,7 @@ import { Game, InsertGame } from "../db/db.js";
 import { IpcMainSend, IpcRendererSend, WhereGame } from "../events.js";
 import { ipcMain, send } from "../main.js";
 import { toLikeQuery } from "../utils.js";
+import { saveInfo } from "./dlsite.js";
 import { loadSetting } from "./setting.js";
 
 interface DirentLike {
@@ -169,38 +170,47 @@ ipcMain.on(IpcRendererSend.UpdateGame, async (e, id, { path, gameData }) => {
     // 데이터베이스 업데이트 실행
     const tx = await db.transaction();
 
-    const updatedRows = await tx("games").update(updateData).where({ path });
-    await tx("gameTags").delete().where({ gamePath: path });
-    if (updateData.tags) {
-      const tags: { id: string; tag: string }[] = updateData.tags
-        .split(",")
-        .map((tag: string) => ({
-          id: randomUUID(),
-          tag: tag.trim(),
-        }));
-      await tx("tags").insert(tags).onConflict().ignore();
-      const tagIds = await tx("tags")
-        .select("id")
-        .whereIn(
-          "tag",
-          tags.map((tag) => tag.tag)
-        );
-      await tx("gameTags").insert(
-        tagIds.map((tagId) => ({
-          gamePath: path,
-          tagId: tagId.id,
-        }))
-      );
-    }
-    await tx.commit();
+    try {
+      const updatedRows = await tx("games").update(updateData).where({ path });
+      if (updatedRows === 0) {
+        send(IpcMainSend.Message, id, {
+          type: "warning",
+          message:
+            "게임 정보가 업데이트되지 않았습니다. 변경사항이 없거나 게임을 찾을 수 없습니다.",
+        });
+        await tx.rollback();
+        return;
+      }
 
-    if (updatedRows === 0) {
-      send(IpcMainSend.Message, id, {
-        type: "warning",
-        message:
-          "게임 정보가 업데이트되지 않았습니다. 변경사항이 없거나 게임을 찾을 수 없습니다.",
-      });
-      return;
+      await tx("gameTags").delete().where({ gamePath: path });
+      if (updateData.tags) {
+        const tags: { id: string; tag: string }[] = updateData.tags
+          .split(",")
+          .map((tag: string) => ({
+            id: randomUUID(),
+            tag: tag.trim(),
+          }));
+        await tx("tags").insert(tags).onConflict().ignore();
+        const tagIds = await tx("tags")
+          .select("id")
+          .whereIn(
+            "tag",
+            tags.map((tag) => tag.tag)
+          );
+        await tx("gameTags")
+          .insert(
+            tagIds.map((tagId) => ({
+              gamePath: path,
+              tagId: tagId.id,
+            }))
+          )
+          .onConflict()
+          .ignore();
+      }
+      await tx.commit();
+    } catch (error) {
+      await tx.rollback();
+      throw error;
     }
 
     send(IpcMainSend.Message, id, {
@@ -455,6 +465,19 @@ const getListData = async ({
       isCompressFile: db.raw("excluded.isCompressFile"),
       updatedAt: db.fn.now(),
     });
+
+  // 정보 입력되지 않은 게임들 처리
+  const notLoadedGames = await db("games")
+    .select()
+    .where({ isLoadedInfo: false })
+    .whereNotNull("rjCode");
+  try {
+    await Promise.all(
+      notLoadedGames.map((game) => saveInfo(game.path, game.rjCode!))
+    );
+  } catch (error) {
+    console.error(error);
+  }
 
   const q = db("games")
     .select("games.*")

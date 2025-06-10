@@ -64,27 +64,32 @@ export async function saveInfo(path: string, rjCode: string) {
 
   const tx = await db.transaction();
 
-  await tx("games")
-    .update({
-      publishDate,
-      makerName,
-      category,
-      isLoadedInfo: true,
-    })
-    .where({ path });
+  try {
+    await tx("games")
+      .update({
+        publishDate,
+        makerName,
+        category,
+        isLoadedInfo: true,
+      })
+      .where({ path });
 
-  if (tags) {
-    await tx("tags")
-      .insert(tags?.map(({ id, name }) => ({ id, tag: name })))
-      .onConflict()
-      .ignore();
-    await tx("gameTags").delete().where({ gamePath: path });
-    await tx("gameTags").insert(
-      tags?.map((tag) => ({ gamePath: path, tagId: tag.id }))
-    );
+    if (tags) {
+      await tx("tags")
+        .insert(tags?.map(({ id, name }) => ({ id, tag: name })))
+        .onConflict()
+        .ignore();
+      await tx("gameTags").delete().where({ gamePath: path });
+      await tx("gameTags")
+        .insert(tags?.map((tag) => ({ gamePath: path, tagId: tag.id })))
+        .onConflict()
+        .ignore();
+    }
+
+    await tx.commit();
+  } catch {
+    await tx.rollback();
   }
-
-  await tx.commit();
 }
 
 // 개발용 전부 다시 로드코드
