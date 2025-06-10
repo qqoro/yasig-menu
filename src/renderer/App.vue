@@ -23,6 +23,9 @@ useWindowEvent("keydown", (event) => {
     case event.key.toLowerCase() === "r" && event.ctrlKey:
       location.reload();
       break;
+    case event.key.toLowerCase() === "f12":
+      send(IpcRendererSend.ToggleDevTools);
+      break;
   }
 });
 
