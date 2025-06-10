@@ -56,6 +56,7 @@ export async function up(knex: Knex): Promise<void> {
       table.boolean("showRecent").defaultTo(true).notNullable();
       table.boolean("blur").defaultTo(false).notNullable();
       table.boolean("dark").defaultTo(false).notNullable();
+      table.integer("zoom").defaultTo(50).notNullable().checkBetween([0, 100]);
       table
         .string("search")
         .defaultTo(JSON.stringify(["", ""]))

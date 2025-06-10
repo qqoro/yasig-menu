@@ -3,7 +3,7 @@ import logo from "@/assets/logo.png";
 import { Icon } from "@iconify/vue";
 import { IpcRendererEvent } from "electron";
 import { storeToRefs } from "pinia";
-import { ref, watch } from "vue";
+import { reactive, ref, watch } from "vue";
 import { RouterView, useRoute } from "vue-router";
 import { toast } from "vue-sonner";
 import { Game } from "../../../main/db/db";
@@ -41,14 +41,14 @@ import { off, on, send, sendApi } from "../../composable/useApi";
 import { useEvent } from "../../composable/useEvent";
 import { Sort } from "../../constants";
 import { thumbnailDownload } from "../../db/game";
+import { getSetting, updateSetting } from "../../db/setting";
 import { cn, wait } from "../../lib/utils";
 import { useGame } from "../../store/game-store";
 import { useSearch } from "../../store/search-store";
-import { useSetting } from "../../store/setting-store";
 import { Toaster } from "../ui/sonner";
 
 const route = useRoute();
-const setting = useSetting();
+const setting = reactive(await getSetting());
 const game = useGame();
 const search = useSearch();
 const isMaximized = ref(false);
@@ -66,14 +66,19 @@ const selectRandomGame = async () => {
 };
 
 const zoomIn = () => {
+  console.log(setting.zoom);
   if (setting.zoom + 5 <= 100) {
-    setting.saveZoom(setting.zoom + 5);
+    const zoom = setting.zoom + 5;
+    updateSetting({ zoom });
+    setting.zoom = zoom;
   }
 };
 
 const zoomOut = () => {
   if (setting.zoom - 5 > 0) {
-    setting.saveZoom(setting.zoom - 5);
+    const zoom = setting.zoom - 5;
+    updateSetting({ zoom });
+    setting.zoom = zoom;
   }
 };
 
@@ -91,11 +96,12 @@ const sortName: Record<Sort, string> = {
 
 const allToggleApplySource = (e: Event) => {
   e?.preventDefault();
-  if (setting.applySources.length === 0) {
-    setting.saveApplySources([...setting.sources]);
-  } else {
-    setting.saveApplySources([]);
-  }
+  const applySources =
+    setting.applySources.length === 0 ? [...setting.sources] : [];
+  updateSetting({
+    applySources: JSON.stringify(applySources),
+  });
+  setting.applySources = applySources;
 };
 
 const toggleApplySource = (e: Event, path: string, isExclude: boolean) => {
@@ -106,13 +112,18 @@ const toggleApplySource = (e: Event, path: string, isExclude: boolean) => {
   } else {
     list.splice(list.indexOf(path), 1);
   }
-  setting.saveApplySources(list);
+  updateSetting({
+    applySources: JSON.stringify(list),
+  });
+  setting.applySources = list;
 };
 
-const applySources = storeToRefs(setting).applySources;
-watch([applySources], () => {
-  game.loadList();
-});
+watch(
+  () => setting.applySources,
+  () => {
+    game.loadList();
+  }
+);
 
 const processQueue = ref<Game[]>([]);
 const batchProcessing = ref(false);
@@ -122,9 +133,6 @@ const thumbnailBatchDownload = async () => {
   }
 
   batchProcessing.value = true;
-  const thumbnailFolder = setting.changeThumbnailFolder[0]
-    ? setting.changeThumbnailFolder[1]
-    : undefined;
   const [, list] = await sendApi(
     IpcRendererSend.LoadList,
     IpcMainSend.LoadedList,
@@ -411,7 +419,7 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, id, percent) => {
     </div>
   </nav>
   <RouterView #default="{ Component }">
-    <component :is="Component" class="py-2 px-4 pb-6" />
+    <component :is="Component" class="py-2 px-4 pb-6" :zoom="setting.zoom" />
   </RouterView>
   <Toaster rich-colors close-button />
   <AlertDialog v-model:open="updateDialogOpen">

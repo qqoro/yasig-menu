@@ -37,7 +37,9 @@ import { useSetting } from "../../../store/setting-store";
 import GameInfoDialog from "./GameInfoDialog.vue";
 const console = log;
 
-const props = defineProps<Omit<Game, "source" | "isLoadedInfo">>();
+const props = defineProps<
+  Omit<Game, "source" | "isLoadedInfo"> & { zoom: number }
+>();
 const emit = defineEmits<{
   viewThumbnail: [title: string, thumbnailPath: string];
   writeMemo: [path: string, title: string];

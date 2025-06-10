@@ -27,6 +27,8 @@ import { useGame } from "../../../store/game-store";
 import { useSearch } from "../../../store/search-store";
 import GameCard from "../components/GameCard.vue";
 
+defineProps<{ zoom: number }>();
+
 const setting = await getSetting();
 const game = useGame();
 const memoData = ref<Record<string, string>>(Data.getJSON("memo") ?? {});
@@ -144,7 +146,7 @@ onMounted(() => {
           'flex justify-center items-center h-[calc(100dvh-200px)]': !gameExist,
         })
       "
-      :style="{ zoom: setting.zoom * 0.02 }"
+      :style="{ zoom: zoom * 0.02 }"
     >
       <div
         v-if="!gameExist"
@@ -166,9 +168,7 @@ onMounted(() => {
           v-if="setting.showRecent && game.searchFilteredList.recent.length > 0"
           class="w-full flex flex-col mb-4"
         >
-          <h2 :style="{ zoom: (1 / (setting.zoom * 0.02)) * 1.2 }">
-            최근 플레이
-          </h2>
+          <h2 :style="{ zoom: (1 / (zoom * 0.02)) * 1.2 }">최근 플레이</h2>
           <div
             class="max-w-full overflow-x-auto flex flex-row items-center gap-4"
           >
@@ -212,6 +212,7 @@ onMounted(() => {
               :tags="tags"
               :tagIds="tagIds"
               :updatedAt="updatedAt"
+              :zoom="zoom"
               @view-thumbnail="viewGameCard"
               @write-memo="viewGameMemo"
             />
@@ -256,6 +257,7 @@ onMounted(() => {
           :tags="tags"
           :tagIds="tagIds"
           :updatedAt="updatedAt"
+          :zoom="zoom"
           @view-thumbnail="viewGameCard"
           @write-memo="viewGameMemo"
         />
@@ -267,7 +269,7 @@ onMounted(() => {
             game.showCount
           "
           class="w-full flex justify-center items-center gap-4"
-          :style="{ zoom: 1 / (setting.zoom * 0.02) }"
+          :style="{ zoom: 1 / (zoom * 0.02) }"
         >
           <Button variant="outline" @click="game.moreLoad(20)"
             >더 불러오기 (20개)</Button
