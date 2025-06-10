@@ -40,8 +40,14 @@ export async function updateGame(
   return result;
 }
 
-// export function thumbnailDownload() {
-//   return db("setting").select().toQuery();
-// }
-
-// console.log(thumbnailDownload());
+export async function thumbnailDownload(
+  path: string,
+  options?: { url?: string; file?: { data: ArrayBuffer; ext: string } }
+) {
+  const [, result] = await sendApi(
+    IpcRendererSend.ThumbnailDownload,
+    IpcMainSend.ThumbnailDone,
+    { path, url: options?.url, file: options?.file }
+  );
+  return result;
+}

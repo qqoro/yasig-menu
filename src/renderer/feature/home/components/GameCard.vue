@@ -29,6 +29,7 @@ import { send } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
 import { useFile } from "../../../composable/useFile";
 import { IMAGE_FILE_TYPE } from "../../../constants";
+import { thumbnailDownload } from "../../../db/game";
 import { cn } from "../../../lib/utils";
 import { useGame } from "../../../store/game-store";
 import { useSetting } from "../../../store/setting-store";
@@ -55,19 +56,17 @@ const { file, changeHandler } = useFile(
 );
 const url = ref("");
 
-const downloadThumbnail = (filePath: string) => {
+const downloadThumbnail = () => {
   loading.value = true;
-  const [useSavePath, savePath] = setting.changeThumbnailFolder;
-  send(IpcRendererSend.ThumbnailDownload, {
-    filePath,
-    cookie: setting.cookie,
-    search: [...setting.search],
-    savePath: useSavePath ? savePath : undefined,
-  });
+  thumbnailDownload(props.path);
 };
 
-const deleteThumbnail = (filePath: string) => {
-  send(IpcRendererSend.ThumbnailDelete, filePath);
+const deleteThumbnail = () => {
+  if (!props.thumbnail) {
+    return;
+  }
+
+  send(IpcRendererSend.ThumbnailDelete, props.thumbnail);
   game.loadList();
 };
 
@@ -85,12 +84,7 @@ const uploadThumbnail = async () => {
 
   loading.value = true;
   open.value = false;
-  const [useSavePath, savePath] = setting.changeThumbnailFolder;
-  send(IpcRendererSend.ThumbnailDownload, {
-    filePath: props.path,
-    cookie: setting.cookie,
-    search: [...setting.search],
-    savePath: useSavePath ? savePath : undefined,
+  thumbnailDownload(props.path, {
     file: {
       data: await file.value.arrayBuffer(),
       ext:
@@ -115,14 +109,7 @@ const downloadThumbnailFromUrl = (filePath: string) => {
 
   loading.value = true;
   open.value = false;
-  const [useSavePath, savePath] = setting.changeThumbnailFolder;
-  send(IpcRendererSend.ThumbnailDownload, {
-    filePath,
-    cookie: setting.cookie,
-    search: [...setting.search],
-    savePath: useSavePath ? savePath : undefined,
-    url: url.value,
-  });
+  thumbnailDownload(props.path, { url: url.value });
 };
 
 const play = (filePath: string) => {
@@ -193,7 +180,7 @@ watch(loading, () => {
         :src="thumbnail.replaceAll('#', '%23') + '?v=' + fakeQueryId"
         alt=""
       />
-      <button v-else-if="!loading" @click="downloadThumbnail(path)">
+      <button v-else-if="!loading" @click="downloadThumbnail">
         <Icon
           icon="solar:gallery-download-bold-duotone"
           class="size-32 max-md:size-24"
@@ -260,13 +247,13 @@ watch(loading, () => {
         <DropdownMenuContent align="start">
           <DropdownMenuItem
             :disabled="!thumbnail"
-            @click="deleteThumbnail(thumbnail!)"
+            @click="deleteThumbnail"
             variant="destructive"
           >
             <Icon icon="solar:trash-bin-minimalistic-2-bold-duotone" />
             <span>썸네일 삭제</span>
           </DropdownMenuItem>
-          <DropdownMenuItem @click="downloadThumbnail(path)">
+          <DropdownMenuItem @click="downloadThumbnail">
             <Icon icon="solar:refresh-circle-bold-duotone" />
             <span>썸네일 다시 다운로드</span>
           </DropdownMenuItem>

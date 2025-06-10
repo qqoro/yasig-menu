@@ -162,12 +162,7 @@ const thumbnailBatchDownload = async () => {
       while (list.length >= 3) {
         await wait(200);
       }
-      send(IpcRendererSend.ThumbnailDownload, {
-        cookie: setting.cookie,
-        savePath: thumbnailFolder,
-        search: [...setting.search],
-        filePath: item.path,
-      });
+      thumbnailDownload(item.path);
       list.push(item);
     }
 

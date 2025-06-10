@@ -5,6 +5,7 @@ import { basename, extname, join } from "path";
 import puppeteer, { Browser, Page } from "puppeteer-core";
 import { IpcMainEventMap, IpcMainSend, IpcRendererSend } from "../events.js";
 import { console, ipcMain, send } from "../main.js";
+import { loadSetting } from "./setting.js";
 
 let browser: Browser | undefined;
 
@@ -15,8 +16,11 @@ app.on("window-all-closed", async function () {
 
 ipcMain.on(
   IpcRendererSend.ThumbnailDownload,
-  async (e, id, { filePath, cookie, search, savePath, file, url }) => {
+  async (e, id, { path: filePath, file, url }) => {
     let page: Page | undefined;
+    const { cookie, search, changeThumbnailFolder, newThumbnailFolder } =
+      await loadSetting();
+    const savePath = changeThumbnailFolder ? newThumbnailFolder : filePath;
 
     const fileInfo = await stat(filePath);
     const baseName = basename(filePath);
