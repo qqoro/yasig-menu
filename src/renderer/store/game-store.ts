@@ -7,15 +7,19 @@ import { IpcMainSend } from "../../main/events";
 import { useEvent } from "../composable/useEvent";
 import { Sort } from "../constants";
 import { getGameList } from "../db/game";
+import { getSetting } from "../db/setting";
 import { searchFuzzy, sortRJCode } from "../lib/search";
 import { useSearch } from "./search-store";
-import { useSetting } from "./setting-store";
 const console = log;
 
 export const useGame = defineStore("game", () => {
   const loading = ref(true);
   const list = ref<Game[]>([]);
   const showCount = ref(20);
+
+  const showAll = ref(false);
+  const showRecent = ref(false);
+
   const moreLoad = (count: number) => {
     showCount.value += count;
   };
@@ -45,8 +49,6 @@ export const useGame = defineStore("game", () => {
   });
 
   const searchFilteredList = computed(() => {
-    const setting = useSetting();
-
     const recent: Game[] = [];
     const games: Game[] = [];
     const regex = searchRegex.value; // 메모이제이션된 정규식 사용
@@ -66,14 +68,14 @@ export const useGame = defineStore("game", () => {
       };
 
       // 최근 목록 사용 + 검색어 없을때만 표시
-      if (item.isRecent && !regex) {
+      if (showRecent.value && gameData.isRecent && !regex) {
         // 개수 제한이 있거나, 아직 recent 목록이 showCount 미만일 때만 추가
-        if (setting.home.showAll || recent.length < showCount.value) {
+        if (showAll.value || recent.length < showCount.value) {
           recent.push(gameData);
         }
       } else {
         // 개수 제한이 있거나, 아직 games 목록이 showCount 미만일 때만 추가
-        if (setting.home.showAll || games.length < showCount.value) {
+        if (showAll.value || games.length < showCount.value) {
           games.push(gameData);
         }
       }
@@ -84,7 +86,7 @@ export const useGame = defineStore("game", () => {
 
   const loadList = async () => {
     const data = await getGameList({ isHidden: false });
-    console.info("게임 목록 로드", data);
+    // console.info("게임 목록 로드", data);
     loading.value = false;
     // 데이터 동일한 경우 캐싱된 computed값 재사용 위해 변경하지 않음
     if (JSON.stringify(list.value) === JSON.stringify(data)) {
@@ -100,9 +102,11 @@ export const useGame = defineStore("game", () => {
 
   // 경로 변경 시 최대 조회개수 초기화
   const route = useRoute();
-  watch(route, () => {
+  watch(route, async () => {
     showCount.value = 20;
-    // const setting = await getSetting();
+    const setting = await getSetting();
+    showAll.value = setting.showAll;
+    showRecent.value = setting.showRecent;
   });
 
   loadList();
