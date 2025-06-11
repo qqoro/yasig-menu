@@ -37,6 +37,7 @@ export async function loadInfo(id: string) {
   const tags = body
     .querySelector(".main_genre")
     ?.querySelectorAll("a")
+    .filter((e) => /genre\/(\d+)\/from/.test(e.getAttribute("href") ?? ""))
     .map((e) => ({
       id: /genre\/(\d+)\/from/.exec(e.getAttribute("href") ?? "")![1],
       name: e.textContent,
