@@ -14,17 +14,11 @@
     "build:port": "tsc --noEmit && node scripts/build.js && electron-builder --win portable --publish=never",
     "build:win": "tsc --noEmit && node scripts/build.js && electron-builder --win --publish=never",
     "build:port:win": "tsc --noEmit && node scripts/build.js && electron-builder --win portable --publish=never",
-    "prepare": "husky && electron-rebuild -f -w better-sqlite3",
-    "db:migrate": "tsx src/main/db/database-manager.ts migrate",
-    "db:rollback": "tsx src/main/db/database-manager.ts rollback",
-    "db:status": "tsx src/main/db/database-manager.ts status",
-    "db:reset": "tsx src/main/db/database-manager.ts reset",
-    "db:create": "tsx src/main/db/database-manager.ts create",
-    "db:health": "tsx src/main/db/database-manager.ts health"
+    "prepare": "husky",
+    "postinstall": "electron-builder install-app-deps"
   },
   "type": "module",
   "devDependencies": {
-    "@electron/rebuild": "^4.0.1",
     "@iconify-json/solar": "^1.2.2",
     "@iconify/vue": "^4.3.0",
     "@types/node": "^22.14.1",
