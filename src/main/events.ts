@@ -18,6 +18,9 @@ export enum IpcMainSend {
   LoadedSetting = "LoadedSetting",
 
   ThumbnailDone = "ThumbnailDone",
+
+  NeedMigration = "NeedMigration",
+  MigrationDone = "MigrationDone",
 }
 
 export interface IpcMainEventMap
@@ -41,6 +44,9 @@ export interface IpcMainEventMap
       [IpcMainSend.LoadedSetting]: [id: string, setting: Setting];
 
       [IpcMainSend.ThumbnailDone]: [id: string, string];
+
+      [IpcMainSend.NeedMigration]: [id: string, version: string];
+      [IpcMainSend.MigrationDone]: [id: string, version: string];
     }
   > {}
 
@@ -70,6 +76,8 @@ export enum IpcRendererSend {
 
   ThumbnailDownload = "ThumbnailDownload",
   ThumbnailDelete = "ThumbnailDelete",
+
+  MigrationData = "MigrationData",
 }
 
 export interface IpcRendererEventMap
@@ -139,6 +147,11 @@ export interface IpcRendererEventMap
         }
       ];
       [IpcRendererSend.ThumbnailDelete]: [id: string, path: string];
+
+      [IpcRendererSend.MigrationData]: [
+        id: string,
+        setting: Record<string, any>
+      ];
     }
   > {}
 
