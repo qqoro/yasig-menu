@@ -27,6 +27,12 @@ import {
   DropdownMenuTrigger,
 } from "../../../components/ui/dropdown-menu";
 import { Input } from "../../../components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../../../components/ui/tooltip";
 import { send } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
 import { useFile } from "../../../composable/useFile";
@@ -174,31 +180,42 @@ watch(loading, () => {
       class="p-0 w-full overflow-hidden flex justify-center items-center"
       style="aspect-ratio: 4/3"
     >
-      <img
-        v-if="thumbnail && !loading"
-        @click="emit('viewThumbnail', title, thumbnail)"
-        :class="
-          cn(
-            'object-cover w-full aspect-[4/3] hover:scale-110 transition-transform cursor-zoom-in',
-            { 'blur-md': blur },
-            { 'brightness-0': dark }
-          )
-        "
-        style="aspect-ratio: 4/3"
-        :src="thumbnail.replaceAll('#', '%23') + '?v=' + fakeQueryId"
-        alt=""
-      />
-      <button v-else-if="!loading" @click="downloadThumbnail">
-        <Icon
-          icon="solar:gallery-download-bold-duotone"
-          class="size-32 max-md:size-24"
-        />
-      </button>
-      <Icon
-        v-else
-        icon="svg-spinners:ring-resize"
-        class="size-32 max-md:size-24"
-      />
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <img
+              v-if="thumbnail && !loading"
+              @click="emit('viewThumbnail', title, thumbnail)"
+              :class="
+                cn(
+                  'object-cover w-full aspect-[4/3] hover:scale-110 transition-transform cursor-zoom-in',
+                  { 'blur-md': blur },
+                  { 'brightness-0': dark }
+                )
+              "
+              style="aspect-ratio: 4/3"
+              :src="thumbnail.replaceAll('#', '%23') + '?v=' + fakeQueryId"
+              alt=""
+            />
+            <button v-else-if="!loading" @click="downloadThumbnail">
+              <Icon
+                icon="solar:gallery-download-bold-duotone"
+                class="size-32 max-md:size-24"
+              />
+            </button>
+            <Icon
+              v-else
+              icon="svg-spinners:ring-resize"
+              class="size-32 max-md:size-24"
+            />
+          </TooltipTrigger>
+          <TooltipContent v-if="memo">
+            <p class="whitespace-pre-wrap break-all max-w-64">
+              {{ memo }}
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </CardHeader>
     <CardContent class="p-0 m-2">
       <div
@@ -276,11 +293,9 @@ watch(loading, () => {
       />
       <PopOverButton
         icon="solar:pen-new-round-bold-duotone"
-        :message="memo || '메모하기'"
-        :pre="true"
-        @click="emit('writeMemo', path, title)"
+        message="정보 수정"
+        @click="openInfo = true"
       />
-
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button variant="outline" size="icon">
@@ -317,10 +332,6 @@ watch(loading, () => {
           <DropdownMenuItem v-if="isRecent" @click="removeRecent(path)">
             <Icon icon="solar:eraser-bold-duotone" />
             <span>최근 플레이 기록 삭제</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem @click="openInfo = true">
-            <Icon icon="solar:eraser-bold-duotone" />
-            <span>정보 수정</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
