@@ -24,7 +24,7 @@ export const useGame = defineStore("game", () => {
     showCount.value += count;
   };
 
-  const { searchWord, sort } = storeToRefs(useSearch());
+  const { searchWord, makerName, tagIds, sort } = storeToRefs(useSearch());
   const sortedList = computed(() => {
     switch (sort.value) {
       case Sort.Title:
@@ -53,6 +53,9 @@ export const useGame = defineStore("game", () => {
     const games: Game[] = [];
     const regex = searchRegex.value; // 메모이제이션된 정규식 사용
 
+    const hasTags = tagIds.value.size > 0;
+    const selectedTags = [...tagIds.value.values()];
+
     for (const item of sortedList.value) {
       // 숨김게임 패스
       if (item.isHidden) {
@@ -62,21 +65,31 @@ export const useGame = defineStore("game", () => {
       if (regex && !regex.test(item.title.replaceAll(" ", ""))) {
         continue;
       }
-
-      const gameData = {
-        ...item,
-      };
+      // 검색 제작자 있는 경우 체크
+      if (makerName.value && item.makerName !== makerName.value) {
+        continue;
+      }
+      // 검색 태그 있는 경우 체크
+      const itemTags = item.tagIds?.split(",") ?? [];
+      if (
+        // 게임에 태그 없거나
+        (hasTags && !item.tagIds) ||
+        // 태그는 있지만 지정 태그가 모두 있지는 않은 경우
+        (hasTags && !selectedTags.every((tagId) => itemTags.includes(tagId)))
+      ) {
+        continue;
+      }
 
       // 최근 목록 사용 + 검색어 없을때만 표시
-      if (showRecent.value && gameData.isRecent && !regex) {
+      if (showRecent.value && item.isRecent && !regex) {
         // 개수 제한이 있거나, 아직 recent 목록이 showCount 미만일 때만 추가
         if (showAll.value || recent.length < showCount.value) {
-          recent.push(gameData);
+          recent.push(item);
         }
       } else {
         // 개수 제한이 있거나, 아직 games 목록이 showCount 미만일 때만 추가
         if (showAll.value || games.length < showCount.value) {
-          games.push(gameData);
+          games.push(item);
         }
       }
     }

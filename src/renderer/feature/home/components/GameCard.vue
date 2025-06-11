@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
 import log from "electron-log";
+import { storeToRefs } from "pinia";
 import { computed, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import type { Game } from "../../../../main/db/db";
@@ -33,6 +34,7 @@ import { IMAGE_FILE_TYPE } from "../../../constants";
 import { thumbnailDownload } from "../../../db/game";
 import { cn } from "../../../lib/utils";
 import { useGame } from "../../../store/game-store";
+import { useSearch } from "../../../store/search-store";
 import GameInfoDialog from "./GameInfoDialog.vue";
 const console = log;
 
@@ -48,6 +50,7 @@ const emit = defineEmits<{
   writeMemo: [path: string, title: string];
 }>();
 const game = useGame();
+const search = storeToRefs(useSearch());
 
 const open = ref(false);
 const openInfo = ref(false);
@@ -205,13 +208,39 @@ watch(loading, () => {
       >
         {{ title }}
       </div>
-      {{ makerName }}
 
-      <template v-if="tagIds && tags">
-        <Badge v-for="(tagId, index) in tagIds.split(',')" :key="tagId">{{
-          tags.split(",")[index].trim()
-        }}</Badge>
-      </template>
+      <div class="flex flex-col gap-1 mt-1">
+        <div>
+          제작사:
+          <button
+            v-if="makerName"
+            @click="
+              search.makerName.value =
+                search.makerName.value === makerName ? '' : makerName
+            "
+            :class="{ 'bg-amber-300': search.makerName.value === makerName }"
+          >
+            {{ makerName }}
+          </button>
+          <template v-else>알 수 없음</template>
+        </div>
+        <div v-if="tagIds && tags" class="flex flex-wrap gap-1">
+          <Badge
+            v-for="(tagId, index) in tagIds.split(',')"
+            :key="tagId"
+            as="button"
+            @click="
+              search.tagIds.value.has(tagId)
+                ? search.tagIds.value.delete(tagId)
+                : search.tagIds.value.add(tagId)
+            "
+            :class="{
+              'bg-amber-300! text-black': search.tagIds.value.has(tagId),
+            }"
+            >{{ tags.split(",")[index].trim() }}</Badge
+          >
+        </div>
+      </div>
     </CardContent>
     <CardFooter class="p-2 pt-0 flex gap-2">
       <PopOverButton
