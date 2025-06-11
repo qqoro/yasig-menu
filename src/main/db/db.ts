@@ -42,7 +42,7 @@ export interface GameTag {
 export interface Setting extends TableBaseColumn {
   sources: string[];
   applySources: string[];
-  changeThumbnailFolder: SqliteBoolean;
+  changeThumbnailFolder: boolean;
   newThumbnailFolder: string;
   cookie: string;
   showAll: boolean;

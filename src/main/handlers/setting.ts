@@ -1,9 +1,10 @@
 import { db } from "../db/db-manager.js";
+import { Setting } from "../db/db.js";
 import { IpcMainSend, IpcRendererSend } from "../events.js";
 import { console, ipcMain, send } from "../main.js";
 
 export const loadSetting = async () => {
-  const [data] = await db("setting").select().limit(1);
+  const [data] = (await db("setting").select().limit(1)) as any;
   Object.keys(data).forEach((key) => {
     try {
       // 빈 문자열은 JSON파싱시 오류나므로 스킵
@@ -21,7 +22,7 @@ export const loadSetting = async () => {
       console.error(error);
     }
   });
-  return data;
+  return data as Setting;
 };
 
 ipcMain.on(IpcRendererSend.LoadSetting, async (e, id) => {
