@@ -1,4 +1,5 @@
 import { ToastT } from "vue-sonner";
+import { Game, Setting, UpdateSetting } from "./db/db.js";
 
 type EnforceAllKeys<
   E extends IpcMainSend | IpcRendererSend,
@@ -14,29 +15,42 @@ export enum IpcMainSend {
   LoadedList = "LoadedList",
   Message = "Message",
 
+  LoadedSetting = "LoadedSetting",
+
   ThumbnailDone = "ThumbnailDone",
+
+  NeedMigration = "NeedMigration",
+  MigrationDone = "MigrationDone",
 }
 
 export interface IpcMainEventMap
   extends EnforceAllKeys<
     IpcMainSend,
     {
-      [IpcMainSend.WindowStatusChange]: [boolean];
-      [IpcMainSend.UpdateChecked]: [boolean];
-      [IpcMainSend.UpdateDownloadProgress]: [number];
-      [IpcMainSend.VersionChecked]: [string];
+      [IpcMainSend.WindowStatusChange]: [id: string, boolean];
+      [IpcMainSend.UpdateChecked]: [id: string, boolean];
+      [IpcMainSend.UpdateDownloadProgress]: [id: string, number];
+      [IpcMainSend.VersionChecked]: [id: string, string];
 
-      [IpcMainSend.LoadedList]: [
-        { path: string; title: string; thumbnail?: string }[]
-      ];
+      [IpcMainSend.LoadedList]: [id: string, Game[]];
       [IpcMainSend.Message]: [
+        id: string,
         {
           type: "success" | "info" | "warning" | "error";
           message: string;
         } & Omit<ToastT, "id" | "type">
       ];
 
-      [IpcMainSend.ThumbnailDone]: [string];
+      [IpcMainSend.LoadedSetting]: [id: string, setting: Setting];
+
+      [IpcMainSend.ThumbnailDone]: [id: string, string];
+
+      [IpcMainSend.NeedMigration]: [
+        id: string,
+        version: string,
+        list: string[]
+      ];
+      [IpcMainSend.MigrationDone]: [id: string, version: string];
     }
   > {}
 
@@ -53,47 +67,76 @@ export enum IpcRendererSend {
   LoadList = "LoadList",
   CleanCache = "CleanCache",
 
+  LoadSetting = "LoadSetting",
+  UpdateSetting = "UpdateSetting",
+
   Play = "Play",
   OpenFolder = "OpenFolder",
   Hide = "Hide",
+  Recent = "Recent",
+  Clear = "Clear",
+  Memo = "Memo",
+  UpdateGame = "UpdateGame",
 
   ThumbnailDownload = "ThumbnailDownload",
   ThumbnailDelete = "ThumbnailDelete",
+
+  MigrationData = "MigrationData",
 }
 
 export interface IpcRendererEventMap
   extends EnforceAllKeys<
     IpcRendererSend,
     {
-      [IpcRendererSend.WindowMinimize]: [];
-      [IpcRendererSend.WindowMaximizeToggle]: [];
-      [IpcRendererSend.WindowClose]: [];
-      [IpcRendererSend.UpdateCheck]: [];
-      [IpcRendererSend.VersionCheck]: [];
-      [IpcRendererSend.ToggleDevTools]: [];
-      [IpcRendererSend.OpenLogFolder]: [];
-      [IpcRendererSend.Restart]: [];
+      [IpcRendererSend.WindowMinimize]: [id: string];
+      [IpcRendererSend.WindowMaximizeToggle]: [id: string];
+      [IpcRendererSend.WindowClose]: [id: string];
+      [IpcRendererSend.UpdateCheck]: [id: string];
+      [IpcRendererSend.VersionCheck]: [id: string];
+      [IpcRendererSend.ToggleDevTools]: [id: string];
+      [IpcRendererSend.OpenLogFolder]: [id: string];
+      [IpcRendererSend.Restart]: [id: string];
 
-      [IpcRendererSend.LoadList]: [
+      [IpcRendererSend.LoadList]: [id: string, options?: WhereGame];
+      [IpcRendererSend.CleanCache]: [id: string];
+
+      [IpcRendererSend.LoadSetting]: [id: string];
+      [IpcRendererSend.UpdateSetting]: [id: string, data: UpdateSetting];
+
+      [IpcRendererSend.Play]: [id: string, path: string];
+      [IpcRendererSend.OpenFolder]: [id: string, path: string];
+      [IpcRendererSend.Hide]: [id: string, { path: string; isHidden: boolean }];
+      [IpcRendererSend.Recent]: [
+        id: string,
+        { path: string; isRecent: boolean }
+      ];
+      [IpcRendererSend.Clear]: [id: string, { path: string; isClear: boolean }];
+      [IpcRendererSend.Memo]: [
+        id: string,
+        { path: string; memo: string | null }
+      ];
+      [IpcRendererSend.UpdateGame]: [
+        id: string,
         {
-          sources: string[];
-          exclude: string[];
-          thumbnailFolder?: string;
-          hideZipFile: boolean;
+          path: string;
+          gameData: Partial<
+            Pick<
+              Game,
+              | "title"
+              | "publishDate"
+              | "makerName"
+              | "category"
+              | "tags"
+              | "memo"
+            >
+          >;
         }
       ];
-      [IpcRendererSend.CleanCache]: [];
-
-      [IpcRendererSend.Play]: [path: string, exclude?: string[]];
-      [IpcRendererSend.OpenFolder]: [string];
-      [IpcRendererSend.Hide]: [string];
 
       [IpcRendererSend.ThumbnailDownload]: [
+        id: string,
         {
-          filePath: string;
-          cookie: string;
-          search: [string, string];
-          savePath?: string;
+          path: string;
           /**
            * 해당 값이 존재하는 경우 검색을 시도하지 않고 바로 해당 파일을 업로드합니다.
            */
@@ -107,6 +150,25 @@ export interface IpcRendererEventMap
           url?: string;
         }
       ];
-      [IpcRendererSend.ThumbnailDelete]: [string];
+      [IpcRendererSend.ThumbnailDelete]: [id: string, path: string];
+
+      [IpcRendererSend.MigrationData]: [
+        id: string,
+        setting: Record<string, any>
+      ];
     }
   > {}
+
+export type WhereGame = Partial<
+  Pick<
+    Game,
+    | "title"
+    | "makerName"
+    | "category"
+    | "tags"
+    | "isHidden"
+    | "isClear"
+    | "isRecent"
+    | "isCompressFile"
+  >
+>;

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
+import { IpcRendererSend } from "../../../../main/events";
 import PopOverButton from "../../../components/PopOverButton.vue";
 import { Button } from "../../../components/ui/button";
 import { Card, CardContent, CardHeader } from "../../../components/ui/card";
@@ -11,8 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../../../components/ui/tooltip";
-import { useApi } from "../../../composable/useApi";
-import { IpcRendererSend } from "../../../events";
+import { send } from "../../../composable/useApi";
 
 defineProps<{
   modelValue: [boolean, string];
@@ -25,9 +25,8 @@ const emit = defineEmits<{
   (e: "update:dark", value: boolean): void;
 }>();
 
-const api = useApi();
 const openFolder = (path: string) => {
-  api.send(IpcRendererSend.OpenFolder, path);
+  send(IpcRendererSend.OpenFolder, path);
 };
 </script>
 
