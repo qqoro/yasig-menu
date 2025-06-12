@@ -27,6 +27,7 @@ export const console = log;
 dayjs.extend(customParseFormat);
 
 let mainWindow: BrowserWindow;
+let list: string[];
 
 export function send<T extends IpcMainSend>(
   event: T,
@@ -138,13 +139,20 @@ function createWindow() {
     return { action: "deny" };
   });
 
+  mainWindow.webContents.on("did-finish-load", () => {
+    if (Array.isArray(list) && list.length > 0) {
+      send(IpcMainSend.NeedMigration, randomUUID(), app.getVersion(), list);
+    }
+  });
+
   windowsInit(mainWindow);
 }
 
 app.whenReady().then(async () => {
   try {
     // 안전한 데이터베이스 초기화 (재시도 포함)
-    await dbManager.initialize();
+    list = await dbManager.initialize();
+
     console.log("데이터베이스 초기화 완료");
   } catch (error) {
     console.error("데이터베이스 초기화 최종 실패:", error);

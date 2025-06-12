@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
+import log from "electron-log";
 import semver from "semver";
 import { onMounted, ref } from "vue";
 import { toast } from "vue-sonner";
@@ -9,6 +10,7 @@ import { send } from "./composable/useApi";
 import { useEvent } from "./composable/useEvent";
 import { useWindowEvent } from "./composable/useWindowEvent";
 import { useGame } from "./store/game-store";
+const console = log;
 
 const game = useGame();
 
@@ -44,20 +46,27 @@ useEvent(IpcMainSend.VersionChecked, (e, id, version) => {
   open.value = true;
   localStorage.setItem("version", version);
 });
-useEvent(IpcMainSend.NeedMigration, (e, id, version) => {
+useEvent(IpcMainSend.NeedMigration, (e, id, version, list) => {
+  console.log("NeedMigration start >>>>", e, id, version, list);
   const appLatestVersion = localStorage.getItem("version");
   if (!appLatestVersion) {
     return;
   }
 
-  if (semver.gte(version, "2.0.0") && semver.lt(version, "3.0.0")) {
+  console.log(
+    version,
+    semver.gte(version, "2.0.0"),
+    semver.lt(version, "3.0.0"),
+    list
+  );
+  if (list.some((m) => m.toLowerCase().startsWith("001_initial_tables"))) {
     migrationLoading.value = true;
+    console.log(list, "DB 마이그레이션을 시작합니다.");
+    send(IpcRendererSend.MigrationData, { ...localStorage });
   }
-
-  send(IpcRendererSend.MigrationData, { ...localStorage });
 });
 useEvent(IpcMainSend.MigrationDone, (e, id, version) => {
-  migrationLoading.value = true;
+  migrationLoading.value = false;
   toast.success("업그레이드 마이그레이션이 완료되었습니다!");
 });
 </script>

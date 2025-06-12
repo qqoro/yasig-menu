@@ -45,7 +45,11 @@ export interface IpcMainEventMap
 
       [IpcMainSend.ThumbnailDone]: [id: string, string];
 
-      [IpcMainSend.NeedMigration]: [id: string, version: string];
+      [IpcMainSend.NeedMigration]: [
+        id: string,
+        version: string,
+        list: string[]
+      ];
       [IpcMainSend.MigrationDone]: [id: string, version: string];
     }
   > {}

@@ -55,7 +55,7 @@ export class DBManager {
   /**
    * 데이터베이스 초기화 및 마이그레이션 실행
    */
-  async initialize(): Promise<void> {
+  async initialize(): Promise<any> {
     try {
       log.info("데이터베이스 초기화 시작...");
       log.info(`환경: ${this.isDevelopment ? "개발" : "프로덕션"}`);
@@ -67,9 +67,10 @@ export class DBManager {
       await this.db.raw(`PRAGMA foreign_keys = ON`);
 
       // 마이그레이션 실행
-      await this.runMigrations();
+      const list = await this.runMigrations();
 
       log.info("데이터베이스 초기화 완료");
+      return list;
     } catch (error) {
       log.error("데이터베이스 초기화 실패:", error);
     }
@@ -78,7 +79,7 @@ export class DBManager {
   /**
    * 모든 마이그레이션 실행
    */
-  async runMigrations(): Promise<void> {
+  async runMigrations(): Promise<any> {
     try {
       log.info("마이그레이션 실행 중...");
       const [batchNo, migrationFiles] = await this.db.migrate.latest();
@@ -91,6 +92,7 @@ export class DBManager {
           migrationFiles
         );
       }
+      return migrationFiles;
     } catch (error) {
       log.error("마이그레이션 실행 실패:", error);
       throw error;
