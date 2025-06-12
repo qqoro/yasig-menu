@@ -4,10 +4,8 @@ import { rm, stat, writeFile } from "fs/promises";
 import { basename, extname, join } from "path";
 import puppeteer, { Browser, Page } from "puppeteer-core";
 import { IpcMainEventMap, IpcMainSend, IpcRendererSend } from "../events.js";
-import { ipcMain, send } from "../main.js";
-
-import log from "electron-log";
-const console = log;
+import { console, ipcMain, send } from "../main.js";
+import { loadSetting } from "./setting.js";
 
 let browser: Browser | undefined;
 
@@ -18,8 +16,11 @@ app.on("window-all-closed", async function () {
 
 ipcMain.on(
   IpcRendererSend.ThumbnailDownload,
-  async (e, { filePath, cookie, search, savePath, file, url }) => {
+  async (e, id, { path: filePath, file, url }) => {
     let page: Page | undefined;
+    const { cookie, search, changeThumbnailFolder, newThumbnailFolder } =
+      await loadSetting();
+    const savePath = changeThumbnailFolder ? newThumbnailFolder : filePath;
 
     const fileInfo = await stat(filePath);
     const baseName = basename(filePath);
@@ -74,7 +75,7 @@ ipcMain.on(
       }
 
       if (!browser) {
-        send(IpcMainSend.Message, {
+        send(IpcMainSend.Message, id, {
           type: "error",
           message:
             "컴퓨터에 크롬이 설치되어 있지 않거나, 경로를 찾지 못했습니다. 크롬을 설치한 후 앱을 다시 실행해주세요.",
@@ -90,7 +91,7 @@ ipcMain.on(
       page = await browser.newPage();
 
       let downloaded = false;
-      let message: undefined | IpcMainEventMap[IpcMainSend.Message][0] =
+      let message: undefined | IpcMainEventMap[IpcMainSend.Message][1] =
         undefined;
 
       // DLSite 다운로드
@@ -187,13 +188,14 @@ ipcMain.on(
       if (downloaded) {
         send(
           IpcMainSend.Message,
+          id,
           message ?? {
             type: "success",
             message: `${baseName}의 썸네일을 다운로드 했습니다.`,
           }
         );
       } else {
-        send(IpcMainSend.Message, {
+        send(IpcMainSend.Message, id, {
           type: "error",
           message: `${baseName}의 썸네일을 찾지 못했습니다.`,
         });
@@ -201,19 +203,19 @@ ipcMain.on(
     } catch (error) {
       console.error(error);
       if ((error as Error)?.name === "TimeoutError") {
-        send(IpcMainSend.Message, {
+        send(IpcMainSend.Message, id, {
           type: "error",
           message: `${baseName}의 썸네일을 찾지 못했습니다.`,
         });
       } else {
-        send(IpcMainSend.Message, {
+        send(IpcMainSend.Message, id, {
           type: "error",
           message: `${baseName}의 썸네일을 다운로드 하던 도중 오류가 발생했습니다.`,
           description: (error as Error).stack,
         });
       }
     } finally {
-      send(IpcMainSend.ThumbnailDone, filePath);
+      send(IpcMainSend.ThumbnailDone, id, filePath);
       await page?.close();
     }
   }
@@ -221,16 +223,16 @@ ipcMain.on(
 
 ipcMain.on(
   IpcRendererSend.ThumbnailDelete,
-  async (e, thumbnailFilePath: string) => {
+  async (e, id, thumbnailFilePath: string) => {
     try {
       await rm(thumbnailFilePath);
-      send(IpcMainSend.ThumbnailDone, thumbnailFilePath);
-      send(IpcMainSend.Message, {
+      send(IpcMainSend.ThumbnailDone, id, thumbnailFilePath);
+      send(IpcMainSend.Message, id, {
         type: "success",
         message: `${thumbnailFilePath} 파일을 삭제했습니다.`,
       });
     } catch (error) {
-      send(IpcMainSend.Message, {
+      send(IpcMainSend.Message, id, {
         type: "error",
         message: `${thumbnailFilePath} 삭제에 실패했습니다.`,
         description: (error as Error).stack,

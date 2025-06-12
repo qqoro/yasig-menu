@@ -3,9 +3,11 @@ import logo from "@/assets/logo.png";
 import { Icon } from "@iconify/vue";
 import { IpcRendererEvent } from "electron";
 import { storeToRefs } from "pinia";
-import { ref, watch } from "vue";
+import { reactive, ref, watch } from "vue";
 import { RouterView, useRoute } from "vue-router";
 import { toast } from "vue-sonner";
+import { Game } from "../../../main/db/db";
+import { IpcMainSend, IpcRendererSend } from "../../../main/events";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,20 +37,18 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../../components/ui/tooltip";
-import { useApi } from "../../composable/useApi";
+import { off, on, send, sendApi } from "../../composable/useApi";
 import { useEvent } from "../../composable/useEvent";
 import { Sort } from "../../constants";
-import { IpcMainSend, IpcRendererSend } from "../../events";
+import { thumbnailDownload } from "../../db/game";
+import { getSetting, updateSetting } from "../../db/setting";
 import { cn, wait } from "../../lib/utils";
 import { useGame } from "../../store/game-store";
 import { useSearch } from "../../store/search-store";
-import { useSetting } from "../../store/setting-store";
-import { GameData } from "../../typings/local";
 import { Toaster } from "../ui/sonner";
 
 const route = useRoute();
-const api = useApi();
-const setting = useSetting();
+const setting = reactive(await getSetting());
 const game = useGame();
 const search = useSearch();
 const isMaximized = ref(false);
@@ -56,30 +56,34 @@ const updateDownloadProgress = ref(0);
 const updateDialogOpen = ref(false);
 
 const selectRandomGame = async () => {
-  const list = await new Promise<GameData[]>((resolve) => {
-    api.once(IpcMainSend.LoadedList, (e, data: GameData[]) => {
-      resolve(data);
-    });
-    game.loadList();
-  });
+  const [, list] = await sendApi(
+    IpcRendererSend.LoadList,
+    IpcMainSend.LoadedList,
+    { isHidden: false }
+  );
   const data = list[Math.floor(list.length * Math.random())];
   search.searchWord = data.title;
 };
 
 const zoomIn = () => {
+  console.log(setting.zoom);
   if (setting.zoom + 5 <= 100) {
-    setting.saveZoom(setting.zoom + 5);
+    const zoom = setting.zoom + 5;
+    updateSetting({ zoom });
+    setting.zoom = zoom;
   }
 };
 
 const zoomOut = () => {
   if (setting.zoom - 5 > 0) {
-    setting.saveZoom(setting.zoom - 5);
+    const zoom = setting.zoom - 5;
+    updateSetting({ zoom });
+    setting.zoom = zoom;
   }
 };
 
 const restart = () => {
-  api.send(IpcRendererSend.Restart);
+  send(IpcRendererSend.Restart);
 };
 
 const { sort } = storeToRefs(useSearch());
@@ -92,11 +96,12 @@ const sortName: Record<Sort, string> = {
 
 const allToggleApplySource = (e: Event) => {
   e?.preventDefault();
-  if (setting.applySources.length === 0) {
-    setting.saveApplySources([...setting.sources]);
-  } else {
-    setting.saveApplySources([]);
-  }
+  const applySources =
+    setting.applySources.length === 0 ? [...setting.sources] : [];
+  updateSetting({
+    applySources: JSON.stringify(applySources),
+  });
+  setting.applySources = applySources;
 };
 
 const toggleApplySource = (e: Event, path: string, isExclude: boolean) => {
@@ -107,16 +112,20 @@ const toggleApplySource = (e: Event, path: string, isExclude: boolean) => {
   } else {
     list.splice(list.indexOf(path), 1);
   }
-  setting.saveApplySources(list);
+  updateSetting({
+    applySources: JSON.stringify(list),
+  });
+  setting.applySources = list;
 };
 
-const applySources = storeToRefs(setting).applySources;
-const hideZipFile = storeToRefs(game).hideZipFile;
-watch([applySources, hideZipFile], () => {
-  game.loadList();
-});
+watch(
+  () => setting.applySources,
+  () => {
+    game.loadList();
+  }
+);
 
-const processQueue = ref<GameData[]>([]);
+const processQueue = ref<Game[]>([]);
 const batchProcessing = ref(false);
 const thumbnailBatchDownload = async () => {
   if (batchProcessing.value) {
@@ -124,28 +133,24 @@ const thumbnailBatchDownload = async () => {
   }
 
   batchProcessing.value = true;
-  const thumbnailFolder = setting.changeThumbnailFolder[0]
-    ? setting.changeThumbnailFolder[1]
-    : undefined;
-  await new Promise<void>((resolve) => {
-    api.once(IpcMainSend.LoadedList, (e, data: GameData[]) => {
-      processQueue.value = data.filter((item) => item.thumbnail === undefined);
-      resolve();
-    });
-    game.loadList();
-  });
+  const [, list] = await sendApi(
+    IpcRendererSend.LoadList,
+    IpcMainSend.LoadedList,
+    { isHidden: false }
+  );
+  processQueue.value = list.filter((item) => item.thumbnail === undefined);
 
   try {
-    let list: GameData[] = [];
+    let list: Game[] = [];
     const totalCount = processQueue.value.length;
     const process = new Promise<void>((resolve) => {
-      const callback = (e: IpcRendererEvent, path: string) => {
+      const callback = (e: IpcRendererEvent, id: string, path: string) => {
         processQueue.value = processQueue.value.filter(
           (item) => item.path !== path
         );
         list = list.filter((item) => item.path !== path);
         if (processQueue.value.length === 0) {
-          api.off(IpcMainSend.ThumbnailDone, callback);
+          off(IpcMainSend.ThumbnailDone, callback);
           resolve();
         }
         toast.info(
@@ -154,7 +159,7 @@ const thumbnailBatchDownload = async () => {
           }/${totalCount})`
         );
       };
-      api.on(IpcMainSend.ThumbnailDone, callback);
+      on(IpcMainSend.ThumbnailDone, callback);
     });
     toast.promise(process, {
       loading: `썸네일을 다운로드하고 있어요... (${totalCount}개)`,
@@ -165,12 +170,7 @@ const thumbnailBatchDownload = async () => {
       while (list.length >= 3) {
         await wait(200);
       }
-      api.send(IpcRendererSend.ThumbnailDownload, {
-        cookie: setting.cookie,
-        savePath: thumbnailFolder,
-        search: [...setting.search],
-        filePath: item.path,
-      });
+      thumbnailDownload(item.path);
       list.push(item);
     }
 
@@ -192,13 +192,13 @@ const thumbnailBatchDelete = () => {
   }
 };
 
-useEvent(IpcMainSend.Message, (_, { type, message, ...args }) => {
+useEvent(IpcMainSend.Message, (e, id, { type, message, ...args }) => {
   toast[type](message, { ...args });
 });
-useEvent(IpcMainSend.WindowStatusChange, (e, isMax) => {
+useEvent(IpcMainSend.WindowStatusChange, (e, id, isMax) => {
   isMaximized.value = isMax;
 });
-useEvent(IpcMainSend.UpdateDownloadProgress, (e, percent) => {
+useEvent(IpcMainSend.UpdateDownloadProgress, (e, id, percent) => {
   updateDownloadProgress.value = percent;
   if (percent === 100) {
     updateDialogOpen.value = true;
@@ -220,13 +220,13 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, percent) => {
     <div class="flex button-group">
       <button
         class="hover:bg-slate-600 transition-colors px-4 hover:text-background"
-        @click="api.send(IpcRendererSend.WindowMinimize)"
+        @click="send(IpcRendererSend.WindowMinimize)"
       >
         <Icon icon="material-symbols:chrome-minimize-rounded" />
       </button>
       <button
         class="hover:bg-slate-600 transition-colors px-4 hover:text-background"
-        @click="api.send(IpcRendererSend.WindowMaximizeToggle)"
+        @click="send(IpcRendererSend.WindowMaximizeToggle)"
       >
         <Icon
           v-if="!isMaximized"
@@ -236,7 +236,7 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, percent) => {
       </button>
       <button
         class="hover:bg-red-600 transition-colors px-4 hover:text-background"
-        @click="api.send(IpcRendererSend.WindowClose)"
+        @click="send(IpcRendererSend.WindowClose)"
       >
         <Icon icon="material-symbols:close-rounded" />
       </button>
@@ -387,12 +387,6 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, percent) => {
                 }}</DropdownMenuItem
               >
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuCheckboxItem v-model="hideZipFile" @select.prevent>
-                <span>압축파일 제외</span>
-              </DropdownMenuCheckboxItem>
-            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -425,7 +419,7 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, percent) => {
     </div>
   </nav>
   <RouterView #default="{ Component }">
-    <component :is="Component" class="py-2 px-4 pb-6" />
+    <component :is="Component" class="py-2 px-4 pb-6" :zoom="setting.zoom" />
   </RouterView>
   <Toaster rich-colors close-button />
   <AlertDialog v-model:open="updateDialogOpen">

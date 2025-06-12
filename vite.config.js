@@ -24,6 +24,9 @@ const config = defineConfig({
       "@": join(import.meta.dirname, "src/renderer/"),
     },
   },
+  optimizeDeps: {
+    exclude: ["knex"],
+  },
 });
 
 export default config;

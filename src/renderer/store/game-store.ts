@@ -2,27 +2,29 @@ import log from "electron-log";
 import { defineStore, storeToRefs } from "pinia";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { useApi } from "../composable/useApi";
+import { Game } from "../../main/db/db";
+import { IpcMainSend } from "../../main/events";
 import { useEvent } from "../composable/useEvent";
 import { Sort } from "../constants";
-import { IpcMainSend, IpcRendererSend } from "../events";
+import { getGameList } from "../db/game";
+import { getSetting } from "../db/setting";
 import { searchFuzzy, sortRJCode } from "../lib/search";
-import { GameData } from "../typings/local";
-import { useGameHistory } from "./game-history-store";
 import { useSearch } from "./search-store";
-import { useSetting } from "./setting-store";
 const console = log;
 
 export const useGame = defineStore("game", () => {
   const loading = ref(true);
-  const hideZipFile = ref(false);
-  const list = ref<{ path: string; title: string; thumbnail?: string }[]>([]);
+  const list = ref<Game[]>([]);
   const showCount = ref(20);
+
+  const showAll = ref(false);
+  const showRecent = ref(false);
+
   const moreLoad = (count: number) => {
     showCount.value += count;
   };
 
-  const { searchWord, sort } = storeToRefs(useSearch());
+  const { searchWord, makerName, tagIds, sort } = storeToRefs(useSearch());
   const sortedList = computed(() => {
     switch (sort.value) {
       case Sort.Title:
@@ -47,36 +49,47 @@ export const useGame = defineStore("game", () => {
   });
 
   const searchFilteredList = computed(() => {
-    const setting = useSetting();
-    const game = useGameHistory();
-
-    const recent: GameData[] = [];
-    const games: GameData[] = [];
+    const recent: Game[] = [];
+    const games: Game[] = [];
     const regex = searchRegex.value; // 메모이제이션된 정규식 사용
 
+    const hasTags = tagIds.value.size > 0;
+    const selectedTags = [...tagIds.value.values()];
+
     for (const item of sortedList.value) {
+      // 숨김게임 패스
+      if (item.isHidden) {
+        continue;
+      }
       // 검색 정규식 있는 경우 체크 후 건너뛰기
       if (regex && !regex.test(item.title.replaceAll(" ", ""))) {
         continue;
       }
-
-      const isRecent =
-        game.recentGame.includes(item.path) && setting.home.showRecent;
-      const gameData = {
-        ...item,
-        cleared: game.clearGame.includes(item.path),
-      };
+      // 검색 제작자 있는 경우 체크
+      if (makerName.value && item.makerName !== makerName.value) {
+        continue;
+      }
+      // 검색 태그 있는 경우 체크
+      const itemTags = item.tagIds?.split(",") ?? [];
+      if (
+        // 게임에 태그 없거나
+        (hasTags && !item.tagIds) ||
+        // 태그는 있지만 지정 태그가 모두 있지는 않은 경우
+        (hasTags && !selectedTags.every((tagId) => itemTags.includes(tagId)))
+      ) {
+        continue;
+      }
 
       // 최근 목록 사용 + 검색어 없을때만 표시
-      if (isRecent && !regex) {
+      if (showRecent.value && item.isRecent && !regex) {
         // 개수 제한이 있거나, 아직 recent 목록이 showCount 미만일 때만 추가
-        if (setting.home.showAll || recent.length < showCount.value) {
-          recent.push(gameData);
+        if (showAll.value || recent.length < showCount.value) {
+          recent.push(item);
         }
       } else {
         // 개수 제한이 있거나, 아직 games 목록이 showCount 미만일 때만 추가
-        if (setting.home.showAll || games.length < showCount.value) {
-          games.push(gameData);
+        if (showAll.value || games.length < showCount.value) {
+          games.push(item);
         }
       }
     }
@@ -84,45 +97,35 @@ export const useGame = defineStore("game", () => {
     return { recent, games };
   });
 
-  const api = useApi();
-  const loadList = () => {
-    const setting = useSetting();
-    const [isChange, thumbnailFolder] = setting.changeThumbnailFolder;
-    api.send(IpcRendererSend.LoadList, {
-      sources: [...setting.applySources],
-      exclude: [...setting.exclude],
-      thumbnailFolder: isChange ? thumbnailFolder : undefined,
-      hideZipFile: hideZipFile.value,
-    });
+  const loadList = async () => {
+    const data = await getGameList({ isHidden: false });
+    // console.info("게임 목록 로드", data);
+    loading.value = false;
+    // 데이터 동일한 경우 캐싱된 computed값 재사용 위해 변경하지 않음
+    if (JSON.stringify(list.value) === JSON.stringify(data)) {
+      return;
+    }
+
+    list.value = data;
   };
 
-  useEvent(
-    IpcMainSend.LoadedList,
-    (e, data: { path: string; title: string; thumbnail?: string }[]) => {
-      // 데이터 동일한 경우 캐싱된 computed값 재사용 위해 변경하지 않음
-      if (JSON.stringify(list.value) === JSON.stringify(data)) {
-        return;
-      }
-
-      list.value = data;
-      loading.value = false;
-    }
-  );
   useEvent(IpcMainSend.ThumbnailDone, () => {
     loadList();
   });
 
   // 경로 변경 시 최대 조회개수 초기화
   const route = useRoute();
-  watch(route, () => {
+  watch(route, async () => {
     showCount.value = 20;
+    const setting = await getSetting();
+    showAll.value = setting.showAll;
+    showRecent.value = setting.showRecent;
   });
 
   loadList();
 
   return {
     loading,
-    hideZipFile,
     showCount,
     moreLoad,
     list,

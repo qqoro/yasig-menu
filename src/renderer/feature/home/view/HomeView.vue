@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
 import { storeToRefs } from "pinia";
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import PageTitle from "../../../components/PageTitle.vue";
 import Button from "../../../components/ui/button/Button.vue";
 import {
@@ -20,14 +20,16 @@ import {
   TooltipTrigger,
 } from "../../../components/ui/tooltip";
 import { useWindowEvent } from "../../../composable/useWindowEvent";
+import { getSetting } from "../../../db/setting";
 import Data from "../../../lib/data";
 import { cn } from "../../../lib/utils";
 import { useGame } from "../../../store/game-store";
 import { useSearch } from "../../../store/search-store";
-import { useSetting } from "../../../store/setting-store";
 import GameCard from "../components/GameCard.vue";
 
-const setting = useSetting();
+defineProps<{ zoom: number }>();
+
+const setting = await getSetting();
 const game = useGame();
 const memoData = ref<Record<string, string>>(Data.getJSON("memo") ?? {});
 
@@ -75,8 +77,12 @@ useWindowEvent("focus", () => {
 });
 
 const gameExist = computed(
-  () => !(setting.sources.length === 0 || game.list.length === 0)
+  () => !(setting.sources?.length === 0 || game.list.length === 0)
 );
+
+onMounted(() => {
+  game.loadList();
+});
 </script>
 
 <template>
@@ -140,7 +146,7 @@ const gameExist = computed(
           'flex justify-center items-center h-[calc(100dvh-200px)]': !gameExist,
         })
       "
-      :style="{ zoom: setting.zoom * 0.02 }"
+      :style="{ zoom: zoom * 0.02 }"
     >
       <div
         v-if="!gameExist"
@@ -159,44 +165,103 @@ const gameExist = computed(
 
       <template v-else>
         <div
-          v-if="
-            setting.home.showRecent && game.searchFilteredList.recent.length > 0
-          "
+          v-if="setting.showRecent && game.searchFilteredList.recent.length > 0"
           class="w-full flex flex-col mb-4"
         >
-          <h2 :style="{ zoom: (1 / (setting.zoom * 0.02)) * 1.2 }">
-            최근 플레이
-          </h2>
+          <h2 :style="{ zoom: (1 / (zoom * 0.02)) * 1.2 }">최근 플레이</h2>
           <div
             class="max-w-full overflow-x-auto flex flex-row items-center gap-4"
           >
             <GameCard
-              v-for="({ path, title, thumbnail, cleared }, index) in game
-                .searchFilteredList.recent"
+              v-for="(
+                {
+                  path,
+                  title,
+                  thumbnail,
+                  category,
+                  createdAt,
+                  isClear,
+                  isCompressFile,
+                  isHidden,
+                  isRecent,
+                  memo,
+                  makerName,
+                  publishDate,
+                  rjCode,
+                  tags,
+                  tagIds,
+                  updatedAt,
+                },
+                index
+              ) in game.searchFilteredList.recent"
               class="shrink-0"
               :key="path + index"
               :path="path"
               :title="title"
               :thumbnail="thumbnail"
-              :cleared="cleared"
-              :recent="true"
-              :memo="
-                memoData[path] ? '메모 내용:\n' + memoData[path] : undefined
-              "
+              :category="category"
+              :isClear="isClear"
+              :isCompressFile="isCompressFile"
+              :isHidden="isHidden"
+              :isRecent="isRecent"
+              :created-at="createdAt"
+              :memo="memo"
+              :makerName="makerName"
+              :publishDate="publishDate"
+              :rjCode="rjCode"
+              :tags="tags"
+              :tagIds="tagIds"
+              :updatedAt="updatedAt"
+              :zoom="zoom"
+              :blur="setting.blur"
+              :dark="setting.dark"
               @view-thumbnail="viewGameCard"
               @write-memo="viewGameMemo"
             />
           </div>
         </div>
         <GameCard
-          v-for="({ path, title, thumbnail, cleared }, index) in game
-            .searchFilteredList.games"
+          v-for="(
+            {
+              path,
+              title,
+              thumbnail,
+              category,
+              createdAt,
+              isClear,
+              isCompressFile,
+              isHidden,
+              isRecent,
+              memo,
+              makerName,
+              publishDate,
+              rjCode,
+              tags,
+              tagIds,
+              updatedAt,
+            },
+            index
+          ) in game.searchFilteredList.games"
           :key="path + index"
           :path="path"
           :title="title"
           :thumbnail="thumbnail"
-          :cleared="cleared"
-          :memo="memoData[path] ? '메모 내용:\n' + memoData[path] : undefined"
+          :category="category"
+          :isClear="isClear"
+          :isCompressFile="isCompressFile"
+          :isHidden="isHidden"
+          :isRecent="isRecent"
+          :created-at="createdAt"
+          :memo="memo"
+          :makerName="makerName"
+          :publishDate="publishDate"
+          :rjCode="rjCode"
+          :tags="tags"
+          :tagIds="tagIds"
+          :updatedAt="updatedAt"
+          :zoom="zoom"
+          :blur="setting.blur"
+          :dark="setting.dark"
           @view-thumbnail="viewGameCard"
           @write-memo="viewGameMemo"
         />
@@ -208,7 +273,7 @@ const gameExist = computed(
             game.showCount
           "
           class="w-full flex justify-center items-center gap-4"
-          :style="{ zoom: 1 / (setting.zoom * 0.02) }"
+          :style="{ zoom: 1 / (zoom * 0.02) }"
         >
           <Button variant="outline" @click="game.moreLoad(20)"
             >더 불러오기 (20개)</Button
