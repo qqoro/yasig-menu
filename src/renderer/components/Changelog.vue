@@ -103,6 +103,7 @@ const changelog = [
       `설정 변경 시 캐시를 무효화합니다.`,
     ],
   ],
+  ["2.0.2", [`잘못된 경로에 썸네일을 다운로드하는 버그가 수정되었습니다. `]],
 ].toReversed() as [string, string[]][];
 </script>
 

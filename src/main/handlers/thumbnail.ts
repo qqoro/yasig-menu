@@ -37,7 +37,7 @@ ipcMain.on(
       if (file) {
         const { data, ext } = file;
 
-        const thumbnailName = savePath
+        const thumbnailName = changeThumbnailFolder
           ? join(savePath, fileName) + ext
           : await getThumbnailName({
               filePath,
@@ -49,7 +49,7 @@ ipcMain.on(
 
       if (url) {
         const thumbnailExt = extname(url.substring(0, url.indexOf("?")));
-        const thumbnailName = savePath
+        const thumbnailName = changeThumbnailFolder
           ? join(savePath, fileName) + thumbnailExt
           : await getThumbnailName({
               filePath,
@@ -104,7 +104,7 @@ ipcMain.on(
 
         if (imgUrl) {
           const thumbnailExt = extname(imgUrl);
-          const thumbnailName = savePath
+          const thumbnailName = changeThumbnailFolder
             ? join(savePath, fileName) + thumbnailExt
             : await getThumbnailName({
                 filePath,
@@ -122,7 +122,7 @@ ipcMain.on(
         try {
           if (bestSrc) {
             const thumbnailExt = getUrlExtension(bestSrc);
-            const thumbnailName = savePath
+            const thumbnailName = changeThumbnailFolder
               ? join(savePath, fileName) + thumbnailExt
               : await getThumbnailName({
                   filePath,
@@ -145,7 +145,7 @@ ipcMain.on(
           if (!downloaded && src) {
             const thumbnailExt =
               "." + src.substring(src.indexOf("/") + 1, src.indexOf(";"));
-            const thumbnailName = savePath
+            const thumbnailName = changeThumbnailFolder
               ? join(savePath, fileName) + thumbnailExt
               : await getThumbnailName({
                   filePath,
@@ -170,7 +170,7 @@ ipcMain.on(
             console.log("src", src);
             const thumbnailExt =
               "." + src.substring(src.indexOf("/") + 1, src.indexOf(";"));
-            const thumbnailName = savePath
+            const thumbnailName = changeThumbnailFolder
               ? join(savePath, fileName) + thumbnailExt
               : await getThumbnailName({
                   filePath,
@@ -399,7 +399,7 @@ async function getThumbnailName({
   filePath: string;
   thumbnailExt: string;
 }) {
-  const info = await stat(filePath); // /path/to/file.exe
+  const info = await stat(filePath); // /path/to/file.exe or /path/to/folder
   const baseName = basename(filePath); // file.exe
   const fileName = baseName.substring(
     0,
