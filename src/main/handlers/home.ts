@@ -494,9 +494,6 @@ const getListData = async ({
   if (isClear !== undefined) {
     q.where({ isClear: isClear });
   }
-  if (isCompressFile) {
-    q.where({ isCompressFile: false });
-  }
   if (isCompressFile !== undefined) {
     q.where({ isCompressFile: isCompressFile });
   }
