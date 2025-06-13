@@ -61,7 +61,7 @@ const save = () => {
     changeThumbnailFolder: changeThumbnailFolder.value[0],
     newThumbnailFolder: JSON.stringify(changeThumbnailFolder.value[1]),
     dark: dark.value,
-    cookie: cookie.value,
+    cookie: JSON.stringify(cookie.value),
     playExclude: JSON.stringify(playExclude.value.map((v) => v.trim())),
     search: JSON.stringify(search.value),
     showAll: showAll.value,

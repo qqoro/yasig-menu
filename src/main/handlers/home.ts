@@ -517,3 +517,17 @@ const getListData = async ({
   }
   return await q;
 };
+
+// 설정 변경 시 강제 캐시 재조회
+ipcMain.on(IpcRendererSend.UpdateSetting, async (e, id, data) => {
+  const whitelist = [
+    "sources",
+    "applySources",
+    "changeThumbnailFolder",
+    "newThumbnailFolder",
+  ];
+  if (whitelist.some((key) => Object.keys(data).includes(key))) {
+    console.log("설정이 변경되어 캐시를 무효화합니다.");
+    initialized = false;
+  }
+});
