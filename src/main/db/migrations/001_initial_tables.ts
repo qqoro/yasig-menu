@@ -76,8 +76,8 @@ export async function up(knex: Knex): Promise<void> {
       sources: JSON.stringify([]),
       applySources: JSON.stringify([]),
       changeThumbnailFolder: false,
-      newThumbnailFolder: "",
-      cookie: "",
+      newThumbnailFolder: JSON.stringify(""),
+      cookie: JSON.stringify(""),
       search: JSON.stringify(["", ""]),
       playExclude: JSON.stringify([
         "notification_helper",

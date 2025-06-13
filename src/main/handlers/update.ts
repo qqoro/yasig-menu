@@ -65,7 +65,10 @@ ipcMain.on(IpcRendererSend.MigrationData, async (e, id, data) => {
     const [changeThumbnailFolder, newThumbnailFolder] = JSON.parse(
       data.changeThumbnailFolder
     );
-    setting.update({ changeThumbnailFolder, newThumbnailFolder });
+    setting.update({
+      changeThumbnailFolder,
+      newThumbnailFolder: JSON.stringify(newThumbnailFolder),
+    });
   }
   if (data.search) {
     setting.update({ search: data.search });
