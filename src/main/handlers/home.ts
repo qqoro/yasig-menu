@@ -442,31 +442,35 @@ const getListData = async ({
     );
 
   // 신규 데이터 삽입 및 기존데이터 업데이트
-  await db
-    .insert(
-      processedList.map(
-        (data) =>
-          ({
-            path: data.path,
-            title: data.title,
-            source: data.source,
-            thumbnail: data.thumbnail ?? null,
-            rjCode: /[RBV]J\d{6,8}/i.exec(data.title)?.[0] ?? null,
-            isCompressFile: data.isCompressFile,
-          } satisfies InsertGame)
-      )
-    )
-    .into("games")
-    .onConflict("path")
-    .merge({
-      // excluded.<columnName> 사용 시 insert문에 사용했던 데이터 사용됨
-      title: db.raw("excluded.title"),
-      source: db.raw("excluded.source"),
-      thumbnail: db.raw("excluded.thumbnail"),
-      rjCode: db.raw("excluded.rjCode"),
-      isCompressFile: db.raw("excluded.isCompressFile"),
-      updatedAt: db.fn.now(),
-    });
+
+  const gameList = processedList.map(
+    (data) =>
+      ({
+        path: data.path,
+        title: data.title,
+        source: data.source,
+        thumbnail: data.thumbnail ?? null,
+        rjCode: /[RBV]J\d{6,8}/i.exec(data.title)?.[0] ?? null,
+        isCompressFile: data.isCompressFile,
+      } satisfies InsertGame)
+  );
+
+  // knex insert 시 복합 select > insert가 되는데 최대 500개 제한이 있음
+  for (let i = 0; i < gameList.length / 400; i++) {
+    await db
+      .insert(gameList.slice(i * 400, (i + 1) * 400))
+      .into("games")
+      .onConflict("path")
+      .merge({
+        // excluded.<columnName> 사용 시 insert문에 사용했던 데이터 사용됨
+        title: db.raw("excluded.title"),
+        source: db.raw("excluded.source"),
+        thumbnail: db.raw("excluded.thumbnail"),
+        rjCode: db.raw("excluded.rjCode"),
+        isCompressFile: db.raw("excluded.isCompressFile"),
+        updatedAt: db.fn.now(),
+      });
+  }
 
   // 정보 입력되지 않은 게임들 처리
   const notLoadedGames = await db("games")
