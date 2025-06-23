@@ -142,6 +142,7 @@ function createWindow() {
   mainWindow.webContents.on("did-finish-load", () => {
     if (Array.isArray(list) && list.length > 0) {
       send(IpcMainSend.NeedMigration, randomUUID(), app.getVersion(), list);
+      list = [];
     }
   });
 
