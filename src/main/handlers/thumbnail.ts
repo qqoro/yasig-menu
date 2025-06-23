@@ -3,11 +3,14 @@ import { app } from "electron";
 import { rm, stat, writeFile } from "fs/promises";
 import { basename, extname, join } from "path";
 import puppeteer, { Browser, Page } from "puppeteer-core";
+import { setTimeout } from "timers/promises";
+import { db } from "../db/db-manager.js";
 import { IpcMainEventMap, IpcMainSend, IpcRendererSend } from "../events.js";
 import { console, ipcMain, send } from "../main.js";
 import { loadSetting } from "./setting.js";
 
 let browser: Browser | undefined;
+let cookieInit = false;
 
 app.on("window-all-closed", async function () {
   await browser?.close();
@@ -59,20 +62,7 @@ ipcMain.on(
         return;
       }
 
-      if (!browser) {
-        const list = chromeLauncher.Launcher.getInstallations();
-        for (const path of list) {
-          console.log("executablePath:", process.env.NODE_ENV, path);
-          browser ??= await puppeteer.launch({
-            headless: true,
-            executablePath: path,
-            args: ["--no-sandbox", "--disable-setuid-sandbox"],
-          });
-          if (browser.connected) {
-            break;
-          }
-        }
-      }
+      browser = await initBrowser();
 
       if (!browser) {
         send(IpcMainSend.Message, id, {
@@ -88,6 +78,17 @@ ipcMain.on(
         domain: ".google.com",
         value: cookie,
       });
+
+      if (!cookieInit) {
+        const cookie = await getNewCookie();
+        await browser.setCookie({
+          name: "NID",
+          domain: ".google.com",
+          value: cookie ?? "",
+        });
+        cookieInit = true;
+      }
+
       page = await browser.newPage();
 
       let downloaded = false;
@@ -240,6 +241,27 @@ ipcMain.on(
     }
   }
 );
+
+async function initBrowser() {
+  if (browser) {
+    return browser;
+  }
+
+  const list = chromeLauncher.Launcher.getInstallations();
+  for (const path of list) {
+    console.log("executablePath:", process.env.NODE_ENV, path);
+    browser ??= await puppeteer.launch({
+      headless: app.isPackaged,
+      executablePath: path,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+    if (browser.connected) {
+      break;
+    }
+  }
+
+  return browser;
+}
 
 async function getFromGoogle({ page, query }: { page: Page; query: string }) {
   const params = new URLSearchParams({
@@ -446,4 +468,62 @@ async function saveFromUrl({
   return await writeFile(fileName, data, {
     encoding: "base64",
   });
+}
+
+async function waitAndClick(page: Page, selector: string) {
+  await setTimeout(300);
+  await page.waitForSelector(selector);
+  await page.$$eval(selector, (el) => (el[0] as HTMLElement)?.click());
+}
+
+export async function getNewCookie() {
+  browser = await initBrowser();
+
+  if (!browser) return;
+
+  const page = await browser.newPage();
+  await page.goto("https://www.google.com/preferences?hl=ko&fg=1");
+
+  // 국가 설정
+  await waitAndClick(
+    page,
+    "body > div:nth-child(2) > div.iORcjf > div.LFAdvb > g-menu > g-menu-item:nth-child(2)"
+  );
+  await waitAndClick(
+    page,
+    "body > div:nth-child(2) > div.iORcjf > div:nth-child(2) > div:nth-child(2) > div.HrFxGf > div > div > div"
+  );
+  await waitAndClick(
+    page,
+    "body > div.iORcjf > div:nth-child(2) > div > div:nth-child(2) > div > div:nth-child(2) > div > div:nth-child(2) > div.HrqWPb"
+  );
+  await waitAndClick(
+    page,
+    "#lb > div > div.mcPPZ.nP0TDe.xg7rAe.ivkdbf > span > div > g-menu > g-menu-item:nth-child(2)"
+  );
+  await waitAndClick(
+    page,
+    "#lb > div > div.mcPPZ.nP0TDe.xg7rAe.ivkdbf > span > div > div.JhVSze > span:nth-child(2)"
+  );
+
+  // 세이프서치 설정
+  await page.goto("https://www.google.com/preferences?hl=ko&fg=1");
+  await waitAndClick(
+    page,
+    "body > div:nth-child(2) > div.iORcjf > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div > div > div"
+  );
+  await waitAndClick(
+    page,
+    "body > div.GSpaEb > div:nth-child(2) > g-radio-button-group > div:nth-child(6)"
+  );
+
+  const cookies = await browser.cookies();
+
+  const targetCookie = cookies.find((cookie) => cookie.name === "NID");
+  if (!targetCookie) {
+    return;
+  }
+
+  await db("setting").update({ cookie: JSON.stringify(targetCookie.value) });
+  return targetCookie.value;
 }
