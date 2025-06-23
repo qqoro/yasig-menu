@@ -120,7 +120,16 @@ ipcMain.on(IpcRendererSend.Hide, async (e, id, { path, isHidden }) => {
 
 // 게임 클리어 체크
 ipcMain.on(IpcRendererSend.Clear, async (e, id, { path, isClear }) => {
-  await db("games").update({ isClear }).where({ path });
+  const q = db("games").update({ isClear });
+  if (isClear) {
+    q.update({ isRecent: false });
+  }
+  await q.where({ path });
+});
+
+// 최근 게임 체크
+ipcMain.on(IpcRendererSend.Recent, async (e, id, { path, isRecent }) => {
+  await db("games").update({ isRecent }).where({ path });
 });
 
 // 게임에 메모 작성
