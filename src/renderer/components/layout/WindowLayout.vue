@@ -138,7 +138,7 @@ const thumbnailBatchDownload = async () => {
     IpcMainSend.LoadedList,
     { isHidden: false }
   );
-  processQueue.value = list.filter((item) => item.thumbnail === undefined);
+  processQueue.value = list.filter((item) => !item.thumbnail);
 
   try {
     let list: Game[] = [];

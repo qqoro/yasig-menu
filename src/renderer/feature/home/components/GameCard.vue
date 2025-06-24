@@ -319,14 +319,14 @@ watch(loading, () => {
             <Icon icon="solar:gallery-edit-bold-duotone" />
             <span>이미지 변경</span>
           </DropdownMenuItem>
-          <DropdownMenuItem v-if="isRJCodeExist?.[0]" as-child>
+          <DropdownMenuItem v-if="rjCode" as-child>
             <a
-              :href="`https://www.dlsite.com/maniax/work/=/product_id/${isRJCodeExist?.[0]}.html`"
+              :href="`https://www.dlsite.com/maniax/work/=/product_id/${rjCode}.html`"
               target="_blank"
               referrerpolicy="no-referrer"
             >
               <Icon icon="solar:square-share-line-bold-duotone" />
-              <span>RJ 사이트 열기</span>
+              <span>DLSite 열기</span>
             </a>
           </DropdownMenuItem>
           <DropdownMenuItem v-if="isRecent" @click="removeRecent(path)">

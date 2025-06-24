@@ -78,10 +78,6 @@ const openLogFolder = () => {
   send(IpcRendererSend.OpenLogFolder);
 };
 
-const cleanCache = () => {
-  send(IpcRendererSend.CleanCache);
-};
-
 const openChangelog = () => {
   open.value = !open.value;
 };
@@ -144,7 +140,6 @@ watch(blur, () => {
         :appVersion="appVersion"
         @updateCheck="updateCheck"
         @openLogFolder="openLogFolder"
-        @cleanCache="cleanCache"
         @openChangelog="openChangelog"
         @toggleDevTools="send(IpcRendererSend.ToggleDevTools)"
       />
