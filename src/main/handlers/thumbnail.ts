@@ -524,6 +524,8 @@ export async function getNewCookie() {
     return;
   }
 
+  await page.close()
+
   await db("setting").update({ cookie: JSON.stringify(targetCookie.value) });
   return targetCookie.value;
 }
