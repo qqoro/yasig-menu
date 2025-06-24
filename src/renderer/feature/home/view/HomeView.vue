@@ -180,6 +180,7 @@ onMounted(() => {
                   thumbnail,
                   category,
                   createdAt,
+                  isFavorite,
                   isClear,
                   isCompressFile,
                   isHidden,
@@ -200,6 +201,7 @@ onMounted(() => {
               :title="title"
               :thumbnail="thumbnail"
               :category="category"
+              :isFavorite="isFavorite"
               :isClear="isClear"
               :isCompressFile="isCompressFile"
               :isHidden="isHidden"
@@ -228,6 +230,7 @@ onMounted(() => {
               thumbnail,
               category,
               createdAt,
+              isFavorite,
               isClear,
               isCompressFile,
               isHidden,
@@ -247,6 +250,7 @@ onMounted(() => {
           :title="title"
           :thumbnail="thumbnail"
           :category="category"
+          :isFavorite="isFavorite"
           :isClear="isClear"
           :isCompressFile="isCompressFile"
           :isHidden="isHidden"

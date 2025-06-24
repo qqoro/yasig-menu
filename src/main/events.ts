@@ -73,6 +73,7 @@ export enum IpcRendererSend {
   OpenFolder = "OpenFolder",
   Hide = "Hide",
   Recent = "Recent",
+  Favorite = "Favorite",
   Clear = "Clear",
   Memo = "Memo",
   UpdateGame = "UpdateGame",
@@ -107,6 +108,10 @@ export interface IpcRendererEventMap
       [IpcRendererSend.Recent]: [
         id: string,
         { path: string; isRecent: boolean }
+      ];
+      [IpcRendererSend.Favorite]: [
+        id: string,
+        { path: string; isFavorite: boolean }
       ];
       [IpcRendererSend.Clear]: [id: string, { path: string; isClear: boolean }];
       [IpcRendererSend.Memo]: [

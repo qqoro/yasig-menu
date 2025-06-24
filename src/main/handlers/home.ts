@@ -97,6 +97,11 @@ ipcMain.on(IpcRendererSend.Hide, async (e, id, { path, isHidden }) => {
   await db("games").update({ isHidden }).where({ path });
 });
 
+// 게임 즐겨찾기 추가
+ipcMain.on(IpcRendererSend.Favorite, async (e, id, { path, isFavorite }) => {
+  await db("games").update({ isFavorite }).where({ path });
+});
+
 // 게임 클리어 체크
 ipcMain.on(IpcRendererSend.Clear, async (e, id, { path, isClear }) => {
   const q = db("games").update({ isClear });
