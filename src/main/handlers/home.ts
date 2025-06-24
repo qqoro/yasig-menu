@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
-import { app, shell } from "electron";
+import { shell } from "electron";
 import fg from "fast-glob";
-import { readdir, rm, stat } from "fs/promises";
+import { readdir, stat } from "fs/promises";
 import { extname, join } from "path";
 import { COMPRESS_FILE_TYPE } from "../constants.js";
 import { db } from "../db/db-manager.js";
@@ -42,27 +42,6 @@ ipcMain.on(IpcRendererSend.LoadList, async (e, id, options) => {
   console.timeEnd("getListData " + id);
 
   send(IpcMainSend.LoadedList, id, list);
-});
-
-// 캐시 삭제 (제거 예정, 캐시 대신 DB사용)
-ipcMain.on(IpcRendererSend.CleanCache, async (e, id) => {
-  try {
-    const cacheDir = join(app.getPath("userData"), ".cache");
-
-    const files = await readdir(cacheDir);
-    files.forEach((file) => rm(join(cacheDir, file)));
-
-    send(IpcMainSend.Message, id, {
-      type: "success",
-      message: "성공적으로 캐시를 삭제했습니다.",
-    });
-  } catch (error) {
-    send(IpcMainSend.Message, id, {
-      type: "error",
-      message: "캐시를 삭제하던 중 오류가 발생했습니다.",
-      description: (error as Error).stack,
-    });
-  }
 });
 
 // 게임 실행

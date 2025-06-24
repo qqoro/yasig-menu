@@ -13,7 +13,6 @@ const props = defineProps<{ appVersion: string }>();
 const emit = defineEmits<{
   (e: "updateCheck"): void;
   (e: "openLogFolder"): void;
-  (e: "cleanCache"): void;
   (e: "openChangelog"): void;
   (e: "toggleDevTools"): void;
 }>();
@@ -56,10 +55,6 @@ const copyAppVersion = async () => {
       <Button variant="outline" @click="emit('openLogFolder')">
         <Icon icon="solar:document-text-bold-duotone" />
         로그 폴더 열기
-      </Button>
-      <Button variant="outline" @click="emit('cleanCache')">
-        <Icon icon="solar:file-remove-bold-duotone" />
-        캐시 삭제
       </Button>
       <Button variant="outline" @click="emit('openChangelog')">
         <Icon icon="solar:pin-list-bold-duotone" />

@@ -65,7 +65,6 @@ export enum IpcRendererSend {
   Restart = "Restart",
 
   LoadList = "LoadList",
-  CleanCache = "CleanCache",
 
   LoadSetting = "LoadSetting",
   UpdateSetting = "UpdateSetting",
@@ -98,7 +97,6 @@ export interface IpcRendererEventMap
       [IpcRendererSend.Restart]: [id: string];
 
       [IpcRendererSend.LoadList]: [id: string, options?: WhereGame];
-      [IpcRendererSend.CleanCache]: [id: string];
 
       [IpcRendererSend.LoadSetting]: [id: string];
       [IpcRendererSend.UpdateSetting]: [id: string, data: UpdateSetting];
