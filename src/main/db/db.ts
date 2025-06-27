@@ -19,6 +19,7 @@ export interface Game extends TableBaseColumn {
   category: string | null;
   tags: string | null;
   tagIds?: string | null;
+  isFavorite: SqliteBoolean;
   isHidden: SqliteBoolean;
   isClear: SqliteBoolean;
   isRecent: SqliteBoolean;

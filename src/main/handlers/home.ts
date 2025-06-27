@@ -97,6 +97,11 @@ ipcMain.on(IpcRendererSend.Hide, async (e, id, { path, isHidden }) => {
   await db("games").update({ isHidden }).where({ path });
 });
 
+// 게임 즐겨찾기 추가
+ipcMain.on(IpcRendererSend.Favorite, async (e, id, { path, isFavorite }) => {
+  await db("games").update({ isFavorite }).where({ path });
+});
+
 // 게임 클리어 체크
 ipcMain.on(IpcRendererSend.Clear, async (e, id, { path, isClear }) => {
   const q = db("games").update({ isClear });
@@ -451,9 +456,7 @@ const getListData = async ({
       .onConflict("path")
       .merge({
         // excluded.<columnName> 사용 시 insert문에 사용했던 데이터 사용됨
-        title: db.raw("excluded.title"),
         source: db.raw("excluded.source"),
-        thumbnail: db.raw("excluded.thumbnail"),
         rjCode: db.raw("excluded.rjCode"),
         isCompressFile: db.raw("excluded.isCompressFile"),
         updatedAt: db.fn.now(),

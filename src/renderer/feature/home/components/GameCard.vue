@@ -63,7 +63,6 @@ const openInfo = ref(false);
 const loading = ref(false);
 // 썸네일 변경 후에도 캐시된 이미지가 노출되는 경우 때문에 가짜 쿼리스트링 추가가
 const fakeQueryId = ref(0);
-const isRJCodeExist = computed(() => /RJ\d{6,8}/i.exec(props.title));
 const { file, changeHandler } = useFile(
   IMAGE_FILE_TYPE,
   "이미지 파일을 업로드 해 주세요."
@@ -145,6 +144,14 @@ const clear = (filePath: string) => {
   game.loadList();
 };
 
+const favorite = (filePath: string) => {
+  send(IpcRendererSend.Favorite, {
+    path: filePath,
+    isFavorite: !props.isFavorite,
+  });
+  game.loadList();
+};
+
 const removeRecent = (filePath: string) => {
   send(IpcRendererSend.Recent, { path: filePath, isRecent: false });
   game.loadList();
@@ -180,6 +187,19 @@ watch(loading, () => {
       class="p-0 w-full overflow-hidden flex justify-center items-center"
       style="aspect-ratio: 4/3"
     >
+      <Button
+        class="top-4 left-4 absolute rounded-full z-10 aspect-square size-12 bg-primary/60 drop-shadow"
+        @click="favorite(path)"
+      >
+        <Icon
+          class="size-6"
+          :class="{
+            'text-yellow-300 drop-shadow-xl drop-shadow-yellow-300': isFavorite,
+            'text-gray-300 drop-shadow-gray-300': !isFavorite,
+          }"
+          icon="solar:stars-minimalistic-bold-duotone"
+        />
+      </Button>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger as-child>

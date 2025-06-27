@@ -62,6 +62,7 @@ export class DBManager {
       log.info(`앱 경로: ${app.getAppPath()}`);
       log.info(`사용자 데이터 경로: ${app.getPath("userData")}`);
       log.info(`리소스 경로: ${process.resourcesPath}`);
+      log.info("DB 파일 경로:", this.db.client.config.connection.filename);
 
       // SQLite 외래키 활성화
       await this.db.raw(`PRAGMA foreign_keys = ON`);

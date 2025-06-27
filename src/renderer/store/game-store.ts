@@ -26,18 +26,25 @@ export const useGame = defineStore("game", () => {
 
   const { searchWord, makerName, tagIds, sort } = storeToRefs(useSearch());
   const sortedList = computed(() => {
-    switch (sort.value) {
-      case Sort.Title:
-        return [...list.value].sort((a, b) => a.title.localeCompare(b.title));
-      case Sort.TitleDesc:
-        return [...list.value].sort((a, b) => b.title.localeCompare(a.title));
-      case Sort.RJCode:
-        return [...list.value].sort((a, b) => sortRJCode(a.title, b.title));
-      case Sort.RJCodeDesc:
-        return [...list.value].sort((a, b) =>
-          sortRJCode(b.title, a.title, true)
-        );
-    }
+    return [...list.value].sort((a, b) => {
+      // 1. 즐겨찾기 여부 먼저 비교 (즐겨찾기(true)가 앞에 오도록)
+      if (!!a.isFavorite && !b.isFavorite) return -1;
+      if (!a.isFavorite && !!b.isFavorite) return 1;
+
+      // 2. 즐겨찾기 여부가 같으면 sort.value에 따른 정렬
+      switch (sort.value) {
+        case Sort.Title:
+          return a.title.localeCompare(b.title);
+        case Sort.TitleDesc:
+          return b.title.localeCompare(a.title);
+        case Sort.RJCode:
+          return sortRJCode(a.title, b.title);
+        case Sort.RJCodeDesc:
+          return sortRJCode(b.title, a.title, true);
+        default:
+          return 0;
+      }
+    });
   });
 
   const searchRegex = computed(() => {
