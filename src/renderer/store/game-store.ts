@@ -31,6 +31,9 @@ export const useGame = defineStore("game", () => {
       if (!!a.isFavorite && !b.isFavorite) return -1;
       if (!a.isFavorite && !!b.isFavorite) return 1;
 
+      if (!!a.isClear && !b.isClear) return 1;
+      if (!a.isClear && !!b.isClear) return -1;
+
       // 2. 즐겨찾기 여부가 같으면 sort.value에 따른 정렬
       switch (sort.value) {
         case Sort.Title:

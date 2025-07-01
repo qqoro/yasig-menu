@@ -457,6 +457,7 @@ const getListData = async ({
       .merge({
         // excluded.<columnName> 사용 시 insert문에 사용했던 데이터 사용됨
         source: db.raw("excluded.source"),
+        thumbnail: db.raw("excluded.thumbnail"),
         rjCode: db.raw("excluded.rjCode"),
         isCompressFile: db.raw("excluded.isCompressFile"),
         updatedAt: db.fn.now(),
