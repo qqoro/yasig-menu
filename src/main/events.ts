@@ -14,6 +14,7 @@ export enum IpcMainSend {
 
   LoadedList = "LoadedList",
   Message = "Message",
+  GameInfoReloaded = "GameInfoReloaded",
 
   LoadedSetting = "LoadedSetting",
 
@@ -40,6 +41,7 @@ export interface IpcMainEventMap
           message: string;
         } & Omit<ToastT, "id" | "type">
       ];
+      [IpcMainSend.GameInfoReloaded]: [id: string, result: Game | null];
 
       [IpcMainSend.LoadedSetting]: [id: string, setting: Setting];
 
@@ -77,6 +79,7 @@ export enum IpcRendererSend {
   Clear = "Clear",
   Memo = "Memo",
   UpdateGame = "UpdateGame",
+  GameInfoReload = "GameInfoReload",
 
   ThumbnailDownload = "ThumbnailDownload",
   ThumbnailDelete = "ThumbnailDelete",
@@ -135,6 +138,7 @@ export interface IpcRendererEventMap
           >;
         }
       ];
+      [IpcRendererSend.GameInfoReload]: [id: string, { path: string }];
 
       [IpcRendererSend.ThumbnailDownload]: [
         id: string,

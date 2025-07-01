@@ -7,7 +7,7 @@ import { COMPRESS_FILE_TYPE } from "../constants.js";
 import { db } from "../db/db-manager.js";
 import { Game, InsertGame } from "../db/db.js";
 import { IpcMainSend, IpcRendererSend, WhereGame } from "../events.js";
-import { ipcMain, send } from "../main.js";
+import { console, ipcMain, send } from "../main.js";
 import { toLikeQuery } from "../utils.js";
 import { saveInfo } from "./dlsite.js";
 import { loadSetting } from "./setting.js";
@@ -31,7 +31,7 @@ export interface GameData {
 ipcMain.on(IpcRendererSend.LoadList, async (e, id, options) => {
   const setting = await loadSetting();
 
-  console.time("getListData " + id);
+  global.console.time("getListData " + id);
   const list = await getListData({
     sources: setting.applySources,
     thumbnailFolder: setting.changeThumbnailFolder
@@ -39,7 +39,7 @@ ipcMain.on(IpcRendererSend.LoadList, async (e, id, options) => {
       : undefined,
     ...(options ?? {}),
   });
-  console.timeEnd("getListData " + id);
+  global.console.timeEnd("getListData " + id);
 
   send(IpcMainSend.LoadedList, id, list);
 });
@@ -522,5 +522,30 @@ ipcMain.on(IpcRendererSend.UpdateSetting, async (e, id, data) => {
   if (whitelist.some((key) => Object.keys(data).includes(key))) {
     console.log("설정이 변경되어 캐시를 무효화합니다.");
     initialized = false;
+  }
+});
+
+// 게임 정보 다시 불러오기
+ipcMain.on(IpcRendererSend.GameInfoReload, async (e, id, { path }) => {
+  try {
+    const [game] = await db("games").select().where({ path });
+    if (game.rjCode) {
+      await saveInfo(path, game.rjCode);
+    } else {
+      throw new Error("RJ코드가 없어 다시 정보를 불러오지 못했습니다.");
+    }
+
+    const [newGame] = await db("games")
+      .select("games.*")
+      .select(db.raw("group_concat(tags.tag, ', ') as tags"))
+      .select(db.raw("group_concat(tags.id, ',') as tagIds"))
+      .leftJoin("gameTags", "games.path", "gameTags.gamePath")
+      .leftJoin("tags", "gameTags.tagId", "tags.id")
+      .groupBy("games.path")
+      .where({ path });
+    e.reply(IpcMainSend.GameInfoReloaded, id, newGame);
+  } catch (err) {
+    console.error(err);
+    e.reply(IpcMainSend.GameInfoReloaded, id, null);
   }
 });
