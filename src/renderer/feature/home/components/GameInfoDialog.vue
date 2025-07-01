@@ -34,7 +34,14 @@
       </div>
 
       <DialogFooter>
-        <Button @click="handleSave" :disabled="loading">
+        <Button
+          variant="secondary"
+          @click="handleRefresh"
+          :disabled="loading || refreshing"
+        >
+          {{ refreshing ? "다시 가져오기 중..." : "게임 정보 다시 가져오기" }}
+        </Button>
+        <Button @click="handleSave" :disabled="loading || refreshing">
           {{ loading ? "저장 중..." : "저장" }}
         </Button>
       </DialogFooter>
@@ -47,6 +54,7 @@ import { DateValue, parseDate } from "@internationalized/date";
 import { onMounted, ref } from "vue";
 import { toast } from "vue-sonner";
 import { Game } from "../../../../main/db/db";
+import { IpcMainSend, IpcRendererSend } from "../../../../main/events";
 import { Button } from "../../../components/ui/button";
 import DatePicker from "../../../components/ui/date-picker/date-picker.vue";
 import {
@@ -59,6 +67,7 @@ import {
 } from "../../../components/ui/dialog";
 import { Input } from "../../../components/ui/input";
 import { Textarea } from "../../../components/ui/textarea";
+import { sendApi } from "../../../composable/useApi";
 import { updateGame } from "../../../db/game";
 import { useGame } from "../../../store/game-store";
 
@@ -66,6 +75,7 @@ const props = defineProps<
   {
     modelValue: boolean;
     path: string;
+    rjCode: string | null;
   } & Pick<
     Game,
     "title" | "publishDate" | "makerName" | "category" | "tags" | "memo"
@@ -77,6 +87,7 @@ const emit = defineEmits<{
 
 const gameStore = useGame();
 const loading = ref(false);
+const refreshing = ref(false);
 
 const title = ref(props.title);
 const publishDate = ref<DateValue>();
@@ -84,6 +95,54 @@ const makerName = ref(props.makerName ?? "");
 const category = ref(props.category ?? "");
 const tags = ref(props.tags ?? "");
 const memo = ref(props.memo ?? "");
+
+const handlePublishDate = (newPublishDate: any) => {
+  if (newPublishDate) {
+    try {
+      const date = new Date(newPublishDate as any);
+      if (!isNaN(date.getTime())) {
+        publishDate.value = parseDate(date.toISOString().split("T")[0]);
+      } else {
+        publishDate.value = undefined;
+      }
+    } catch (error) {
+      console.warn("발매일 파싱 오류:", error);
+      publishDate.value = undefined;
+    }
+  } else {
+    publishDate.value = undefined;
+  }
+};
+
+const handleRefresh = async () => {
+  try {
+    refreshing.value = true;
+    const [, game] = await sendApi(
+      IpcRendererSend.GameInfoReload,
+      IpcMainSend.GameInfoReloaded,
+      {
+        path: props.path,
+      }
+    );
+    if (game) {
+      title.value = game.title;
+      handlePublishDate(game.publishDate);
+      makerName.value = game.makerName ?? "";
+      category.value = game.category ?? "";
+      tags.value = game.tags ?? "";
+      memo.value = game.memo ?? "";
+    } else {
+      throw new Error("RJ코드가 없어 다시 정보를 불러오지 못했습니다.");
+    }
+
+    await gameStore.loadList();
+    toast.success("게임 정보를 다시 가져왔습니다.");
+  } catch (err) {
+    toast.error((err as Error).message);
+  } finally {
+    refreshing.value = false;
+  }
+};
 
 const handleSave = async () => {
   try {
@@ -124,13 +183,11 @@ const handleSave = async () => {
     const result = await updateGame(props.path, gameData);
 
     if (result.type === "success") {
-      // 게임 목록 새로고침
+      // 게임 목록 다시 가져오기
       await gameStore.loadList();
 
       // 다이얼로그 닫기
       emit("update:modelValue", false);
-
-      toast.success(result.message);
     } else {
       toast.error(result.message);
       if (result.description) {
@@ -146,20 +203,6 @@ const handleSave = async () => {
 };
 
 onMounted(() => {
-  if (props.publishDate) {
-    try {
-      const date = new Date(props.publishDate as any);
-      if (!isNaN(date.getTime())) {
-        publishDate.value = parseDate(date.toISOString().split("T")[0]);
-      } else {
-        publishDate.value = undefined;
-      }
-    } catch (error) {
-      console.warn("발매일 파싱 오류:", error);
-      publishDate.value = undefined;
-    }
-  } else {
-    publishDate.value = undefined;
-  }
+  handlePublishDate(props.publishDate);
 });
 </script>
