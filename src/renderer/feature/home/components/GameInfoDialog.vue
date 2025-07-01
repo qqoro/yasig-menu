@@ -188,8 +188,6 @@ const handleSave = async () => {
 
       // 다이얼로그 닫기
       emit("update:modelValue", false);
-
-      toast.success(result.message);
     } else {
       toast.error(result.message);
       if (result.description) {
