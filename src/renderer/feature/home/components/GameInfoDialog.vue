@@ -75,7 +75,6 @@ const props = defineProps<
   {
     modelValue: boolean;
     path: string;
-    rjCode: string | null;
   } & Pick<
     Game,
     "title" | "publishDate" | "makerName" | "category" | "tags" | "memo"
