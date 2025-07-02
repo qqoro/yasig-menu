@@ -59,11 +59,9 @@ export async function loadInfo(id: string) {
 }
 
 export async function saveInfo(path: string, rjCode: string) {
-  const { publishDate, makerHref, makerName, category, tags } =
-    await loadInfo(rjCode);
+  const { publishDate, makerName, category, tags } = await loadInfo(rjCode);
 
   const tx = await db.transaction();
-
   try {
     await tx("games")
       .update({

@@ -65,7 +65,7 @@ export const sendApi = <T extends IpcRendererSend, R extends IpcMainSend>(
 ): Promise<IpcMainEventMap[R]> => {
   return new Promise((resolve, reject) => {
     const id = send(channel, ...args);
-    const callback = (e: IpcRendererEvent, ...data: IpcMainEventMap[R]) => {
+    const callback = (_: IpcRendererEvent, ...data: IpcMainEventMap[R]) => {
       if (data[0] !== id) {
         return;
       }

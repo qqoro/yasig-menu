@@ -37,7 +37,7 @@ ipcMain.on(IpcRendererSend.LoadList, async (e, id, options) => {
     thumbnailFolder: setting.changeThumbnailFolder
       ? setting.newThumbnailFolder
       : undefined,
-    ...(options ?? {}),
+    ...options,
   });
   global.console.timeEnd("getListData " + id);
 

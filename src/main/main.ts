@@ -188,7 +188,7 @@ app.on("window-all-closed", function () {
 });
 
 // 애플리케이션 종료 시 데이터베이스 연결 정리
-app.on("before-quit", async (event) => {
+app.on("before-quit", async () => {
   try {
     // 데이터베이스 연결 종료
     await dbManager.destroy();
