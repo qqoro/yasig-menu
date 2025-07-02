@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { shell } from "electron";
 import fg from "fast-glob";
-import { readdir, stat } from "fs/promises";
+import { readdir, rm, stat } from "fs/promises";
 import { extname, join } from "path";
 import { COMPRESS_FILE_TYPE } from "../constants.js";
 import { db } from "../db/db-manager.js";
@@ -425,6 +425,29 @@ const getListData = async ({
 
   // 썸네일 찾기
   const processedList = findThumbnails(list);
+
+  const setting = await loadSetting();
+  if (setting.deleteThumbnailFile) {
+    // 오래된 썸네일 파일 삭제
+    const oldThumbnails = await db("games")
+      .select("thumbnail")
+      .whereNotIn(
+        "path",
+        processedList.map((item) => item.path)
+      )
+      .whereNotNull("thumbnail");
+
+    for (const { thumbnail } of oldThumbnails) {
+      if (thumbnail) {
+        try {
+          await rm(thumbnail);
+          console.log(`썸네일 삭제: ${thumbnail}`);
+        } catch (error) {
+          console.error(`썸네일 삭제 실패: ${thumbnail}`, error);
+        }
+      }
+    }
+  }
 
   // path가 존재하지 않는 데이터는 삭제
   await db("games")

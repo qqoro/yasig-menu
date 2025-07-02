@@ -53,6 +53,7 @@ export interface Setting extends TableBaseColumn {
   zoom: number;
   search: [string, string];
   playExclude: string[];
+  deleteThumbnailFile: boolean;
 }
 export interface InsertSetting extends Partial<TableBaseColumn> {
   sources?: string;
@@ -67,6 +68,7 @@ export interface InsertSetting extends Partial<TableBaseColumn> {
   cookie?: string;
   search?: string;
   playExclude?: string;
+  deleteThumbnailFile?: SqliteBoolean;
 }
 export type UpdateSetting = Partial<InsertSetting>;
 
