@@ -497,7 +497,7 @@ const getListData = async ({
     if (!data) continue;
 
     const { id, collector } = data;
-    const info = await collector.fetchInfo(game.path, id);
+    const info = await collector.fetchInfo({ path: game.path, id });
     if (info) {
       await saveInfo(game.path, info);
     }
@@ -560,7 +560,7 @@ ipcMain.on(IpcRendererSend.GameInfoReload, async (e, id, { path }) => {
     }
 
     const { id: gameId, collector } = data;
-    const info = await collector.fetchInfo(path, gameId);
+    const info = await collector.fetchInfo({ id: gameId, path });
     console.log("info >>>>>>>>", info);
     if (info) {
       await saveInfo(path, info);

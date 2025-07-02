@@ -4,11 +4,11 @@ import { Collector } from "./registry.js";
 
 export const DLSiteCollector: Collector = {
   name: "DLSite",
-  getId: async (path: string) => {
+  getId: async (path) => {
     const rjCode = /[RBV]J\d{6,8}/i.exec(path)?.[0];
     return rjCode;
   },
-  fetchInfo: async (path: string, id: string) => {
+  fetchInfo: async ({ id }) => {
     const html = await fetch(
       `https://www.dlsite.com/maniax/work/=/product_id/${id}.html`,
       {

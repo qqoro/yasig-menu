@@ -1,22 +1,36 @@
+import { Page } from "puppeteer-core";
 import { db } from "../db/db-manager.js";
+import { DLSiteCollector } from "./dlsite-collector.js";
 import { SteamCollector } from "./steam-collector.js";
 
 export interface LoadedInfo {
-  title: string | undefined;
-  thumbnail: string | undefined;
-  publishDate: Date | undefined;
-  makerName: string | undefined;
-  category: string | undefined;
-  tags: { id: string; name: string }[] | undefined;
+  title?: string;
+  thumbnail?: string;
+  publishDate?: Date;
+  makerName?: string;
+  category?: string;
+  tags?: { id: string; name: string }[];
 }
 
 export interface Collector {
   name: string;
   getId: (path: string) => Promise<string | undefined>;
-  fetchInfo: (path: string, id: string) => Promise<LoadedInfo | undefined>;
+  fetchInfo: ({
+    path,
+    id,
+    page,
+  }: {
+    path: string;
+    id: string;
+    page?: Page;
+  }) => Promise<LoadedInfo | undefined>;
 }
 
-export const collectors: Collector[] = [SteamCollector];
+export const collectors: Collector[] = [
+  DLSiteCollector,
+  SteamCollector,
+  // GoogleCollector,
+];
 
 export async function findCollector(path: string) {
   return (

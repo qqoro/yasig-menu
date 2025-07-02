@@ -34,7 +34,7 @@ export const SteamCollector: Collector = {
     return /\d{3,7}/g.exec(path)?.[0] ?? undefined;
   },
 
-  fetchInfo: async (path: string, id: string) => {
+  fetchInfo: async ({ path, id }) => {
     const res = await fetch(
       `https://store.steampowered.com/api/appdetails?appids=${id}`,
     );
