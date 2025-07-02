@@ -3,13 +3,13 @@ import { shell } from "electron";
 import fg from "fast-glob";
 import { readdir, rm, stat } from "fs/promises";
 import { extname, join } from "path";
+import { collectors, LoadedInfo, saveInfo } from "../collectors/registry.js";
 import { COMPRESS_FILE_TYPE } from "../constants.js";
 import { db } from "../db/db-manager.js";
 import { Game, InsertGame } from "../db/db.js";
 import { IpcMainSend, IpcRendererSend, WhereGame } from "../events.js";
 import { console, ipcMain, send } from "../main.js";
 import { toLikeQuery } from "../utils.js";
-import { saveInfo } from "./dlsite.js";
 import { loadSetting } from "./setting.js";
 
 interface DirentLike {
@@ -490,14 +490,47 @@ const getListData = async ({
   // 정보 입력되지 않은 게임들 처리
   const notLoadedGames = await db("games")
     .select()
-    .where({ isLoadedInfo: false })
-    .whereNotNull("rjCode");
-  try {
-    await Promise.all(
-      notLoadedGames.map((game) => saveInfo(game.path, game.rjCode!)),
-    );
-  } catch (error) {
-    console.error(error);
+    .where({ isLoadedInfo: false });
+
+  for (const game of notLoadedGames) {
+    for (const collector of collectors) {
+      const id = await collector.getId(game.path);
+      if (id) {
+        const info = await collector.fetchInfo(game.path, id);
+        const tx = await db.transaction();
+        try {
+          await tx("games")
+            .update({
+              ...info,
+              rjCode: id,
+              isLoadedInfo: true,
+            })
+            .where({ path: game.path });
+
+          if (info.tags) {
+            await tx("tags")
+              .insert(info.tags?.map(({ id, name }) => ({ id, tag: name })))
+              .onConflict()
+              .ignore();
+            await tx("gameTags").delete().where({ gamePath: game.path });
+            await tx("gameTags")
+              .insert(
+                info.tags?.map((tag) => ({
+                  gamePath: game.path,
+                  tagId: tag.id,
+                })),
+              )
+              .onConflict()
+              .ignore();
+          }
+
+          await tx.commit();
+        } catch {
+          await tx.rollback();
+        }
+        break; // 다음 수집기는 실행 안함
+      }
+    }
   }
 
   const q = db("games")
@@ -551,11 +584,25 @@ ipcMain.on(IpcRendererSend.UpdateSetting, async (e, id, data) => {
 // 게임 정보 다시 불러오기
 ipcMain.on(IpcRendererSend.GameInfoReload, async (e, id, { path }) => {
   try {
-    const [game] = await db("games").select().where({ path });
-    if (game.rjCode) {
-      await saveInfo(path, game.rjCode);
+    let info: LoadedInfo | undefined;
+    for (const collector of collectors) {
+      const gameId = await collector.getId(path);
+      if (!gameId) {
+        continue;
+      }
+
+      info = await collector.fetchInfo(path, gameId);
+      if (info) {
+        break;
+      }
+    }
+
+    if (info) {
+      await saveInfo(path, info);
     } else {
-      throw new Error("RJ코드가 없어 다시 정보를 불러오지 못했습니다.");
+      throw new Error(
+        "게임 정보를 가져올 수 있는 특정 값이 없어 정보를 불러오지 못했습니다.",
+      );
     }
 
     const [newGame] = await db("games")
