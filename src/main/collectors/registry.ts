@@ -1,20 +1,35 @@
 import { db } from "../db/db-manager.js";
-import { DLSiteCollector } from "./dlsite-collector.js";
+import { SteamCollector } from "./steam-collector.js";
 
 export interface LoadedInfo {
-  publishDate: Date;
-  makerName: string;
-  category: string;
-  tags: { id: string; name: string }[];
+  title: string | undefined;
+  thumbnail: string | undefined;
+  publishDate: Date | undefined;
+  makerName: string | undefined;
+  category: string | undefined;
+  tags: { id: string; name: string }[] | undefined;
 }
 
 export interface Collector {
   name: string;
   getId: (path: string) => Promise<string | undefined>;
-  fetchInfo: (path: string, id: string) => Promise<LoadedInfo>;
+  fetchInfo: (path: string, id: string) => Promise<LoadedInfo | undefined>;
 }
 
-export const collectors: Collector[] = [DLSiteCollector];
+export const collectors: Collector[] = [SteamCollector];
+
+export async function findCollector(path: string) {
+  return (
+    await Promise.all(
+      collectors.map(async (collector) => ({
+        collector,
+        id: await collector.getId(path),
+      })),
+    )
+  ).find((data) => !!data.id) as
+    | { collector: Collector; id: string }
+    | undefined;
+}
 
 export async function saveInfo(path: string, info: LoadedInfo) {
   const { publishDate, makerName, category, tags } = info;

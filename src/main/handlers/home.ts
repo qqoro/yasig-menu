@@ -3,7 +3,7 @@ import { shell } from "electron";
 import fg from "fast-glob";
 import { readdir, rm, stat } from "fs/promises";
 import { extname, join } from "path";
-import { collectors, LoadedInfo, saveInfo } from "../collectors/registry.js";
+import { findCollector, saveInfo } from "../collectors/registry.js";
 import { COMPRESS_FILE_TYPE } from "../constants.js";
 import { db } from "../db/db-manager.js";
 import { Game, InsertGame } from "../db/db.js";
@@ -493,43 +493,13 @@ const getListData = async ({
     .where({ isLoadedInfo: false });
 
   for (const game of notLoadedGames) {
-    for (const collector of collectors) {
-      const id = await collector.getId(game.path);
-      if (id) {
-        const info = await collector.fetchInfo(game.path, id);
-        const tx = await db.transaction();
-        try {
-          await tx("games")
-            .update({
-              ...info,
-              rjCode: id,
-              isLoadedInfo: true,
-            })
-            .where({ path: game.path });
+    const data = await findCollector(game.path);
+    if (!data) continue;
 
-          if (info.tags) {
-            await tx("tags")
-              .insert(info.tags?.map(({ id, name }) => ({ id, tag: name })))
-              .onConflict()
-              .ignore();
-            await tx("gameTags").delete().where({ gamePath: game.path });
-            await tx("gameTags")
-              .insert(
-                info.tags?.map((tag) => ({
-                  gamePath: game.path,
-                  tagId: tag.id,
-                })),
-              )
-              .onConflict()
-              .ignore();
-          }
-
-          await tx.commit();
-        } catch {
-          await tx.rollback();
-        }
-        break; // 다음 수집기는 실행 안함
-      }
+    const { id, collector } = data;
+    const info = await collector.fetchInfo(game.path, id);
+    if (info) {
+      await saveInfo(game.path, info);
     }
   }
 
@@ -584,19 +554,14 @@ ipcMain.on(IpcRendererSend.UpdateSetting, async (e, id, data) => {
 // 게임 정보 다시 불러오기
 ipcMain.on(IpcRendererSend.GameInfoReload, async (e, id, { path }) => {
   try {
-    let info: LoadedInfo | undefined;
-    for (const collector of collectors) {
-      const gameId = await collector.getId(path);
-      if (!gameId) {
-        continue;
-      }
-
-      info = await collector.fetchInfo(path, gameId);
-      if (info) {
-        break;
-      }
+    const data = await findCollector(path);
+    if (!data) {
+      throw new Error();
     }
 
+    const { id: gameId, collector } = data;
+    const info = await collector.fetchInfo(path, gameId);
+    console.log("info >>>>>>>>", info);
     if (info) {
       await saveInfo(path, info);
     } else {

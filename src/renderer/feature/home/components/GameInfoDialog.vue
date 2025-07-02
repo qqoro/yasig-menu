@@ -131,7 +131,9 @@ const handleRefresh = async () => {
       tags.value = game.tags ?? "";
       memo.value = game.memo ?? "";
     } else {
-      throw new Error("RJ코드가 없어 다시 정보를 불러오지 못했습니다.");
+      throw new Error(
+        "게임 정보를 가져올 수 있는 특정 값이 없어 정보를 불러오지 못했습니다.",
+      );
     }
 
     await gameStore.loadList();

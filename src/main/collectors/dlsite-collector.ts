@@ -27,6 +27,11 @@ export const DLSiteCollector: Collector = {
       },
     });
 
+    const title = body.querySelector("#work_name")?.textContent;
+    const src = body
+      .querySelector("#work_left .product-slider-data > div")
+      ?.getAttribute("data-src");
+    const thumbnail = src ? "https:" + src : undefined;
     const date = dayjs(
       body.querySelector("#work_outline > tr:nth-child(1) > td > a")
         ?.textContent ?? null,
@@ -50,6 +55,8 @@ export const DLSiteCollector: Collector = {
         })) ?? [];
 
     return {
+      title,
+      thumbnail,
       publishDate,
       makerName,
       category,
