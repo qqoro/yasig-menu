@@ -59,7 +59,7 @@ const selectRandomGame = async () => {
   const [, list] = await sendApi(
     IpcRendererSend.LoadList,
     IpcMainSend.LoadedList,
-    { isHidden: false }
+    { isHidden: false },
   );
   const data = list[Math.floor(list.length * Math.random())];
   search.searchWord = data.title;
@@ -122,7 +122,7 @@ watch(
   () => setting.applySources,
   () => {
     game.loadList();
-  }
+  },
 );
 
 const processQueue = ref<Game[]>([]);
@@ -136,7 +136,7 @@ const thumbnailBatchDownload = async () => {
   const [, list] = await sendApi(
     IpcRendererSend.LoadList,
     IpcMainSend.LoadedList,
-    { isHidden: false }
+    { isHidden: false },
   );
   processQueue.value = list.filter((item) => !item.thumbnail);
 
@@ -146,7 +146,7 @@ const thumbnailBatchDownload = async () => {
     const process = new Promise<void>((resolve) => {
       const callback = (e: IpcRendererEvent, id: string, path: string) => {
         processQueue.value = processQueue.value.filter(
-          (item) => item.path !== path
+          (item) => item.path !== path,
         );
         list = list.filter((item) => item.path !== path);
         if (processQueue.value.length === 0) {
@@ -156,7 +156,7 @@ const thumbnailBatchDownload = async () => {
         toast.info(
           `다운로드 진행중... (${
             totalCount - processQueue.value.length
-          }/${totalCount})`
+          }/${totalCount})`,
         );
       };
       on(IpcMainSend.ThumbnailDone, callback);
@@ -179,7 +179,7 @@ const thumbnailBatchDownload = async () => {
   } catch (error) {
     toast.error("알 수 없는 오류가 발생했습니다!", {
       description: [(error as Error).message, (error as Error).stack].join(
-        "\n"
+        "\n",
       ),
     });
   } finally {
@@ -366,7 +366,7 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, id, percent) => {
                     toggleApplySource(
                       e,
                       source,
-                      !setting.applySources.includes(source)
+                      !setting.applySources.includes(source),
                     )
                 "
               >
@@ -374,8 +374,8 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, id, percent) => {
                   source.substring(
                     Math.max(
                       source.lastIndexOf("/"),
-                      source.lastIndexOf("\\")
-                    ) + 1
+                      source.lastIndexOf("\\"),
+                    ) + 1,
                   )
                 }}</span>
               </DropdownMenuCheckboxItem>

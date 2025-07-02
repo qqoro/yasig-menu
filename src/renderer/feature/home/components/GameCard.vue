@@ -65,7 +65,7 @@ const loading = ref(false);
 const fakeQueryId = ref(0);
 const { file, changeHandler } = useFile(
   IMAGE_FILE_TYPE,
-  "이미지 파일을 업로드 해 주세요."
+  "이미지 파일을 업로드 해 주세요.",
 );
 const url = ref("");
 
@@ -210,7 +210,7 @@ watch(loading, () => {
                 cn(
                   'object-cover w-full aspect-[4/3] hover:scale-110 transition-transform cursor-zoom-in',
                   { 'blur-md': blur },
-                  { 'brightness-0': dark }
+                  { 'brightness-0': dark },
                 )
               "
               style="aspect-ratio: 4/3"

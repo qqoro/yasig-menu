@@ -90,7 +90,7 @@ export class DBManager {
       } else {
         log.info(
           `배치 ${batchNo}에서 ${migrationFiles.length}개의 마이그레이션을 실행했습니다:`,
-          migrationFiles
+          migrationFiles,
         );
       }
       return migrationFiles;
@@ -113,7 +113,7 @@ export class DBManager {
       } else {
         log.info(
           `배치 ${batchNo}에서 ${migrationFiles.length}개의 마이그레이션을 롤백했습니다:`,
-          migrationFiles
+          migrationFiles,
         );
       }
     } catch (error) {

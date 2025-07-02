@@ -72,7 +72,9 @@ const openFolder = (path: string) => {
         >
           <Input
             :model-value="modelValue[1]"
-            @update:model-value="(v) => emit('update:modelValue', [modelValue[0], v as string])"
+            @update:model-value="
+              (v) => emit('update:modelValue', [modelValue[0], v as string])
+            "
             placeholder="새로운 저장 경로를 입력하세요."
           />
           <PopOverButton

@@ -5,7 +5,7 @@ import { api } from "./useApi";
 
 export const useEvent = <T extends IpcMainSend>(
   event: T,
-  callback: (event: IpcRendererEvent, ...args: IpcMainEventMap[T]) => void
+  callback: (event: IpcRendererEvent, ...args: IpcMainEventMap[T]) => void,
 ) => {
   onMounted(() => {
     api.addListener(event, callback);

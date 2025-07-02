@@ -19,7 +19,8 @@
     "build:win": "tsc --noEmit && node scripts/build.js && electron-builder --win --publish=never",
     "build:port:win": "tsc --noEmit && node scripts/build.js && electron-builder --win portable --publish=never",
     "prepare": "husky",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "format": "prettier src/ --write"
   },
   "type": "module",
   "devDependencies": {
@@ -33,6 +34,7 @@
     "electron": "^32.1.2",
     "electron-builder": "^25.1.6",
     "husky": "^9.1.7",
+    "prettier": "^3.6.2",
     "semver": "^7.7.1",
     "tsx": "^4.19.3",
     "typescript": "^5.8.3",

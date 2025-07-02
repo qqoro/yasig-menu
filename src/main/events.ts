@@ -3,7 +3,7 @@ import { Game, Setting, UpdateSetting } from "./db/db.js";
 
 type EnforceAllKeys<
   E extends IpcMainSend | IpcRendererSend,
-  T extends Record<E, any[]>
+  T extends Record<E, any[]>,
 > = T;
 
 export enum IpcMainSend {
@@ -39,7 +39,7 @@ export interface IpcMainEventMap
         {
           type: "success" | "info" | "warning" | "error";
           message: string;
-        } & Omit<ToastT, "id" | "type">
+        } & Omit<ToastT, "id" | "type">,
       ];
       [IpcMainSend.GameInfoReloaded]: [id: string, result: Game | null];
 
@@ -50,7 +50,7 @@ export interface IpcMainEventMap
       [IpcMainSend.NeedMigration]: [
         id: string,
         version: string,
-        list: string[]
+        list: string[],
       ];
       [IpcMainSend.MigrationDone]: [id: string, version: string];
     }
@@ -110,16 +110,16 @@ export interface IpcRendererEventMap
       [IpcRendererSend.Hide]: [id: string, { path: string; isHidden: boolean }];
       [IpcRendererSend.Recent]: [
         id: string,
-        { path: string; isRecent: boolean }
+        { path: string; isRecent: boolean },
       ];
       [IpcRendererSend.Favorite]: [
         id: string,
-        { path: string; isFavorite: boolean }
+        { path: string; isFavorite: boolean },
       ];
       [IpcRendererSend.Clear]: [id: string, { path: string; isClear: boolean }];
       [IpcRendererSend.Memo]: [
         id: string,
-        { path: string; memo: string | null }
+        { path: string; memo: string | null },
       ];
       [IpcRendererSend.UpdateGame]: [
         id: string,
@@ -136,7 +136,7 @@ export interface IpcRendererEventMap
               | "memo"
             >
           >;
-        }
+        },
       ];
       [IpcRendererSend.GameInfoReload]: [id: string, { path: string }];
 
@@ -155,13 +155,13 @@ export interface IpcRendererEventMap
            * 해당 값이 존재하는 경우 검색을 시도하지 않고 바로 주소에서 다운로드합니다.
            */
           url?: string;
-        }
+        },
       ];
       [IpcRendererSend.ThumbnailDelete]: [id: string, path: string];
 
       [IpcRendererSend.MigrationData]: [
         id: string,
-        setting: Record<string, any>
+        setting: Record<string, any>,
       ];
     }
   > {}

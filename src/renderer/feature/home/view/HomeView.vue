@@ -77,7 +77,7 @@ useWindowEvent("focus", () => {
 });
 
 const gameExist = computed(
-  () => !(setting.sources?.length === 0 || game.list.length === 0)
+  () => !(setting.sources?.length === 0 || game.list.length === 0),
 );
 
 onMounted(() => {

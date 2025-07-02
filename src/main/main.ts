@@ -41,7 +41,7 @@ export function send<T extends IpcMainSend>(
 export const ipcMain: Omit<IpcMain, "on"> & {
   on: <T extends IpcRendererSend>(
     channel: T,
-    listener: (event: IpcMainEvent, ...args: IpcRendererEventMap[T]) => void
+    listener: (event: IpcMainEvent, ...args: IpcRendererEventMap[T]) => void,
   ) => void;
 } = ipcMainOrigin;
 
@@ -74,7 +74,7 @@ function createWindow() {
       send(
         IpcMainSend.WindowStatusChange,
         randomUUID(),
-        mainWindow.isMaximized()
+        mainWindow.isMaximized(),
       );
     });
     mainWindow.webContents.openDevTools({ mode: "detach" });
@@ -94,7 +94,7 @@ function createWindow() {
         send(
           IpcMainSend.WindowStatusChange,
           randomUUID(),
-          mainWindow.isMaximized()
+          mainWindow.isMaximized(),
         );
       });
   }
@@ -104,7 +104,7 @@ function createWindow() {
     send(
       IpcMainSend.WindowStatusChange,
       randomUUID(),
-      mainWindow.isMaximized()
+      mainWindow.isMaximized(),
     );
   });
   mainWindow.on("unmaximize", () => {
@@ -112,7 +112,7 @@ function createWindow() {
     send(
       IpcMainSend.WindowStatusChange,
       randomUUID(),
-      mainWindow.isMaximized()
+      mainWindow.isMaximized(),
     );
   });
   mainWindow.on("enter-full-screen", () => {
@@ -120,7 +120,7 @@ function createWindow() {
     send(
       IpcMainSend.WindowStatusChange,
       randomUUID(),
-      mainWindow.isMaximized()
+      mainWindow.isMaximized(),
     );
   });
 
@@ -129,7 +129,7 @@ function createWindow() {
     const allowedDomains = ["github.com", "www.dlsite.com", "forms.gle"];
     if (
       allowedDomains.some((domain) =>
-        details.url.startsWith("https://" + domain)
+        details.url.startsWith("https://" + domain),
       )
     ) {
       shell.openExternal(details.url);

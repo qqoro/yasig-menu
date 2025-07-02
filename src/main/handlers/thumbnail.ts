@@ -31,7 +31,7 @@ ipcMain.on(
       0,
       fileInfo.isFile()
         ? baseName.length - extname(baseName).length
-        : baseName.length
+        : baseName.length,
     );
 
     try {
@@ -135,7 +135,7 @@ ipcMain.on(
               thumbnailName,
               thumbnailExt,
               "||",
-              bestSrc
+              bestSrc,
             );
             await saveFromUrl({
               fileName: thumbnailName,
@@ -193,7 +193,7 @@ ipcMain.on(
           message ?? {
             type: "success",
             message: `${baseName}의 썸네일을 다운로드 했습니다.`,
-          }
+          },
         );
       } else {
         send(IpcMainSend.Message, id, {
@@ -219,7 +219,7 @@ ipcMain.on(
       send(IpcMainSend.ThumbnailDone, id, filePath);
       await page?.close();
     }
-  }
+  },
 );
 
 ipcMain.on(
@@ -239,7 +239,7 @@ ipcMain.on(
         description: (error as Error).stack,
       });
     }
-  }
+  },
 );
 
 async function initBrowser() {
@@ -280,7 +280,7 @@ async function getFromGoogle({ page, query }: { page: Page; query: string }) {
       "img.sFlh5c.FyHeAf.iPVvYb",
       (imgs) => {
         return imgs[0].getAttribute("src");
-      }
+      },
     );
 
     return [src, higherImage];
@@ -380,22 +380,22 @@ async function getFromDLSite({ page, rjCode }: { page: Page; rjCode: string }) {
       },
       body: null,
       method: "GET",
-    }
+    },
   ).then((res) => res.json())) as Record<typeof rjCode, DLSiteProductInfo>;
   if (data?.[rjCode]?.work_image) {
     return "https:" + data[rjCode].work_image;
   }
 
   await page.goto(
-    `https://www.dlsite.com/maniax/work/=/product_id/${rjCode}.html`
+    `https://www.dlsite.com/maniax/work/=/product_id/${rjCode}.html`,
   );
   await page.waitForSelector(
     "#work_left div.slider_body_inner.swiper-container-initialized.swiper-container-horizontal > ul > li.slider_item.active > picture > img",
-    { timeout: 5000 }
+    { timeout: 5000 },
   );
   const src = await page.$$eval(
     "#work_left div.slider_body_inner.swiper-container-initialized.swiper-container-horizontal > ul > li.slider_item.active > picture > img",
-    (imgs) => imgs[0].getAttribute("srcset")
+    (imgs) => imgs[0].getAttribute("srcset"),
   );
 
   return "https:" + src;
@@ -425,7 +425,7 @@ async function getThumbnailName({
   const baseName = basename(filePath); // file.exe
   const fileName = baseName.substring(
     0,
-    baseName.length - extname(baseName).length
+    baseName.length - extname(baseName).length,
   ); // file
 
   return [
@@ -487,34 +487,34 @@ export async function getNewCookie() {
   // 국가 설정
   await waitAndClick(
     page,
-    "body > div:nth-child(2) > div.iORcjf > div.LFAdvb > g-menu > g-menu-item:nth-child(2)"
+    "body > div:nth-child(2) > div.iORcjf > div.LFAdvb > g-menu > g-menu-item:nth-child(2)",
   );
   await waitAndClick(
     page,
-    "body > div:nth-child(2) > div.iORcjf > div:nth-child(2) > div:nth-child(2) > div.HrFxGf > div > div > div"
+    "body > div:nth-child(2) > div.iORcjf > div:nth-child(2) > div:nth-child(2) > div.HrFxGf > div > div > div",
   );
   await waitAndClick(
     page,
-    "body > div.iORcjf > div:nth-child(2) > div > div:nth-child(2) > div > div:nth-child(2) > div > div:nth-child(2) > div.HrqWPb"
+    "body > div.iORcjf > div:nth-child(2) > div > div:nth-child(2) > div > div:nth-child(2) > div > div:nth-child(2) > div.HrqWPb",
   );
   await waitAndClick(
     page,
-    "#lb > div > div.mcPPZ.nP0TDe.xg7rAe.ivkdbf > span > div > g-menu > g-menu-item:nth-child(2)"
+    "#lb > div > div.mcPPZ.nP0TDe.xg7rAe.ivkdbf > span > div > g-menu > g-menu-item:nth-child(2)",
   );
   await waitAndClick(
     page,
-    "#lb > div > div.mcPPZ.nP0TDe.xg7rAe.ivkdbf > span > div > div.JhVSze > span:nth-child(2)"
+    "#lb > div > div.mcPPZ.nP0TDe.xg7rAe.ivkdbf > span > div > div.JhVSze > span:nth-child(2)",
   );
 
   // 세이프서치 설정
   await page.goto("https://www.google.com/preferences?hl=ko&fg=1");
   await waitAndClick(
     page,
-    "body > div:nth-child(2) > div.iORcjf > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div > div > div"
+    "body > div:nth-child(2) > div.iORcjf > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div > div > div",
   );
   await waitAndClick(
     page,
-    "body > div.GSpaEb > div:nth-child(2) > g-radio-button-group > div:nth-child(6)"
+    "body > div.GSpaEb > div:nth-child(2) > g-radio-button-group > div:nth-child(6)",
   );
 
   const cookies = await browser.cookies();
@@ -524,7 +524,7 @@ export async function getNewCookie() {
     return;
   }
 
-  await page.close()
+  await page.close();
 
   await db("setting").update({ cookie: JSON.stringify(targetCookie.value) });
   return targetCookie.value;

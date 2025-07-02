@@ -122,7 +122,7 @@ const handleRefresh = async () => {
       IpcMainSend.GameInfoReloaded,
       {
         path: props.path,
-      }
+      },
     );
     if (game) {
       title.value = game.title;

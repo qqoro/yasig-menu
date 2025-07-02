@@ -9,7 +9,7 @@ export async function loadInfo(id: string) {
       headers: {
         cookie: "locale=ko-kr",
       },
-    }
+    },
   ).then((res) => res.text());
 
   const body = parse(html, {
@@ -24,7 +24,7 @@ export async function loadInfo(id: string) {
   const date = dayjs(
     body.querySelector("#work_outline > tr:nth-child(1) > td > a")
       ?.textContent ?? null,
-    `YYYY년 MM월 DD일`
+    `YYYY년 MM월 DD일`,
   );
   const publishDate = date.isValid() ? date.toDate() : null;
   const maker = body.querySelector("#work_maker > tr > td > span > a");
@@ -32,7 +32,7 @@ export async function loadInfo(id: string) {
   const makerName = maker?.textContent;
 
   const category = body.querySelector(
-    "#category_type > a:nth-child(1) > span"
+    "#category_type > a:nth-child(1) > span",
   )?.textContent;
   const tags = body
     .querySelector(".main_genre")
@@ -59,9 +59,8 @@ export async function loadInfo(id: string) {
 }
 
 export async function saveInfo(path: string, rjCode: string) {
-  const { publishDate, makerHref, makerName, category, tags } = await loadInfo(
-    rjCode
-  );
+  const { publishDate, makerHref, makerName, category, tags } =
+    await loadInfo(rjCode);
 
   const tx = await db.transaction();
 

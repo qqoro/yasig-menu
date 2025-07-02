@@ -8,7 +8,7 @@ import {
 
 type Tail<T extends readonly unknown[]> = T extends readonly [
   any,
-  ...infer Rest
+  ...infer Rest,
 ]
   ? Rest
   : [];
@@ -26,11 +26,11 @@ export const api = window.require("electron").ipcRenderer as Omit<
   send: Send;
   on: <T extends IpcMainSend>(
     channel: T,
-    listener: (event: IpcRendererEvent, ...args: IpcMainEventMap[T]) => void
+    listener: (event: IpcRendererEvent, ...args: IpcMainEventMap[T]) => void,
   ) => void;
   once: <T extends IpcMainSend>(
     channel: T,
-    listener: (event: IpcRendererEvent, ...args: IpcMainEventMap[T]) => void
+    listener: (event: IpcRendererEvent, ...args: IpcMainEventMap[T]) => void,
   ) => void;
 };
 
@@ -45,7 +45,7 @@ export const send: <T extends IpcRendererSend>(
 
 export const on: <T extends IpcMainSend>(
   channel: T,
-  listener: (event: IpcRendererEvent, ...args: IpcMainEventMap[T]) => void
+  listener: (event: IpcRendererEvent, ...args: IpcMainEventMap[T]) => void,
 ) => () => void = (channel, listener) => {
   api.on(channel, listener);
   return () => api.off(channel, listener);
@@ -53,7 +53,7 @@ export const on: <T extends IpcMainSend>(
 
 export const off: <T extends IpcMainSend>(
   channel: T,
-  listener: (event: IpcRendererEvent, ...args: IpcMainEventMap[T]) => void
+  listener: (event: IpcRendererEvent, ...args: IpcMainEventMap[T]) => void,
 ) => void = (channel, listener) => {
   api.off(channel, listener);
 };

@@ -55,7 +55,7 @@ ipcMain.on(IpcRendererSend.Play, async (e, id, filePath) => {
         file.isDirectory() ||
         !file.name.toLowerCase().endsWith(".exe") ||
         setting.playExclude.some((ex) =>
-          file.name.toLowerCase().startsWith(ex.toLowerCase())
+          file.name.toLowerCase().startsWith(ex.toLowerCase()),
         )
       ) {
         continue;
@@ -189,14 +189,14 @@ ipcMain.on(IpcRendererSend.UpdateGame, async (e, id, { path, gameData }) => {
           .select("id")
           .whereIn(
             "tag",
-            tags.map((tag) => tag.tag)
+            tags.map((tag) => tag.tag),
           );
         await tx("gameTags")
           .insert(
             tagIds.map((tagId) => ({
               gamePath: path,
               tagId: tagId.id,
-            }))
+            })),
           )
           .onConflict()
           .ignore();
@@ -241,12 +241,12 @@ const checkCacheDirty = async (sources: (string | undefined)[]) => {
         .map(
           (v) =>
             new Date(v as unknown as string).getTime() -
-            new Date().getTimezoneOffset() * 60 * 1000
+            new Date().getTimezoneOffset() * 60 * 1000,
         ),
-      0
+      0,
     );
     const sourcesInfo = await Promise.all(
-      (sources.filter((v) => !!v) as string[]).map((path) => stat(path))
+      (sources.filter((v) => !!v) as string[]).map((path) => stat(path)),
     );
 
     // DB업데이트 시간과 소스 폴더의 수정 시간 비교
@@ -296,7 +296,7 @@ function findThumbnails(files: DirentLike[]) {
       const thumbnail = `${baseName}${imgExt}`;
 
       const thumbnailFile = files.find(
-        (file) => file.name.toLowerCase() === thumbnail.toLowerCase()
+        (file) => file.name.toLowerCase() === thumbnail.toLowerCase(),
       );
       if (thumbnailFile) {
         result.push({
@@ -401,8 +401,8 @@ const getListData = async ({
             objectMode: true,
             deep: 1,
             absolute: true, // cwd 기준 상대 경로 반환
-          })
-      )
+          }),
+      ),
     )
   ).flat();
 
@@ -418,7 +418,7 @@ const getListData = async ({
       isCompressFile:
         entry.dirent.isFile() &&
         COMPRESS_FILE_TYPE.some((ext) =>
-          entry.path.toLowerCase().endsWith(ext)
+          entry.path.toLowerCase().endsWith(ext),
         ),
     });
   }
@@ -433,7 +433,7 @@ const getListData = async ({
       .select("thumbnail")
       .whereNotIn(
         "path",
-        processedList.map((item) => item.path)
+        processedList.map((item) => item.path),
       )
       .whereNotNull("thumbnail");
 
@@ -454,7 +454,7 @@ const getListData = async ({
     .delete()
     .whereNotIn(
       "path",
-      processedList.map((item) => item.path)
+      processedList.map((item) => item.path),
     );
 
   // 신규 데이터 삽입 및 기존데이터 업데이트
@@ -468,7 +468,7 @@ const getListData = async ({
         thumbnail: data.thumbnail ?? null,
         rjCode: /[RBV]J\d{6,8}/i.exec(data.title)?.[0] ?? null,
         isCompressFile: data.isCompressFile,
-      } satisfies InsertGame)
+      }) satisfies InsertGame,
   );
 
   // knex insert 시 복합 select > insert가 되는데 최대 500개 제한이 있음
@@ -494,7 +494,7 @@ const getListData = async ({
     .whereNotNull("rjCode");
   try {
     await Promise.all(
-      notLoadedGames.map((game) => saveInfo(game.path, game.rjCode!))
+      notLoadedGames.map((game) => saveInfo(game.path, game.rjCode!)),
     );
   } catch (error) {
     console.error(error);

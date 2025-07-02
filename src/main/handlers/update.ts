@@ -63,7 +63,7 @@ ipcMain.on(IpcRendererSend.MigrationData, async (e, id, data) => {
   }
   if (data.changeThumbnailFolder) {
     const [changeThumbnailFolder, newThumbnailFolder] = JSON.parse(
-      data.changeThumbnailFolder
+      data.changeThumbnailFolder,
     );
     setting.update({
       changeThumbnailFolder,
@@ -90,7 +90,7 @@ ipcMain.on(IpcRendererSend.MigrationData, async (e, id, data) => {
     await Promise.all(
       Object.keys(memo).map(async (key) => {
         await tx("games").update({ memo: memo[key] }).where({ path: key });
-      })
+      }),
     );
     await tx.commit();
   }
@@ -101,7 +101,7 @@ ipcMain.on(IpcRendererSend.MigrationData, async (e, id, data) => {
     await Promise.all(
       exclude.map(async (path) => {
         await tx("games").update({ isHidden: true }).where({ path });
-      })
+      }),
     );
     await tx.commit();
   }
@@ -143,12 +143,15 @@ ipcMain.on(IpcRendererSend.Restart, async () => {
 });
 
 autoUpdater.checkForUpdates();
-setInterval(() => {
-  if (startDownload) {
-    return;
-  }
-  autoUpdater.checkForUpdates();
-}, 1000 * 60 * 10);
+setInterval(
+  () => {
+    if (startDownload) {
+      return;
+    }
+    autoUpdater.checkForUpdates();
+  },
+  1000 * 60 * 10,
+);
 
 const updateCheckForPortable = async () => {
   const url = `https://api.github.com/repos/qqoro/yasig-menu/releases/latest`;
