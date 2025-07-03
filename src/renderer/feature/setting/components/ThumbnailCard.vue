@@ -18,11 +18,13 @@ defineProps<{
   modelValue: [boolean, string];
   blur: boolean;
   dark: boolean;
+  deleteThumbnailFile: boolean;
 }>();
 const emit = defineEmits<{
   (e: "update:modelValue", value: [boolean, string]): void;
   (e: "update:blur", value: boolean): void;
   (e: "update:dark", value: boolean): void;
+  (e: "update:deleteThumbnailFile", value: boolean): void;
 }>();
 
 const openFolder = (path: string) => {
@@ -70,7 +72,9 @@ const openFolder = (path: string) => {
         >
           <Input
             :model-value="modelValue[1]"
-            @update:model-value="(v) => emit('update:modelValue', [modelValue[0], v as string])"
+            @update:model-value="
+              (v) => emit('update:modelValue', [modelValue[0], v as string])
+            "
             placeholder="새로운 저장 경로를 입력하세요."
           />
           <PopOverButton
@@ -96,6 +100,29 @@ const openFolder = (path: string) => {
         >
           <div>썸네일 숨김 켜기</div>
           <Switch :model-value="dark" @update.stop />
+        </Button>
+        <Button
+          variant="outline"
+          class="flex justify-between items-center w-full"
+          @click="emit('update:deleteThumbnailFile', !deleteThumbnailFile)"
+        >
+          <div class="flex justify-center items-center gap-1">
+            목록에 없는 썸네일 파일 삭제
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Icon icon="solar:question-circle-outline" />
+                </TooltipTrigger>
+                <TooltipContent class="max-w-48 text-pretty" align="start">
+                  <p>
+                    게임 목록 새로고침 시, 더 이상 존재하지 않는 게임의 썸네일
+                    파일을 물리적으로 삭제합니다.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <Switch :model-value="deleteThumbnailFile" @update.stop />
         </Button>
       </div>
     </CardContent>

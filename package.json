@@ -1,7 +1,7 @@
 {
   "name": "yasig-menu",
   "displayName": "야식메뉴판",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "description": "야식 관리에 도움이 되는 가벼운 앱",
   "license": "MIT",
   "repository": {
@@ -19,7 +19,9 @@
     "build:win": "tsc --noEmit && node scripts/build.js && electron-builder --win --publish=never",
     "build:port:win": "tsc --noEmit && node scripts/build.js && electron-builder --win portable --publish=never",
     "prepare": "husky",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "lint": "oxlint",
+    "format": "prettier src/ --write"
   },
   "type": "module",
   "devDependencies": {
@@ -33,6 +35,8 @@
     "electron": "^32.1.2",
     "electron-builder": "^25.1.6",
     "husky": "^9.1.7",
+    "oxlint": "^1.5.0",
+    "prettier": "^3.6.2",
     "semver": "^7.7.1",
     "tsx": "^4.19.3",
     "typescript": "^5.8.3",

@@ -131,7 +131,19 @@ const changelog = [
       `게임 정보를 다시 가져오는 기능을 추가했습니다.`,
     ],
   ],
-].toReversed() as [string, string[]][];
+  [
+    "2.3.0",
+    [
+      [
+        `스팀 지원 기능이 추가되어, 더 다양한 게임 정보를 확인할 수 있습니다. 아래와 같은 형식인 경우 자동으로 인식됩니다.`,
+        `경로에 steam(대소문자 구분 안함)이라는 단어가 있어야 합니다.`,
+        `경로에 앱 ID(숫자 코드)가 있어야 합니다.`,
+      ],
+      `외부에서 수집한 게임의 원제목을 표기하는 기능이 추가되었습니다. (기본 값: 사용)`,
+      `사용되지 않는 썸네일을 자동으로 삭제하는 옵션이 추가되었습니다. (기본 값 : 미사용)`,
+    ],
+  ],
+].toReversed() as [string, string[] | string[][]][];
 </script>
 
 <template>
@@ -147,7 +159,17 @@ const changelog = [
             v{{ change[0] }}
           </h3>
           <ul class="text-sm space-y-1">
-            <li v-for="item in change[1]">- {{ item }}</li>
+            <template v-for="item in change[1]">
+              <template v-if="typeof item === 'string'">
+                <li>▶ {{ item }}</li>
+              </template>
+              <template v-else>
+                <li>▶ {{ item[0] }}</li>
+                <ul class="text-sm space-y-1 ml-4">
+                  <li v-for="i in item.slice(1)">▶ {{ i }}</li>
+                </ul>
+              </template>
+            </template>
           </ul>
         </div>
       </div>

@@ -7,12 +7,12 @@ import {
 import { sendApi } from "../composable/useApi";
 
 export async function getGameList(
-  options?: IpcRendererEventMap[IpcRendererSend.LoadList][1]
+  options?: IpcRendererEventMap[IpcRendererSend.LoadList][1],
 ) {
   const [, data] = await sendApi(
     IpcRendererSend.LoadList,
     IpcMainSend.LoadedList,
-    options
+    options,
   );
   return data;
 }
@@ -30,24 +30,24 @@ export async function updateGame(
       | "isClear"
       | "memo"
     >
-  >
+  >,
 ) {
   const [, result] = await sendApi(
     IpcRendererSend.UpdateGame,
     IpcMainSend.Message,
-    { path, gameData }
+    { path, gameData },
   );
   return result;
 }
 
 export async function thumbnailDownload(
   path: string,
-  options?: { url?: string; file?: { data: ArrayBuffer; ext: string } }
+  options?: { url?: string; file?: { data: ArrayBuffer; ext: string } },
 ) {
   const [, result] = await sendApi(
     IpcRendererSend.ThumbnailDownload,
     IpcMainSend.ThumbnailDone,
-    { path, url: options?.url, file: options?.file }
+    { path, url: options?.url, file: options?.file },
   );
   return result;
 }

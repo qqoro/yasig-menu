@@ -90,7 +90,7 @@ const copy = async () => {
           </DialogContent>
         </Dialog>
       </div>
-      <div class="text-muted-foreground text-sm">
+      <div class="text-muted-foreground text-sm line-through">
         <p>
           구글 검색 시 사용할 <span class="font-bold">NID</span> 쿠키 값을
           지정합니다. 썸네일 다운로드 시 이미지가 없는 경우 세이프 서치 제한에
@@ -101,6 +101,7 @@ const copy = async () => {
           수 있습니다.
         </p>
       </div>
+      <p>이제는 자동으로 설정됩니다. 값을 변경하지 않아도 됩니다.</p>
     </CardHeader>
     <CardContent class="flex flex-col gap-2">
       <Input

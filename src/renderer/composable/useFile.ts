@@ -11,7 +11,7 @@ export const useFile = (acceptExt?: string[], errorMessage?: string) => {
     if (
       acceptExt &&
       !acceptExt?.some((ext) =>
-        file?.name.toLowerCase().endsWith(ext.toLowerCase())
+        file?.name.toLowerCase().endsWith(ext.toLowerCase()),
       )
     ) {
       toast.error(errorMessage ?? "이미지 파일을 업로드 해 주세요.");

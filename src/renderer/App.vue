@@ -57,7 +57,7 @@ useEvent(IpcMainSend.NeedMigration, (e, id, version, list) => {
     version,
     semver.gte(version, "2.0.0"),
     semver.lt(version, "3.0.0"),
-    list
+    list,
   );
   if (list.some((m) => m.toLowerCase().startsWith("001_initial_tables"))) {
     migrationLoading.value = true;

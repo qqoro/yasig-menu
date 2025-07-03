@@ -1,15 +1,15 @@
 import { randomUUID } from "crypto";
 import { shell } from "electron";
 import fg from "fast-glob";
-import { readdir, stat } from "fs/promises";
+import { readdir, rm, stat } from "fs/promises";
 import { extname, join } from "path";
+import { findCollector, saveInfo } from "../collectors/registry.js";
 import { COMPRESS_FILE_TYPE } from "../constants.js";
 import { db } from "../db/db-manager.js";
 import { Game, InsertGame } from "../db/db.js";
 import { IpcMainSend, IpcRendererSend, WhereGame } from "../events.js";
 import { console, ipcMain, send } from "../main.js";
 import { toLikeQuery } from "../utils.js";
-import { saveInfo } from "./dlsite.js";
 import { loadSetting } from "./setting.js";
 
 interface DirentLike {
@@ -37,7 +37,7 @@ ipcMain.on(IpcRendererSend.LoadList, async (e, id, options) => {
     thumbnailFolder: setting.changeThumbnailFolder
       ? setting.newThumbnailFolder
       : undefined,
-    ...(options ?? {}),
+    ...options,
   });
   global.console.timeEnd("getListData " + id);
 
@@ -55,7 +55,7 @@ ipcMain.on(IpcRendererSend.Play, async (e, id, filePath) => {
         file.isDirectory() ||
         !file.name.toLowerCase().endsWith(".exe") ||
         setting.playExclude.some((ex) =>
-          file.name.toLowerCase().startsWith(ex.toLowerCase())
+          file.name.toLowerCase().startsWith(ex.toLowerCase()),
         )
       ) {
         continue;
@@ -189,14 +189,14 @@ ipcMain.on(IpcRendererSend.UpdateGame, async (e, id, { path, gameData }) => {
           .select("id")
           .whereIn(
             "tag",
-            tags.map((tag) => tag.tag)
+            tags.map((tag) => tag.tag),
           );
         await tx("gameTags")
           .insert(
             tagIds.map((tagId) => ({
               gamePath: path,
               tagId: tagId.id,
-            }))
+            })),
           )
           .onConflict()
           .ignore();
@@ -241,12 +241,12 @@ const checkCacheDirty = async (sources: (string | undefined)[]) => {
         .map(
           (v) =>
             new Date(v as unknown as string).getTime() -
-            new Date().getTimezoneOffset() * 60 * 1000
+            new Date().getTimezoneOffset() * 60 * 1000,
         ),
-      0
+      0,
     );
     const sourcesInfo = await Promise.all(
-      (sources.filter((v) => !!v) as string[]).map((path) => stat(path))
+      (sources.filter((v) => !!v) as string[]).map((path) => stat(path)),
     );
 
     // DB업데이트 시간과 소스 폴더의 수정 시간 비교
@@ -296,7 +296,7 @@ function findThumbnails(files: DirentLike[]) {
       const thumbnail = `${baseName}${imgExt}`;
 
       const thumbnailFile = files.find(
-        (file) => file.name.toLowerCase() === thumbnail.toLowerCase()
+        (file) => file.name.toLowerCase() === thumbnail.toLowerCase(),
       );
       if (thumbnailFile) {
         result.push({
@@ -401,8 +401,8 @@ const getListData = async ({
             objectMode: true,
             deep: 1,
             absolute: true, // cwd 기준 상대 경로 반환
-          })
-      )
+          }),
+      ),
     )
   ).flat();
 
@@ -418,7 +418,7 @@ const getListData = async ({
       isCompressFile:
         entry.dirent.isFile() &&
         COMPRESS_FILE_TYPE.some((ext) =>
-          entry.path.toLowerCase().endsWith(ext)
+          entry.path.toLowerCase().endsWith(ext),
         ),
     });
   }
@@ -426,12 +426,35 @@ const getListData = async ({
   // 썸네일 찾기
   const processedList = findThumbnails(list);
 
+  const setting = await loadSetting();
+  if (setting.deleteThumbnailFile) {
+    // 오래된 썸네일 파일 삭제
+    const oldThumbnails = await db("games")
+      .select("thumbnail")
+      .whereNotIn(
+        "path",
+        processedList.map((item) => item.path),
+      )
+      .whereNotNull("thumbnail");
+
+    for (const { thumbnail } of oldThumbnails) {
+      if (thumbnail) {
+        try {
+          await rm(thumbnail);
+          console.log(`썸네일 삭제: ${thumbnail}`);
+        } catch (error) {
+          console.error(`썸네일 삭제 실패: ${thumbnail}`, error);
+        }
+      }
+    }
+  }
+
   // path가 존재하지 않는 데이터는 삭제
   await db("games")
     .delete()
     .whereNotIn(
       "path",
-      processedList.map((item) => item.path)
+      processedList.map((item) => item.path),
     );
 
   // 신규 데이터 삽입 및 기존데이터 업데이트
@@ -445,7 +468,7 @@ const getListData = async ({
         thumbnail: data.thumbnail ?? null,
         rjCode: /[RBV]J\d{6,8}/i.exec(data.title)?.[0] ?? null,
         isCompressFile: data.isCompressFile,
-      } satisfies InsertGame)
+      }) satisfies InsertGame,
   );
 
   // knex insert 시 복합 select > insert가 되는데 최대 500개 제한이 있음
@@ -467,14 +490,17 @@ const getListData = async ({
   // 정보 입력되지 않은 게임들 처리
   const notLoadedGames = await db("games")
     .select()
-    .where({ isLoadedInfo: false })
-    .whereNotNull("rjCode");
-  try {
-    await Promise.all(
-      notLoadedGames.map((game) => saveInfo(game.path, game.rjCode!))
-    );
-  } catch (error) {
-    console.error(error);
+    .where({ isLoadedInfo: false });
+
+  for (const game of notLoadedGames) {
+    const data = await findCollector(game.path);
+    if (!data) continue;
+
+    const { id, collector } = data;
+    const info = await collector.fetchInfo({ path: game.path, id });
+    if (info) {
+      await saveInfo(game.path, info);
+    }
   }
 
   const q = db("games")
@@ -528,11 +554,20 @@ ipcMain.on(IpcRendererSend.UpdateSetting, async (e, id, data) => {
 // 게임 정보 다시 불러오기
 ipcMain.on(IpcRendererSend.GameInfoReload, async (e, id, { path }) => {
   try {
-    const [game] = await db("games").select().where({ path });
-    if (game.rjCode) {
-      await saveInfo(path, game.rjCode);
+    const data = await findCollector(path);
+    if (!data) {
+      throw new Error();
+    }
+
+    const { id: gameId, collector } = data;
+    const info = await collector.fetchInfo({ id: gameId, path });
+    console.log("info >>>>>>>>", info);
+    if (info) {
+      await saveInfo(path, info);
     } else {
-      throw new Error("RJ코드가 없어 다시 정보를 불러오지 못했습니다.");
+      throw new Error(
+        "게임 정보를 가져올 수 있는 특정 값이 없어 정보를 불러오지 못했습니다.",
+      );
     }
 
     const [newGame] = await db("games")

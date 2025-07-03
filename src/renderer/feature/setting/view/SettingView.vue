@@ -38,6 +38,8 @@ const cookie = ref(setting.cookie);
 const exclude = ref(games.map((game) => game.path));
 const search = ref(setting.search);
 const playExclude = ref(setting.playExclude);
+const deleteThumbnailFile = ref(setting.deleteThumbnailFile);
+const showCollectorTitle = ref(setting.showCollectorTitle);
 const appVersion = ref("");
 
 const open = ref(false);
@@ -66,6 +68,8 @@ const save = () => {
     search: JSON.stringify(search.value),
     showAll: showAll.value,
     showRecent: showRecent.value,
+    deleteThumbnailFile: deleteThumbnailFile.value,
+    showCollectorTitle: showCollectorTitle.value,
   });
   toast.success("설정을 저장했습니다.");
 };
@@ -126,11 +130,16 @@ watch(blur, () => {
     </template>
     <template v-else>
       <GamePathCard v-model="sources" />
-      <HomeCard v-model:all="showAll" v-model:recent="showRecent" />
+      <HomeCard
+        v-model:all="showAll"
+        v-model:recent="showRecent"
+        v-model:collector-title="showCollectorTitle"
+      />
       <ThumbnailCard
         v-model="changeThumbnailFolder"
         v-model:blur="blur"
         v-model:dark="dark"
+        v-model:deleteThumbnailFile="deleteThumbnailFile"
       />
       <CookieCard v-model="cookie" />
       <SearchKeywordCard v-model="search" />

@@ -5,7 +5,7 @@ import { send, sendApi } from "../composable/useApi";
 export async function getSetting() {
   const [, data] = await sendApi(
     IpcRendererSend.LoadSetting,
-    IpcMainSend.LoadedSetting
+    IpcMainSend.LoadedSetting,
   );
   return data;
 }

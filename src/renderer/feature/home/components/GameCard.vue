@@ -47,6 +47,7 @@ const console = log;
 const props = defineProps<
   Omit<Game, "source" | "isLoadedInfo"> & {
     zoom: number;
+    showCollectorTitle: boolean;
     blur?: boolean;
     dark?: boolean;
   }
@@ -57,6 +58,9 @@ const emit = defineEmits<{
 }>();
 const game = useGame();
 const search = storeToRefs(useSearch());
+const hasCollectorTitle = computed(
+  () => props.showCollectorTitle && props.collectorTitle,
+);
 
 const open = ref(false);
 const openInfo = ref(false);
@@ -65,7 +69,7 @@ const loading = ref(false);
 const fakeQueryId = ref(0);
 const { file, changeHandler } = useFile(
   IMAGE_FILE_TYPE,
-  "이미지 파일을 업로드 해 주세요."
+  "이미지 파일을 업로드 해 주세요.",
 );
 const url = ref("");
 
@@ -210,7 +214,7 @@ watch(loading, () => {
                 cn(
                   'object-cover w-full aspect-[4/3] hover:scale-110 transition-transform cursor-zoom-in',
                   { 'blur-md': blur },
-                  { 'brightness-0': dark }
+                  { 'brightness-0': dark },
                 )
               "
               style="aspect-ratio: 4/3"
@@ -240,8 +244,16 @@ watch(loading, () => {
     <CardContent class="p-0 m-2">
       <div
         class="text-ellipsis text-nowrap overflow-hidden"
-        :title="title"
+        :title="hasCollectorTitle ? (collectorTitle ?? title) : title"
         :style="`font-size: ${titleFontSize}px`"
+      >
+        {{ hasCollectorTitle ? (collectorTitle ?? title) : title }}
+      </div>
+      <div
+        v-if="hasCollectorTitle"
+        class="text-muted-foreground"
+        :title="title"
+        :style="`font-size: ${titleFontSize * 0.75}px`"
       >
         {{ title }}
       </div>

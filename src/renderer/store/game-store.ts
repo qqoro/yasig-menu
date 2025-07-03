@@ -1,4 +1,3 @@
-import log from "electron-log";
 import { defineStore, storeToRefs } from "pinia";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
@@ -10,7 +9,6 @@ import { getGameList } from "../db/game";
 import { getSetting } from "../db/setting";
 import { searchFuzzy, sortRJCode } from "../lib/search";
 import { useSearch } from "./search-store";
-const console = log;
 
 export const useGame = defineStore("game", () => {
   const loading = ref(true);

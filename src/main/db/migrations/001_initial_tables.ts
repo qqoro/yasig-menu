@@ -64,7 +64,7 @@ export async function up(knex: Knex): Promise<void> {
       table
         .string("playExclude")
         .defaultTo(
-          JSON.stringify(["notification_helper", "UnityCrashHandler64"])
+          JSON.stringify(["notification_helper", "UnityCrashHandler64"]),
         )
         .notNullable();
       table.timestamp("createdAt", { useTz: false }).defaultTo(knex.fn.now());

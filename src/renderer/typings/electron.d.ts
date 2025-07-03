@@ -1,13 +1,8 @@
 /**
  * Should match main/preload.ts for typescript support in renderer
  */
-export default interface ElectronApi {
-  sendMessage: (message: string) => void;
-  save: () => void;
-}
+export default interface ElectronApi {}
 
 declare global {
-  interface Window {
-    electronAPI: ElectronApi;
-  }
+  interface Window {}
 }
