@@ -4,7 +4,7 @@ import { DLSiteCollector } from "./dlsite-collector.js";
 import { SteamCollector } from "./steam-collector.js";
 
 export interface LoadedInfo {
-  title?: string;
+  collectorTitle?: string;
   thumbnail?: string;
   publishDate?: Date;
   makerName?: string;
@@ -46,12 +46,13 @@ export async function findCollector(path: string) {
 }
 
 export async function saveInfo(path: string, info: LoadedInfo) {
-  const { publishDate, makerName, category, tags } = info;
+  const { collectorTitle, publishDate, makerName, category, tags } = info;
 
   const tx = await db.transaction();
   try {
     await tx("games")
       .update({
+        collectorTitle,
         publishDate,
         makerName,
         category,

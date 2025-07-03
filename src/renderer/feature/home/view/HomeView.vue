@@ -177,6 +177,7 @@ onMounted(() => {
                 {
                   path,
                   title,
+                  collectorTitle,
                   thumbnail,
                   category,
                   createdAt,
@@ -199,6 +200,7 @@ onMounted(() => {
               :key="path + index"
               :path="path"
               :title="title"
+              :collectorTitle="collectorTitle"
               :thumbnail="thumbnail"
               :category="category"
               :isFavorite="isFavorite"
@@ -215,6 +217,7 @@ onMounted(() => {
               :tagIds="tagIds"
               :updatedAt="updatedAt"
               :zoom="zoom"
+              :show-collector-title="setting.showCollectorTitle"
               :blur="setting.blur"
               :dark="setting.dark"
               @view-thumbnail="viewGameCard"
@@ -227,6 +230,7 @@ onMounted(() => {
             {
               path,
               title,
+              collectorTitle,
               thumbnail,
               category,
               createdAt,
@@ -248,6 +252,7 @@ onMounted(() => {
           :key="path + index"
           :path="path"
           :title="title"
+          :collectorTitle="collectorTitle"
           :thumbnail="thumbnail"
           :category="category"
           :isFavorite="isFavorite"
@@ -264,6 +269,7 @@ onMounted(() => {
           :tagIds="tagIds"
           :updatedAt="updatedAt"
           :zoom="zoom"
+          :show-collector-title="setting.showCollectorTitle"
           :blur="setting.blur"
           :dark="setting.dark"
           @view-thumbnail="viewGameCard"

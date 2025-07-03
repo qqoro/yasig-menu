@@ -10,6 +10,7 @@ interface TableBaseColumn {
 export interface Game extends TableBaseColumn {
   path: string;
   title: string;
+  collectorTitle: string | null;
   source: string;
   thumbnail: string | null;
   rjCode: string | null;
@@ -54,6 +55,7 @@ export interface Setting extends TableBaseColumn {
   search: [string, string];
   playExclude: string[];
   deleteThumbnailFile: boolean;
+  showCollectorTitle: boolean;
 }
 export interface InsertSetting extends Partial<TableBaseColumn> {
   sources?: string;
@@ -69,6 +71,7 @@ export interface InsertSetting extends Partial<TableBaseColumn> {
   search?: string;
   playExclude?: string;
   deleteThumbnailFile?: SqliteBoolean;
+  showCollectorTitle?: SqliteBoolean;
 }
 export type UpdateSetting = Partial<InsertSetting>;
 

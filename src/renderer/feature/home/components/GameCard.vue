@@ -47,6 +47,7 @@ const console = log;
 const props = defineProps<
   Omit<Game, "source" | "isLoadedInfo"> & {
     zoom: number;
+    showCollectorTitle: boolean;
     blur?: boolean;
     dark?: boolean;
   }
@@ -57,6 +58,9 @@ const emit = defineEmits<{
 }>();
 const game = useGame();
 const search = storeToRefs(useSearch());
+const hasCollectorTitle = computed(
+  () => props.showCollectorTitle && props.collectorTitle,
+);
 
 const open = ref(false);
 const openInfo = ref(false);
@@ -240,8 +244,16 @@ watch(loading, () => {
     <CardContent class="p-0 m-2">
       <div
         class="text-ellipsis text-nowrap overflow-hidden"
-        :title="title"
+        :title="hasCollectorTitle ? (collectorTitle ?? title) : title"
         :style="`font-size: ${titleFontSize}px`"
+      >
+        {{ hasCollectorTitle ? (collectorTitle ?? title) : title }}
+      </div>
+      <div
+        v-if="hasCollectorTitle"
+        class="text-muted-foreground"
+        :title="title"
+        :style="`font-size: ${titleFontSize * 0.75}px`"
       >
         {{ title }}
       </div>

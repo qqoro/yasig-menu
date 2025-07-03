@@ -36,14 +36,18 @@ export const SteamCollector: Collector = {
 
   fetchInfo: async ({ path, id }) => {
     const res = await fetch(
-      `https://store.steampowered.com/api/appdetails?appids=${id}`,
+      `https://store.steampowered.com/api/appdetails?appids=${id}&l=korean`,
     );
     const json = (await res.json()) as SteamApiResponse;
+    if (!json[id].success) {
+      return undefined;
+    }
+
     const info = json[id].data;
 
     return {
       path: path,
-      title: info.name, // "SKETCHY MASSAGE"
+      collectorTitle: info.name,
       thumbnail: info.header_image ?? undefined,
       publishDate: info?.release_date?.date
         ? new Date(
