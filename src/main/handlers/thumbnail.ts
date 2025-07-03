@@ -70,17 +70,13 @@ ipcMain.on(
       let message: undefined | IpcMainEventMap[IpcMainSend.Message][1] =
         undefined;
 
-      // TODO: 그냥 return 하는거 전부 바꿔야 함.
       const data = await findCollector(filePath);
       if (data) {
         const { id: gameId, collector } = data;
         const info = await collector.fetchInfo({ path: filePath, id: gameId });
-        if (info?.thumbnail === undefined) {
-          return;
-        }
 
         // DLSite 다운로드
-        if (collector.name === "DLSite") {
+        if (collector.name === "DLSite" && info?.thumbnail) {
           const thumbnailExt = extname(info.thumbnail);
           const thumbnailName = changeThumbnailFolder
             ? join(savePath, fileName) + thumbnailExt
@@ -96,15 +92,7 @@ ipcMain.on(
         }
 
         // Steam 다운로드
-        if (!downloaded && collector.name === "Steam") {
-          const info = await collector.fetchInfo({
-            path: filePath,
-            id: gameId,
-          });
-          if (info?.thumbnail === undefined) {
-            return;
-          }
-
+        if (!downloaded && collector.name === "Steam" && info?.thumbnail) {
           // 스팀 주소에 붙어있는 파라미터 제거
           const index = info.thumbnail.indexOf("?t=");
           info.thumbnail = info.thumbnail.substring(0, index);
