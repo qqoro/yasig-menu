@@ -44,6 +44,22 @@ ipcMain.on(IpcRendererSend.LoadList, async (e, id, options) => {
   send(IpcMainSend.LoadedList, id, list);
 });
 
+ipcMain.on(IpcRendererSend.ReloadAllGameInfo, async (e, id) => {
+  await db("games").update({ isLoadedInfo: false });
+  const setting = await loadSetting();
+  initialized = false;
+  await getListData({
+    sources: setting.applySources,
+    thumbnailFolder: setting.changeThumbnailFolder
+      ? setting.newThumbnailFolder
+      : undefined,
+  });
+  send(IpcMainSend.Message, id, {
+    type: "success",
+    message: "성공적으로 정보를 갱신하였습니다.",
+  });
+});
+
 // 게임 실행
 ipcMain.on(IpcRendererSend.Play, async (e, id, filePath) => {
   const setting = await loadSetting();
