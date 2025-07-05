@@ -3,25 +3,34 @@ import { Collector } from "./registry.js";
 export interface SteamApiResponse {
   [appId: string]: {
     success: boolean;
-    data: {
-      name: string;
-      release_date: {
-        coming_soon: boolean;
-        date: string;
-      };
-      developers: string[];
-      genres: {
-        id: string;
-        description: string;
-      }[];
-      header_image: string;
-      screenshots: {
-        id: number;
-        path_thumbnail: string;
-        path_full: string;
-      }[];
-    };
+    data:
+      | {
+          name: string;
+          release_date: {
+            coming_soon: boolean;
+            date: string;
+          };
+          developers: string[];
+          genres: {
+            id: string;
+            description: string;
+          }[];
+          header_image: string;
+          screenshots: {
+            id: number;
+            path_thumbnail: string;
+            path_full: string;
+          }[];
+        }
+      | undefined;
   };
+}
+
+export interface SteamSpyApiResponse {
+  appid: number;
+  name: string | null | undefined;
+  developer: string | undefined;
+  tags: Record<string, number> | [];
 }
 
 export const SteamCollector: Collector = {
@@ -31,24 +40,44 @@ export const SteamCollector: Collector = {
       return;
     }
 
-    return /\d{3,7}/g.exec(path)?.[0] ?? undefined;
+    return /\d{4,7}/g.exec(path)?.[0] ?? undefined;
   },
 
   fetchInfo: async ({ path, id }) => {
-    const res = await fetch(
-      `https://store.steampowered.com/api/appdetails?appids=${id}&l=korean`,
-    );
-    const json = (await res.json()) as SteamApiResponse;
-    if (!json[id].success) {
+    const [steam, spy] = await Promise.all([
+      (async () => {
+        const res = await fetch(
+          `https://store.steampowered.com/api/appdetails?appids=${id}&l=korean`,
+        );
+        return (await res.json()) as SteamApiResponse | null;
+      })(),
+      (async () => {
+        const res = await fetch(
+          `https://steamspy.com/api.php?request=appdetails&appid=${id}`,
+        );
+        return (await res.json()) as SteamSpyApiResponse;
+      })(),
+    ]);
+
+    if (!steam?.[id]?.success && spy?.name === null) {
       return undefined;
     }
 
-    const info = json[id].data;
+    spy.name = spy.name === null ? undefined : spy.name;
+    spy.developer = spy.developer === "" ? undefined : spy.developer;
+
+    const info = steam?.[id]?.data;
+    const tags = Array.isArray(spy.tags)
+      ? []
+      : Object.keys(spy.tags).map((tagName) => ({
+          id: spy.tags[tagName].toString(),
+          name: tagName,
+        }));
 
     return {
       path: path,
-      collectorTitle: info.name,
-      thumbnail: info.header_image ?? undefined,
+      collectorTitle: info?.name ?? spy.name,
+      thumbnail: info?.header_image,
       publishDate: info?.release_date?.date
         ? new Date(
             info.release_date.date.replace(/년 |월 |일/g, (m) =>
@@ -56,13 +85,13 @@ export const SteamCollector: Collector = {
             ),
           )
         : undefined,
-      makerName: Array.isArray(info.developers)
-        ? info.developers[0]
+      makerName:
+        (Array.isArray(info?.developers) ? info.developers[0] : undefined) ??
+        spy.developer,
+      category: Array.isArray(info?.genres)
+        ? info?.genres[0].description
         : undefined,
-      category: Array.isArray(info.genres)
-        ? info.genres[0].description
-        : undefined,
-      tags: undefined,
+      tags: tags,
     };
   },
 };

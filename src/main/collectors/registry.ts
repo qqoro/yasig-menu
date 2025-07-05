@@ -60,20 +60,30 @@ export async function saveInfo(path: string, info: LoadedInfo) {
       })
       .where({ path });
 
-    if (tags) {
+    if (tags && tags.length !== 0) {
+      // 태그 이름이 중복되지만 id가 다른 경우 먼저 삽입된 데이터로 통일
+      const tagNames = tags.map(({ name }) => name);
+      const existingTags = await tx("tags").whereIn("tag", tagNames);
+      tags.forEach((tag) => {
+        const eTag = existingTags.find((eTag) => eTag.tag === tag.name);
+        if (!eTag) return;
+        tag.id = eTag.id;
+      });
+
       await tx("tags")
-        .insert(tags?.map(({ id, name }) => ({ id, tag: name })))
+        .insert(tags.map(({ id, name }) => ({ id, tag: name })))
         .onConflict()
         .ignore();
       await tx("gameTags").delete().where({ gamePath: path });
       await tx("gameTags")
-        .insert(tags?.map((tag) => ({ gamePath: path, tagId: tag.id })))
+        .insert(tags.map((tag) => ({ gamePath: path, tagId: tag.id })))
         .onConflict()
         .ignore();
     }
 
     await tx.commit();
-  } catch {
+  } catch (error) {
+    console.error("error in save info >>", error);
     await tx.rollback();
   }
 }
