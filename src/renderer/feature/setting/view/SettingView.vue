@@ -6,7 +6,7 @@ import { IpcMainSend, IpcRendererSend } from "../../../../main/events";
 import Changelog from "../../../components/Changelog.vue";
 import PageTitle from "../../../components/PageTitle.vue";
 import { Button } from "../../../components/ui/button";
-import { send } from "../../../composable/useApi";
+import { send, sendApi } from "../../../composable/useApi";
 import { useEvent } from "../../../composable/useEvent";
 import { getGameList } from "../../../db/game";
 import { getSetting, updateSetting } from "../../../db/setting";
@@ -40,7 +40,9 @@ const search = ref(setting.search);
 const playExclude = ref(setting.playExclude);
 const deleteThumbnailFile = ref(setting.deleteThumbnailFile);
 const showCollectorTitle = ref(setting.showCollectorTitle);
+
 const appVersion = ref("");
+const reloadGameInfoLoading = ref(false);
 
 const open = ref(false);
 
@@ -84,6 +86,12 @@ const openLogFolder = () => {
 
 const openChangelog = () => {
   open.value = !open.value;
+};
+
+const reloadAllGameInfo = async () => {
+  reloadGameInfoLoading.value = true;
+  await sendApi(IpcRendererSend.ReloadAllGameInfo, IpcMainSend.Message);
+  reloadGameInfoLoading.value = false;
 };
 
 // const resetSetting = () => {
@@ -147,10 +155,12 @@ watch(blur, () => {
       <PlayExcludeCard v-model="playExclude" />
       <AppInfoCard
         :appVersion="appVersion"
+        :reloadGameInfoLoading="reloadGameInfoLoading"
         @updateCheck="updateCheck"
         @openLogFolder="openLogFolder"
         @openChangelog="openChangelog"
         @toggleDevTools="send(IpcRendererSend.ToggleDevTools)"
+        @reloadAllGameInfo="reloadAllGameInfo"
       />
     </template>
 

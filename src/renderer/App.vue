@@ -80,9 +80,23 @@ useEvent(IpcMainSend.MigrationDone, (e, id, version) => {
     <div>업그레이드중입니다.. 잠시만 기다려주세요</div>
   </div>
   <template v-else>
-    <Suspense>
-      <RouterView />
-    </Suspense>
+    <RouterView v-slot="{ Component }">
+      <template v-if="Component">
+        <Suspense>
+          <template #default>
+            <component :is="Component"></component>
+          </template>
+          <template #fallback>
+            <div
+              class="w-screen h-screen flex justify-center items-center flex-col gap-12 text-muted-foreground"
+            >
+              <Icon icon="svg-spinners:ring-resize" class="size-32" />
+              <div class="text-xl">로딩 중...</div>
+            </div>
+          </template>
+        </Suspense>
+      </template>
+    </RouterView>
     <Changelog v-model:open="open" />
   </template>
 </template>

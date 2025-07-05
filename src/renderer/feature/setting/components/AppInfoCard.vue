@@ -9,12 +9,16 @@ import {
   CardHeader,
 } from "../../../components/ui/card";
 
-const props = defineProps<{ appVersion: string }>();
+const props = defineProps<{
+  appVersion: string;
+  reloadGameInfoLoading: boolean;
+}>();
 const emit = defineEmits<{
   (e: "updateCheck"): void;
   (e: "openLogFolder"): void;
   (e: "openChangelog"): void;
   (e: "toggleDevTools"): void;
+  (e: "reloadAllGameInfo"): void;
 }>();
 
 const copyAppVersion = async () => {
@@ -55,6 +59,14 @@ const copyAppVersion = async () => {
       <Button variant="outline" @click="emit('openLogFolder')">
         <Icon icon="solar:document-text-bold-duotone" />
         로그 폴더 열기
+      </Button>
+      <Button variant="outline" @click="emit('reloadAllGameInfo')">
+        <Icon
+          v-if="!reloadGameInfoLoading"
+          icon="solar:server-square-update-bold-duotone"
+        />
+        <Icon v-else icon="svg-spinners:ring-resize" />
+        게임 정보 새로고침
       </Button>
       <Button variant="outline" @click="emit('openChangelog')">
         <Icon icon="solar:pin-list-bold-duotone" />
