@@ -58,6 +58,14 @@ const save = () => {
     set.add(source);
   }
 
+  const gamePaths = games.map((gameData) => gameData.path);
+  const removedGames = gamePaths.filter(
+    (game) => !exclude.value.includes(game),
+  );
+
+  removedGames.forEach((path) => {
+    send(IpcRendererSend.Hide, { path, isHidden: false });
+  });
   updateSetting({
     sources: JSON.stringify(sources.value.map((source) => source.trim())),
     applySources: JSON.stringify(sources.value.map((source) => source.trim())),
