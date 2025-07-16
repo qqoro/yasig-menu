@@ -70,7 +70,7 @@ export const SteamCollector: Collector = {
     const tags = Array.isArray(spy.tags)
       ? []
       : Object.keys(spy.tags).map((tagName) => ({
-          id: spy.tags[tagName].toString(),
+          id: (spy.tags as Record<string, number>)[tagName].toString(),
           name: tagName,
         }));
 
