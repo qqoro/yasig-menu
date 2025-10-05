@@ -58,6 +58,7 @@
     "electron-updater": "^6.6.2",
     "electron-window-state": "^5.0.3",
     "fast-glob": "^3.3.3",
+    "iconv-lite": "^0.7.0",
     "knex": "^3.1.0",
     "lucide-vue-next": "^0.488.0",
     "node-html-parser": "^7.0.1",
