@@ -188,11 +188,11 @@ watch(loading, () => {
     "
   >
     <CardHeader
-      class="p-0 w-full overflow-hidden flex justify-center items-center"
+      class="p-0 w-full overflow-hidden flex justify-center items-center relative"
       style="aspect-ratio: 4/3"
     >
       <Button
-        class="top-4 left-4 absolute rounded-full z-10 aspect-square size-12 bg-primary/60 drop-shadow"
+        class="top-4 left-4 absolute rounded-full aspect-square size-12 bg-primary/60 drop-shadow z-[1]"
         @click="favorite(path)"
       >
         <Icon
