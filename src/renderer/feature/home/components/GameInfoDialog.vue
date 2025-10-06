@@ -84,6 +84,8 @@ const emit = defineEmits<{
   (e: "update:modelValue", value: boolean): void;
 }>();
 
+const KST_OFFSET = 9 * 60 * 60 * 1000;
+
 const gameStore = useGame();
 const loading = ref(false);
 const refreshing = ref(false);
@@ -100,7 +102,10 @@ const handlePublishDate = (newPublishDate: any) => {
     try {
       const date = new Date(newPublishDate as any);
       if (!isNaN(date.getTime())) {
-        publishDate.value = parseDate(date.toISOString().split("T")[0]);
+        // DB 저장 된 데이터는 UTC기준으로 KST 보정
+        publishDate.value = parseDate(
+          new Date(date.getTime() + KST_OFFSET).toISOString().split("T")[0],
+        );
       } else {
         publishDate.value = undefined;
       }

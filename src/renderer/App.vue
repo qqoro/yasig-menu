@@ -10,6 +10,7 @@ import { send } from "./composable/useApi";
 import { useEvent } from "./composable/useEvent";
 import { useWindowEvent } from "./composable/useWindowEvent";
 import { useGame } from "./store/game-store";
+
 const console = log;
 
 const game = useGame();
