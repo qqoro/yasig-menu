@@ -110,6 +110,30 @@ ipcMain.on(
           });
           downloaded = true;
         }
+
+        // Getchu 다운로드
+        if (!downloaded && collector.name === "Getchu" && info?.thumbnail) {
+          console.log(info.thumbnail);
+
+          const thumbnailExt = extname(info.thumbnail);
+          const thumbnailName = changeThumbnailFolder
+            ? join(savePath, fileName) + thumbnailExt
+            : await getThumbnailName({
+                filePath,
+                thumbnailExt,
+              });
+
+          await saveFromUrl({
+            fileName: thumbnailName,
+            imgUrl: info.thumbnail,
+            init: {
+              headers: {
+                Referer: `https://www.getchu.com/soft.phtml?id=${id}`,
+              },
+            },
+          });
+          downloaded = true;
+        }
       }
 
       // 구글 검색 다운로드
@@ -381,11 +405,13 @@ async function saveFromBase64({
 async function saveFromUrl({
   fileName,
   imgUrl,
+  init,
 }: {
   fileName: string;
   imgUrl: string;
+  init?: RequestInit;
 }) {
-  const response = await fetch(imgUrl);
+  const response = await fetch(imgUrl, init);
   const arrayBuffer = await response.arrayBuffer();
   const data = Buffer.from(arrayBuffer);
 

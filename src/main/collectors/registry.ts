@@ -1,6 +1,7 @@
 import { Page } from "puppeteer-core";
 import { db } from "../db/db-manager.js";
 import { DLSiteCollector } from "./dlsite-collector.js";
+import { GetchuCollector } from "./getchu-collector.js";
 import { SteamCollector } from "./steam-collector.js";
 
 export interface LoadedInfo {
@@ -29,6 +30,7 @@ export interface Collector {
 export const collectors: Collector[] = [
   DLSiteCollector,
   SteamCollector,
+  GetchuCollector,
   // GoogleCollector,
 ];
 
