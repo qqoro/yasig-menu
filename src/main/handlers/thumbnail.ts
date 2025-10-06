@@ -77,7 +77,6 @@ ipcMain.on(
 
         // DLSite 다운로드
         if (collector.name === "DLSite" && info?.thumbnail) {
-          console.log(info.thumbnail);
           const thumbnailExt = extname(info.thumbnail);
           const thumbnailName = changeThumbnailFolder
             ? join(savePath, fileName) + thumbnailExt

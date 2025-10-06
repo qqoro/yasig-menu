@@ -48,8 +48,10 @@ export const GetchuCollector: Collector = {
     const category = "";
     const tags =
       maker?.parentNode.parentNode.parentNode.children
-        .filter((e) => e.children[0].textContent.startsWith("カテゴリ："))[0]
-        .children[1].children.slice(0, -1)
+        .filter((e) =>
+          e?.children[0]?.textContent.startsWith("カテゴリ："),
+        )?.[0]
+        ?.children?.[1]?.children.slice(0, -1)
         .map((e) => ({
           id: /category\[0\]=(.+)/.exec(e.getAttribute("href") ?? "")![1],
           name: e.textContent,
