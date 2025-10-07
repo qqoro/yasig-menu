@@ -126,7 +126,7 @@ ipcMain.on(
             imgUrl: info.thumbnail,
             init: {
               headers: {
-                Referer: `https://www.getchu.com/soft.phtml?id=${id}`,
+                Referer: `https://www.getchu.com/soft.phtml?id=${gameId}`,
               },
             },
           });
