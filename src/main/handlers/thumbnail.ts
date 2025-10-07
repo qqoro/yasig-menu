@@ -113,8 +113,6 @@ ipcMain.on(
 
         // Getchu 다운로드
         if (!downloaded && collector.name === "Getchu" && info?.thumbnail) {
-          console.log(info.thumbnail);
-
           const thumbnailExt = extname(info.thumbnail);
           const thumbnailName = changeThumbnailFolder
             ? join(savePath, fileName) + thumbnailExt
