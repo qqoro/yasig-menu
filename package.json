@@ -86,7 +86,7 @@
       "puppeteer"
     ],
     "overrides": {
-      "node-abi": "^4.14.0"
+      "node-abi": "^3.78.0"
     }
   }
 }
