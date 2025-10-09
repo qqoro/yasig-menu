@@ -165,6 +165,13 @@ const changelog = [
       "발매일 조회 시 KST(한국 표준시)가 반영되도록 수정했습니다.",
     ],
   ],
+  [
+    "2.4.1",
+    [
+      "몇몇 Getchu 작품의 데이터를 가져오지 못하던 버그를 수정했습니다. (@pilgeun48님 감사합니다.)",
+      "Steam 작품 조회 시 ST+작품ID인 경우도 인식하도록 추가하였습니다.",
+    ],
+  ],
 ].toReversed() as [string, string[] | string[][]][];
 </script>
 
