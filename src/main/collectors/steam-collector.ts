@@ -36,6 +36,11 @@ export interface SteamSpyApiResponse {
 export const SteamCollector: Collector = {
   name: "Steam",
   getId: async (path: string) => {
+    const id = /ST(\d{4,7})/gi.exec(path);
+    if (id?.[1]) {
+      return id[1];
+    }
+
     if (!path.toLowerCase().includes("steam")) {
       return;
     }
