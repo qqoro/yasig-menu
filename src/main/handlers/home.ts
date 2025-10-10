@@ -1,8 +1,8 @@
 import { randomUUID } from "crypto";
 import { shell } from "electron";
 import fg from "fast-glob";
-import { readdir, rm, stat } from "fs/promises";
-import { extname, join } from "path";
+import { readdir, rm, stat, rename } from "fs/promises";
+import { extname, join, dirname } from "path";
 import { findCollector, saveInfo } from "../collectors/registry.js";
 import { COMPRESS_FILE_TYPE } from "../constants.js";
 import { db } from "../db/db-manager.js";
@@ -236,6 +236,61 @@ ipcMain.on(IpcRendererSend.UpdateGame, async (e, id, { path, gameData }) => {
     });
   }
 });
+
+ipcMain.on(
+  IpcRendererSend.RenameGame,
+  async (e, id, { oldPath, newName }) => {
+    const tx = await db.transaction();
+    try {
+      const game = await tx("games").where({ path: oldPath }).first();
+      if (!game) {
+        throw new Error("게임을 찾을 수 없습니다.");
+      }
+
+      const oldExt = extname(oldPath);
+      const newPath = join(dirname(oldPath), newName + oldExt);
+
+      // 1. 게임 파일/폴더 이름 변경
+      await rename(oldPath, newPath);
+
+      // 2. 썸네일이 존재하면 이름 변경
+      let newThumbnailPath: string | null = null;
+      if (game.thumbnail) {
+        const thumbExt = extname(game.thumbnail);
+        const newThumbnailName = newName + thumbExt;
+        newThumbnailPath = join(dirname(game.thumbnail), newThumbnailName);
+        await rename(game.thumbnail, newThumbnailPath);
+      }
+
+      // 3. 데이터베이스 업데이트
+      // ON UPDATE CASCADE가 gameTags를 자동으로 처리합니다.
+      await tx("games").where({ path: oldPath }).update({
+        path: newPath,
+        title: newName,
+        thumbnail: newThumbnailPath,
+        updatedAt: db.fn.now(),
+      });
+
+      await tx.commit();
+
+      send(IpcMainSend.Message, id, {
+        type: "success",
+        message: "성공적으로 파일 이름을 변경했습니다.",
+      });
+
+      // 캐시를 무효화하여 다음 목록 로드 시 재생성하도록 함
+      initialized = false;
+    } catch (error) {
+      await tx.rollback();
+      console.error("게임 이름 변경 오류:", error);
+      send(IpcMainSend.Message, id, {
+        type: "error",
+        message: "파일 이름 변경에 실패했습니다.",
+        description: (error as Error).message,
+      });
+    }
+  },
+);
 
 /**
  * 캐시 유효성 검사, 이 값이 `true`인 경우 캐시를 재생성 해야 함.

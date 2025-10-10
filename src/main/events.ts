@@ -81,6 +81,7 @@ export enum IpcRendererSend {
   Memo = "Memo",
   UpdateGame = "UpdateGame",
   GameInfoReload = "GameInfoReload",
+  RenameGame = "RenameGame",
 
   ThumbnailDownload = "ThumbnailDownload",
   ThumbnailDelete = "ThumbnailDelete",
@@ -141,6 +142,10 @@ export interface IpcRendererEventMap
         },
       ];
       [IpcRendererSend.GameInfoReload]: [id: string, { path: string }];
+      [IpcRendererSend.RenameGame]: [
+        id: string,
+        { oldPath: string; newName: string },
+      ];
 
       [IpcRendererSend.ThumbnailDownload]: [
         id: string,
