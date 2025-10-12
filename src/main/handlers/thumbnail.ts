@@ -37,11 +37,21 @@ ipcMain.on(
     );
 
     try {
+      // 기존 썸네일 삭제
+      await deleteOldThumbnail(filePath);
+
       console.log("download requested!", filePath);
 
       // 썸네일 직접 업로드
       if (file) {
         const { data, ext } = file;
+        const oldThumbnail = await db("games")
+          .select("thumbnail")
+          .where("path", filePath)
+          .first();
+        if (oldThumbnail?.thumbnail) {
+          await rm(oldThumbnail.thumbnail, { force: true });
+        }
 
         const thumbnailName = changeThumbnailFolder
           ? join(savePath, fileName) + ext
@@ -441,6 +451,23 @@ async function saveFromUrl({
   return await writeFile(fileName, data, {
     encoding: "base64",
   });
+}
+
+/**
+ * 지정된 게임 경로에 해당하는 기존 썸네일을 삭제합니다.
+ *
+ * @param gamePath 게임 경로
+ */
+async function deleteOldThumbnail(gamePath: string) {
+  const oldThumbnail = await db("games")
+    .select("thumbnail")
+    .where("path", gamePath)
+    .first();
+
+  if (oldThumbnail?.thumbnail) {
+    await rm(oldThumbnail.thumbnail, { force: true });
+    await db("games").update("thumbnail", null).where("path", gamePath);
+  }
 }
 
 async function waitAndClick(page: Page, selector: string) {

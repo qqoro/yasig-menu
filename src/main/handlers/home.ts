@@ -4,7 +4,7 @@ import fg from "fast-glob";
 import { access, readdir, rename, rm, stat } from "fs/promises";
 import { dirname, extname, join } from "path";
 import { findCollector, saveInfo } from "../collectors/registry.js";
-import { COMPRESS_FILE_TYPE } from "../constants.js";
+import { COMPRESS_FILE_TYPE, IMAGE_FILE_TYPE } from "../constants.js";
 import { db } from "../db/db-manager.js";
 import { Game, InsertGame } from "../db/db.js";
 import { IpcMainSend, IpcRendererSend, WhereGame } from "../events.js";
@@ -349,17 +349,7 @@ const checkCacheDirty = async (sources: (string | undefined)[]) => {
   }
 };
 
-function findThumbnails(files: DirentLike[]) {
-  const imageExtensions = [
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".gif",
-    ".webp",
-    ".bmp",
-    ".avif",
-    ".svg",
-  ];
+export function findThumbnails(files: DirentLike[]) {
   const result: {
     path: string;
     title: string;
@@ -371,7 +361,9 @@ function findThumbnails(files: DirentLike[]) {
   files.forEach((file) => {
     // 이미지 파일 인 경우 스킵
     const extension = extname(file.name).toLowerCase();
-    if (imageExtensions.includes(extension)) {
+    if (
+      IMAGE_FILE_TYPE.includes(extension as (typeof IMAGE_FILE_TYPE)[number])
+    ) {
       return;
     }
 
@@ -381,7 +373,7 @@ function findThumbnails(files: DirentLike[]) {
       : file.name;
 
     // 모든 이미지 확장자 검사
-    for (const imgExt of imageExtensions) {
+    for (const imgExt of IMAGE_FILE_TYPE) {
       const thumbnail = `${baseName}${imgExt}`;
 
       const thumbnailFile = files.find(
