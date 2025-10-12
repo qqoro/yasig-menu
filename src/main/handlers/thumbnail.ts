@@ -132,6 +132,25 @@ ipcMain.on(
           });
           downloaded = true;
         }
+
+        // Ci-en 다운로드
+        if (collector.name === "Ci-en" && info?.thumbnail) {
+          const thumbnailUrl = new URL(info.thumbnail);
+          thumbnailUrl.search = "";
+
+          const thumbnailExt = extname(thumbnailUrl.toString());
+          const thumbnailName = changeThumbnailFolder
+            ? join(savePath, fileName) + thumbnailExt
+            : await getThumbnailName({
+                filePath,
+                thumbnailExt,
+              });
+          await saveFromUrl({
+            fileName: thumbnailName,
+            imgUrl: info.thumbnail,
+          });
+          downloaded = true;
+        }
       }
 
       // 구글 검색 다운로드
