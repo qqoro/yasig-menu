@@ -51,10 +51,10 @@ export const CienCollector: Collector = {
       article?.parentNode.parentNode.querySelector(".e-userName")?.innerText;
 
     // 카테고리 X
-    const category = "";
+    const category = undefined;
 
     // 태그 X
-    const tags = [];
+    const tags = undefined;
 
     return {
       collectorTitle,
