@@ -40,6 +40,7 @@ export interface GameTag {
   gamePath: string;
   tagId: string;
 }
+export type UpdateGameTag = Partial<GameTag>;
 
 export interface Setting extends TableBaseColumn {
   sources: string[];
@@ -79,7 +80,7 @@ declare module "knex/types/tables.js" {
   interface Tables {
     games: Knex.CompositeTableType<Game, InsertGame, UpdateGame>;
     tags: Knex.CompositeTableType<Tag, Tag, Tag>;
-    gameTags: Knex.CompositeTableType<GameTag, GameTag, GameTag>;
+    gameTags: Knex.CompositeTableType<GameTag, GameTag, UpdateGameTag>;
     setting: Knex.CompositeTableType<Setting, InsertSetting, UpdateSetting>;
   }
 }

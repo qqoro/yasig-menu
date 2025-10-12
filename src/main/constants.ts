@@ -1,5 +1,5 @@
 /**
- * 압축파일 확장자
+ * 압축 파일 확장자
  *
  * 전부 소문자로 검사 필요
  */
@@ -13,4 +13,20 @@ export const COMPRESS_FILE_TYPE = [
   ".bz2",
   ".alz",
   ".egg",
+] as const;
+
+/**
+ * 이미지 파일 확장자
+ *
+ * 전부 소문자로 검사 필요
+ */
+export const IMAGE_FILE_TYPE = [
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".gif",
+  ".webp",
+  ".bmp",
+  ".avif",
+  ".svg",
 ] as const;

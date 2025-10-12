@@ -37,11 +37,21 @@ ipcMain.on(
     );
 
     try {
+      // 기존 썸네일 삭제
+      await deleteOldThumbnail(filePath);
+
       console.log("download requested!", filePath);
 
       // 썸네일 직접 업로드
       if (file) {
         const { data, ext } = file;
+        const oldThumbnail = await db("games")
+          .select("thumbnail")
+          .where("path", filePath)
+          .first();
+        if (oldThumbnail?.thumbnail) {
+          await rm(oldThumbnail.thumbnail, { force: true });
+        }
 
         const thumbnailName = changeThumbnailFolder
           ? join(savePath, fileName) + ext
@@ -113,8 +123,6 @@ ipcMain.on(
 
         // Getchu 다운로드
         if (!downloaded && collector.name === "Getchu" && info?.thumbnail) {
-          console.log(info.thumbnail);
-
           const thumbnailExt = extname(info.thumbnail);
           const thumbnailName = changeThumbnailFolder
             ? join(savePath, fileName) + thumbnailExt
@@ -128,9 +136,28 @@ ipcMain.on(
             imgUrl: info.thumbnail,
             init: {
               headers: {
-                Referer: `https://www.getchu.com/soft.phtml?id=${id}`,
+                Referer: `https://www.getchu.com/soft.phtml?id=${gameId}`,
               },
             },
+          });
+          downloaded = true;
+        }
+
+        // Ci-en 다운로드
+        if (collector.name === "Ci-en" && info?.thumbnail) {
+          const thumbnailUrl = new URL(info.thumbnail);
+          thumbnailUrl.search = "";
+
+          const thumbnailExt = extname(thumbnailUrl.toString());
+          const thumbnailName = changeThumbnailFolder
+            ? join(savePath, fileName) + thumbnailExt
+            : await getThumbnailName({
+                filePath,
+                thumbnailExt,
+              });
+          await saveFromUrl({
+            fileName: thumbnailName,
+            imgUrl: info.thumbnail,
           });
           downloaded = true;
         }
@@ -424,6 +451,23 @@ async function saveFromUrl({
   return await writeFile(fileName, data, {
     encoding: "base64",
   });
+}
+
+/**
+ * 지정된 게임 경로에 해당하는 기존 썸네일을 삭제합니다.
+ *
+ * @param gamePath 게임 경로
+ */
+async function deleteOldThumbnail(gamePath: string) {
+  const oldThumbnail = await db("games")
+    .select("thumbnail")
+    .where("path", gamePath)
+    .first();
+
+  if (oldThumbnail?.thumbnail) {
+    await rm(oldThumbnail.thumbnail, { force: true });
+    await db("games").update("thumbnail", null).where("path", gamePath);
+  }
 }
 
 async function waitAndClick(page: Page, selector: string) {

@@ -161,6 +161,30 @@ const removeRecent = (filePath: string) => {
   game.loadList();
 };
 
+const openRename = ref(false);
+const newName = ref("");
+
+const openRenameDialog = (value: boolean) => {
+  if (value) {
+    newName.value = props.title; // pre-fill with current title
+  }
+  openRename.value = value;
+};
+
+const renameGame = () => {
+  if (!newName.value.trim()) {
+    toast.error("새로운 파일 이름을 입력해주세요.");
+    return;
+  }
+
+  send(IpcRendererSend.RenameGame, {
+    oldPath: props.path,
+    newName: newName.value,
+  });
+  openRename.value = false;
+  game.loadList(); // Reload the list
+};
+
 const titleFontSize = computed(() => {
   return Math.max(16 / (props.zoom * 0.02), 16);
 });
@@ -349,7 +373,11 @@ watch(loading, () => {
           </DropdownMenuItem>
           <DropdownMenuItem @click="open = true">
             <Icon icon="solar:gallery-edit-bold-duotone" />
-            <span>이미지 변경</span>
+            <span>썸네일 변경</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem @click="openRenameDialog(true)">
+            <Icon icon="solar:pen-new-square-bold-duotone" />
+            <span>이름 변경</span>
           </DropdownMenuItem>
           <DropdownMenuItem v-if="rjCode" as-child>
             <a
@@ -387,6 +415,25 @@ watch(loading, () => {
           <Button @click="downloadThumbnailFromUrl(path)"
             >URL에서 다운로드</Button
           >
+        </div>
+      </DialogContent>
+    </Dialog>
+    <Dialog :open="openRename" @update:open="openRenameDialog">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>게임 이름 변경</DialogTitle>
+          <DialogDescription>
+            새로운 게임 파일/폴더 이름을 입력하세요. 썸네일 이름도 함께
+            변경됩니다.
+          </DialogDescription>
+        </DialogHeader>
+        <div class="flex flex-col gap-2 text-sm">
+          <Input
+            v-model="newName"
+            placeholder="새로운 이름"
+            @keyup.enter="renameGame"
+          />
+          <Button @click="renameGame">변경</Button>
         </div>
       </DialogContent>
     </Dialog>
