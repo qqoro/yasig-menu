@@ -5,7 +5,10 @@ import { Collector } from "./registry.js";
 export const CienCollector: Collector = {
   name: "Ci-en",
   getId: async (path) => {
-    const id = /(?:CE|CIEN|CI-EN)(\d+-\d+)/i.exec(path)?.[1];
+    const id = /(?:CE|CIEN|CI-EN)(\d+-\d+|creator\d+article\d+)/i
+      .exec(path)?.[1]
+      ?.replace("creator", "")
+      .replace("article", "-");
     return id;
   },
   fetchInfo: async ({ id }) => {
