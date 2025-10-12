@@ -6,7 +6,7 @@ import { Collector } from "./registry.js";
 export const GetchuCollector: Collector = {
   name: "Getchu",
   getId: async (path) => {
-    const id = /GC\d{1,7}/i.exec(path)?.[0].slice(2);
+    const [, id] = /(?:GC|GETCHU)(\d{1,7})/i.exec(path) ?? [];
     return id;
   },
   fetchInfo: async ({ id }) => {
@@ -49,8 +49,6 @@ export const GetchuCollector: Collector = {
     const thumbnail = src
       ? new URL(src, "https://www.getchu.com").href
       : undefined;
-    console.log(src);
-    console.log(thumbnail);
 
     // 제목 수집
     const collectorTitle = softTitle?.childNodes
