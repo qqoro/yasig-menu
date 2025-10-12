@@ -49,8 +49,6 @@ export const GetchuCollector: Collector = {
     const thumbnail = src
       ? new URL(src, "https://www.getchu.com").href
       : undefined;
-    console.log(src);
-    console.log(thumbnail);
 
     // 제목 수집
     const collectorTitle = softTitle?.childNodes
