@@ -39,13 +39,16 @@ export const CienCollector: Collector = {
 
     // 발매일 수집
     const publishDateString =
-      article?.parentNode.querySelector(".e-date")?.innerText;
+      article?.parentNode.parentNode.querySelector(".e-date")?.innerText;
+
+    console.log(publishDateString);
+
     const date = dayjs(publishDateString);
     const publishDate = date.isValid() ? date.toDate() : new Date();
 
     // 제작사 수집
     const makerName =
-      article?.parentNode.querySelector("e-userName")?.innerText;
+      article?.parentNode.parentNode.querySelector(".e-userName")?.innerText;
 
     // 카테고리 X
     const category = "";
