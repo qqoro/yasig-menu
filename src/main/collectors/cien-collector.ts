@@ -40,9 +40,6 @@ export const CienCollector: Collector = {
     // 발매일 수집
     const publishDateString =
       article?.parentNode.parentNode.querySelector(".e-date")?.innerText;
-
-    console.log(publishDateString);
-
     const date = dayjs(publishDateString);
     const publishDate = date.isValid() ? date.toDate() : new Date();
 
