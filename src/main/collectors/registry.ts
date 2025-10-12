@@ -1,5 +1,6 @@
 import { Page } from "puppeteer-core";
 import { db } from "../db/db-manager.js";
+import { CienCollector } from "./cien-collector.js";
 import { DLSiteCollector } from "./dlsite-collector.js";
 import { GetchuCollector } from "./getchu-collector.js";
 import { SteamCollector } from "./steam-collector.js";
@@ -31,6 +32,7 @@ export const collectors: Collector[] = [
   DLSiteCollector,
   SteamCollector,
   GetchuCollector,
+  CienCollector,
   // GoogleCollector,
 ];
 
