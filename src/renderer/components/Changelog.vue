@@ -172,6 +172,21 @@ const changelog = [
       "Steam 작품 조회 시 ST+작품ID인 경우도 인식하도록 추가하였습니다.",
     ],
   ],
+  [
+    "2.5.0",
+    [
+      "Getchu 작품 조회 시 GETCHU+작품ID인 경우도 인식하도록 추가하였습니다. (@pilgeun48님 감사합니다.)",
+      [
+        "Ci-en 지원 기능이 추가되었습니다. (@pilgeun48님 감사합니다.)",
+        "CE/CIEN/CI-EN의 prefix가 적용 가능하며, 대소문자는 구분하지 않습니다.",
+        "prefix+(creator?)+창작자ID+(article?)+게시글ID 형식으로 인식합니다.",
+        `예시: "https://ci-en.net/creator/1/article/58152"의 데이터를 가져온다면, "CE1-58152", "Cien0000001-0058152", "CEcreator1article58152", "Ci-en0000001article0058152" 모두 사용 가능합니다.`,
+      ],
+      "게임의 파일 이름을 변경할 수 있는 기능이 추가되었습니다. (게임 목록 - 햄버거 메뉴 - 이름 변경)",
+      "설정에 등록한 라이브러리 폴더가 없어진 경우 무시하도록 로딩 속도를 개선하였습니다.",
+      "썸네일을 새로 다운로드 하는 경우 기존에 등록된 썸네일을 삭제하도록 수정하였습니다.",
+    ],
+  ],
 ].toReversed() as [string, string[] | string[][]][];
 </script>
 
@@ -190,12 +205,19 @@ const changelog = [
           <ul class="text-sm space-y-1">
             <template v-for="item in change[1]">
               <template v-if="typeof item === 'string'">
-                <li>▶ {{ item }}</li>
+                <li class="ml-3 relative">
+                  <span class="inline-block absolute -left-3">•</span>{{ item }}
+                </li>
               </template>
               <template v-else>
-                <li>▶ {{ item[0] }}</li>
+                <li class="ml-3 relative">
+                  <span class="inline-block absolute -left-3">•</span
+                  >{{ item[0] }}
+                </li>
                 <ul class="text-sm space-y-1 ml-4">
-                  <li v-for="i in item.slice(1)">▶ {{ i }}</li>
+                  <li v-for="i in item.slice(1)" class="ml-3 relative">
+                    <span class="inline-block absolute -left-3">•</span>{{ i }}
+                  </li>
                 </ul>
               </template>
             </template>

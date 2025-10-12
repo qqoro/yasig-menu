@@ -177,7 +177,10 @@ const renameGame = () => {
     return;
   }
 
-  send(IpcRendererSend.RenameGame, { oldPath: props.path, newName: newName.value });
+  send(IpcRendererSend.RenameGame, {
+    oldPath: props.path,
+    newName: newName.value,
+  });
   openRename.value = false;
   game.loadList(); // Reload the list
 };
@@ -370,7 +373,7 @@ watch(loading, () => {
           </DropdownMenuItem>
           <DropdownMenuItem @click="open = true">
             <Icon icon="solar:gallery-edit-bold-duotone" />
-            <span>이미지 변경</span>
+            <span>썸네일 변경</span>
           </DropdownMenuItem>
           <DropdownMenuItem @click="openRenameDialog(true)">
             <Icon icon="solar:pen-new-square-bold-duotone" />
