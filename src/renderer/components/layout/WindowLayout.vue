@@ -86,6 +86,32 @@ const restart = () => {
   send(IpcRendererSend.Restart);
 };
 
+const toggleDarkMode = () => {
+  const isDark = !setting.darkMode;
+  updateSetting({ darkMode: isDark });
+  setting.darkMode = isDark;
+};
+
+// 다크모드 적용 함수
+const applyDarkMode = (isDark: boolean) => {
+  if (isDark) {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+};
+
+// 초기 다크모드 적용
+applyDarkMode(setting.darkMode);
+
+// 다크모드 설정 변경 감지
+watch(
+  () => setting.darkMode,
+  (isDark) => {
+    applyDarkMode(isDark);
+  }
+);
+
 const { sort } = storeToRefs(useSearch());
 const sortName: Record<Sort, string> = {
   [Sort.Title]: "제목 정렬",
@@ -208,7 +234,7 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, id, percent) => {
 
 <template>
   <header
-    class="flex flex-row justify-between w-full bg-slate-200/50 backdrop-blur-sm z-10 py-2 px-4 sticky top-0 title-bar h-14"
+    class="flex flex-row justify-between w-full bg-slate-200/50 dark:bg-slate-800/50 backdrop-blur-sm z-10 py-2 px-4 sticky top-0 title-bar h-14"
   >
     <RouterLink
       to="/"
@@ -219,13 +245,13 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, id, percent) => {
     </RouterLink>
     <div class="flex button-group">
       <button
-        class="hover:bg-slate-600 transition-colors px-4 hover:text-background"
+        class="hover:bg-slate-600 dark:hover:bg-slate-700 transition-colors px-4 hover:text-background"
         @click="send(IpcRendererSend.WindowMinimize)"
       >
         <Icon icon="material-symbols:chrome-minimize-rounded" />
       </button>
       <button
-        class="hover:bg-slate-600 transition-colors px-4 hover:text-background"
+        class="hover:bg-slate-600 dark:hover:bg-slate-700 transition-colors px-4 hover:text-background"
         @click="send(IpcRendererSend.WindowMaximizeToggle)"
       >
         <Icon
@@ -235,7 +261,7 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, id, percent) => {
         <Icon v-else icon="material-symbols:chrome-restore-outline-rounded" />
       </button>
       <button
-        class="hover:bg-red-600 transition-colors px-4 hover:text-background"
+        class="hover:bg-red-600 dark:hover:bg-red-700 transition-colors px-4 hover:text-background"
         @click="send(IpcRendererSend.WindowClose)"
       >
         <Icon icon="material-symbols:close-rounded" />
@@ -243,12 +269,12 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, id, percent) => {
     </div>
   </header>
   <nav
-    class="flex text-sm items-center bg-slate-100/50 backdrop-blur-sm sticky top-14 z-10"
+    class="flex text-sm items-center bg-slate-100/50 dark:bg-slate-900/50 backdrop-blur-sm sticky top-14 z-10"
   >
     <RouterLink
       to="/"
       :class="
-        cn('px-4 py-2 transition-colors hover:bg-slate-300', {
+        cn('px-4 py-2 transition-colors hover:bg-slate-300 dark:hover:bg-slate-700', {
           'font-bold': route.path === '/',
         })
       "
@@ -257,7 +283,7 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, id, percent) => {
     <RouterLink
       to="/setting"
       :class="
-        cn('px-4 py-2 transition-colors hover:bg-slate-300', {
+        cn('px-4 py-2 transition-colors hover:bg-slate-300 dark:hover:bg-slate-700', {
           'font-bold': route.path === '/setting',
         })
       "
@@ -274,12 +300,33 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, id, percent) => {
           v-model="updateDownloadProgress"
         />
       </template>
+      <!-- 다크모드 토글 버튼 -->
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <button
+              class="transition-colors hover:bg-slate-300 dark:hover:bg-slate-700 size-7 rounded-sm flex justify-center items-center"
+              @click="toggleDarkMode"
+            >
+              <Icon
+                v-if="setting.darkMode"
+                icon="solar:sun-bold-duotone"
+                class="text-yellow-500"
+              />
+              <Icon v-else icon="solar:moon-stars-bold-duotone" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{{ setting.darkMode ? "라이트 모드" : "다크 모드" }}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <template v-if="route.path === '/'">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger as-child>
               <button
-                class="transition-colors hover:bg-slate-300 size-7 rounded-sm flex justify-center items-center"
+                class="transition-colors hover:bg-slate-300 dark:hover:bg-slate-700 size-7 rounded-sm flex justify-center items-center"
                 @click="selectRandomGame"
               >
                 <Icon icon="solar:rocket-2-outline" />
@@ -294,7 +341,7 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, id, percent) => {
           <Tooltip>
             <TooltipTrigger as-child>
               <button
-                class="transition-colors hover:bg-slate-300 size-7 rounded-sm flex justify-center items-center"
+                class="transition-colors hover:bg-slate-300 dark:hover:bg-slate-700 size-7 rounded-sm flex justify-center items-center"
                 @click="zoomIn"
               >
                 <Icon icon="solar:magnifer-zoom-in-outline" />
@@ -309,7 +356,7 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, id, percent) => {
           <Tooltip>
             <TooltipTrigger as-child>
               <button
-                class="transition-colors hover:bg-slate-300 size-7 rounded-sm flex justify-center items-center"
+                class="transition-colors hover:bg-slate-300 dark:hover:bg-slate-700 size-7 rounded-sm flex justify-center items-center"
                 @click="zoomOut"
               >
                 <Icon icon="solar:magnifer-zoom-out-outline" />
@@ -325,7 +372,7 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, id, percent) => {
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
             <button
-              class="transition-colors hover:bg-slate-300 size-7 rounded-sm flex justify-center items-center"
+              class="transition-colors hover:bg-slate-300 dark:hover:bg-slate-700 size-7 rounded-sm flex justify-center items-center"
             >
               <Icon icon="solar:round-sort-vertical-outline" />
             </button>
@@ -348,7 +395,7 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, id, percent) => {
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
             <button
-              class="transition-colors hover:bg-slate-300 size-7 rounded-sm flex justify-center items-center"
+              class="transition-colors hover:bg-slate-300 dark:hover:bg-slate-700 size-7 rounded-sm flex justify-center items-center"
             >
               <Icon icon="solar:filter-outline" />
             </button>
@@ -393,7 +440,7 @@ useEvent(IpcMainSend.UpdateDownloadProgress, (e, id, percent) => {
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
             <button
-              class="transition-colors hover:bg-slate-300 size-7 rounded-sm flex justify-center items-center"
+              class="transition-colors hover:bg-slate-300 dark:hover:bg-slate-700 size-7 rounded-sm flex justify-center items-center"
             >
               <Icon icon="solar:menu-dots-outline" />
             </button>

@@ -17,13 +17,13 @@ import { send } from "../../../composable/useApi";
 defineProps<{
   modelValue: [boolean, string];
   blur: boolean;
-  dark: boolean;
+  thumbnailHide: boolean;
   deleteThumbnailFile: boolean;
 }>();
 const emit = defineEmits<{
   (e: "update:modelValue", value: [boolean, string]): void;
   (e: "update:blur", value: boolean): void;
-  (e: "update:dark", value: boolean): void;
+  (e: "update:thumbnailHide", value: boolean): void;
   (e: "update:deleteThumbnailFile", value: boolean): void;
 }>();
 
@@ -96,10 +96,10 @@ const openFolder = (path: string) => {
         <Button
           variant="outline"
           class="flex justify-between items-center w-full"
-          @click="emit('update:dark', !dark)"
+          @click="emit('update:thumbnailHide', !thumbnailHide)"
         >
           <div>썸네일 숨김 켜기</div>
-          <Switch :model-value="dark" @update.stop />
+          <Switch :model-value="thumbnailHide" @update.stop />
         </Button>
         <Button
           variant="outline"

@@ -59,7 +59,7 @@ ipcMain.on(IpcRendererSend.MigrationData, async (e, id, data) => {
     setting.update({ blur: JSON.parse(data.blur) });
   }
   if (data.dark) {
-    setting.update({ dark: JSON.parse(data.dark) });
+    setting.update({ thumbnailHide: JSON.parse(data.dark) });
   }
   if (data.changeThumbnailFolder) {
     const [changeThumbnailFolder, newThumbnailFolder] = JSON.parse(

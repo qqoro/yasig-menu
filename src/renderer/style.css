@@ -200,7 +200,7 @@
       sans-serif;
   }
   body {
-    @apply bg-background text-foreground bg-slate-50;
+    @apply bg-background text-foreground;
   }
 
   button:not(:disabled),
@@ -213,6 +213,11 @@
   --sb-track-color: #ccf1de;
   --sb-thumb-color: #6baf8d;
   --sb-size: 10px;
+}
+
+.dark {
+  --sb-track-color: #1e3a2a;
+  --sb-thumb-color: #4a7c5d;
 }
 
 ::-webkit-scrollbar {

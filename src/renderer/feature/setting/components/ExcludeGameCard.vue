@@ -26,7 +26,7 @@ const removeExclude = (index: number) => {
         <summary>펼치기</summary>
         <ul v-for="(path, index) in modelValue" :key="index" class="flex gap-2">
           <li
-            class="flex gap-2 w-full rounded-sm hover:bg-slate-300 px-2 py-1 transition-colors items-center"
+            class="flex gap-2 w-full rounded-sm hover:bg-slate-300 dark:hover:bg-slate-700 px-2 py-1 transition-colors items-center"
           >
             <div class="w-full">{{ path }}</div>
             <Button
