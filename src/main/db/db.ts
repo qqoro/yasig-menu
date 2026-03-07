@@ -51,7 +51,8 @@ export interface Setting extends TableBaseColumn {
   showAll: boolean;
   showRecent: boolean;
   blur: boolean;
-  dark: boolean;
+  thumbnailHide: boolean;
+  darkMode: boolean;
   zoom: number;
   search: [string, string];
   playExclude: string[];
@@ -66,7 +67,8 @@ export interface InsertSetting extends Partial<TableBaseColumn> {
   showAll?: SqliteBoolean;
   showRecent?: SqliteBoolean;
   blur?: SqliteBoolean;
-  dark?: SqliteBoolean;
+  thumbnailHide?: SqliteBoolean;
+  darkMode?: SqliteBoolean;
   zoom?: number;
   cookie?: string;
   search?: string;

@@ -49,7 +49,7 @@ const props = defineProps<
     zoom: number;
     showCollectorTitle: boolean;
     blur?: boolean;
-    dark?: boolean;
+    thumbnailHide?: boolean;
   }
 >();
 const emit = defineEmits<{
@@ -206,7 +206,7 @@ watch(loading, () => {
 <template>
   <Card
     :class="
-      cn('p-0 overflow-hidden hover:bg-green-50 gap-1 w-96 transition-all', {
+      cn('p-0 overflow-hidden hover:bg-green-50 dark:hover:bg-green-950 gap-1 w-96 transition-all', {
         'opacity-50 hover:opacity-100': isClear,
       })
     "
@@ -238,7 +238,7 @@ watch(loading, () => {
                 cn(
                   'object-cover w-full aspect-[4/3] hover:scale-110 transition-transform cursor-zoom-in',
                   { 'blur-md': blur },
-                  { 'brightness-0': dark },
+                  { 'brightness-0': thumbnailHide },
                 )
               "
               style="aspect-ratio: 4/3"
@@ -291,7 +291,7 @@ watch(loading, () => {
               search.makerName.value =
                 search.makerName.value === makerName ? '' : makerName
             "
-            :class="{ 'bg-amber-300': search.makerName.value === makerName }"
+            :class="{ 'bg-amber-300 dark:bg-amber-600': search.makerName.value === makerName }"
           >
             {{ makerName }}
           </button>
@@ -308,7 +308,7 @@ watch(loading, () => {
                 : search.tagIds.value.add(tagId)
             "
             :class="{
-              'bg-amber-300! text-black': search.tagIds.value.has(tagId),
+              'bg-amber-300! text-black dark:bg-amber-600! dark:text-white': search.tagIds.value.has(tagId),
             }"
             >{{ tags.split(",")[index].trim() }}</Badge
           >

@@ -33,7 +33,7 @@ const changeThumbnailFolder = ref<[boolean, string]>([
   setting.newThumbnailFolder,
 ]);
 const blur = ref(setting.blur);
-const dark = ref(setting.dark);
+const thumbnailHide = ref(setting.thumbnailHide);
 const cookie = ref(setting.cookie);
 const exclude = ref(games.map((game) => game.path));
 const search = ref(setting.search);
@@ -72,7 +72,7 @@ const save = () => {
     blur: blur.value,
     changeThumbnailFolder: changeThumbnailFolder.value[0],
     newThumbnailFolder: JSON.stringify(changeThumbnailFolder.value[1]),
-    dark: dark.value,
+    thumbnailHide: thumbnailHide.value,
     cookie: JSON.stringify(cookie.value),
     playExclude: JSON.stringify(playExclude.value.map((v) => v.trim())),
     search: JSON.stringify(search.value),
@@ -154,7 +154,7 @@ watch(blur, () => {
       <ThumbnailCard
         v-model="changeThumbnailFolder"
         v-model:blur="blur"
-        v-model:dark="dark"
+        v-model:thumbnailHide="thumbnailHide"
         v-model:deleteThumbnailFile="deleteThumbnailFile"
       />
       <CookieCard v-model="cookie" />
@@ -207,7 +207,7 @@ watch(blur, () => {
           <AlertDialogFooter>
             <AlertDialogCancel>취소</AlertDialogCancel>
             <AlertDialogAction
-              class="text-red-800 bg-red-200 hover:bg-red-300"
+              class="text-red-800 bg-red-200 hover:bg-red-300 dark:text-red-100 dark:bg-red-900 dark:hover:bg-red-800"
               @click="resetSetting"
             >
               초기화

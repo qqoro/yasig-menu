@@ -187,6 +187,20 @@ const changelog = [
       "썸네일을 새로 다운로드 하는 경우 기존에 등록된 썸네일을 삭제하도록 수정하였습니다.",
     ],
   ],
+  [
+    "2.5.1",
+    [
+      "쿠키 초기화 로직을 수정하여, 블러된 이미지로 받아지는 버그를 수정했습니다.",
+      "구글 이미지 다운로드 시 잘못된 확장자로 저장되는 버그를 수정했습니다."
+    ],
+  ],
+  [
+    "2.6.0",
+    [
+      "다크모드 지원 기능이 추가되었습니다.",
+      "상단 네비게이션 바에서 다크모드를 켜고 끌 수 있는 토글 버튼이 추가되었습니다.",
+    ],
+  ]
 ].toReversed() as [string, string[] | string[][]][];
 </script>
 
@@ -198,6 +212,17 @@ const changelog = [
         <DialogDescription class="hidden"></DialogDescription>
       </DialogHeader>
       <div class="grid overflow-y-auto gap-4 pr-4">
+        <a
+          href="https://github.com/qqoro/yasig-menu-plus"
+          target="_blank"
+          class="bg-amber-100 dark:bg-amber-900/50 border border-amber-300 dark:border-amber-700 rounded-lg p-4 hover:bg-amber-200 dark:hover:bg-amber-900/70 transition-colors cursor-pointer"
+        >
+          <p class="font-bold text-amber-800 dark:text-amber-200">⚠️ 프로젝트 종료 안내</p>
+          <p class="text-amber-700 dark:text-amber-300 text-sm mt-1">
+            이 프로젝트는 더 이상 업데이트되지 않습니다.<br />
+            후속 프로젝트인 <span class="underline font-medium">yasig-menu-plus</span>를 이용해주세요.
+          </p>
+        </a>
         <div v-for="change in changelog" :key="change[0]">
           <h3 class="text-xl border-b-slate-400 border-b mb-2 py-1">
             v{{ change[0] }}

@@ -219,7 +219,7 @@ onMounted(() => {
               :zoom="zoom"
               :show-collector-title="setting.showCollectorTitle"
               :blur="setting.blur"
-              :dark="setting.dark"
+              :thumbnailHide="setting.thumbnailHide"
               @view-thumbnail="viewGameCard"
               @write-memo="viewGameMemo"
             />
@@ -271,7 +271,7 @@ onMounted(() => {
           :zoom="zoom"
           :show-collector-title="setting.showCollectorTitle"
           :blur="setting.blur"
-          :dark="setting.dark"
+          :thumbnailHide="setting.thumbnailHide"
           @view-thumbnail="viewGameCard"
           @write-memo="viewGameMemo"
         />

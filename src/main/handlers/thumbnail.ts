@@ -205,7 +205,8 @@ ipcMain.on(
         }
 
         if (!info.thumbnail.startsWith("data:")) {
-          const thumbnailExt = getUrlExtension(info.thumbnail);
+          // saveFromUrl에서 확장자 없는 경우 자동으로 mimeType 추출
+          const thumbnailExt = "";
           const thumbnailName = changeThumbnailFolder
             ? join(savePath, fileName) + thumbnailExt
             : await getThumbnailName({
@@ -516,14 +517,17 @@ export async function getNewCookie() {
     page,
     "body > div.GSpaEb > div:nth-child(2) > g-radio-button-group > div:nth-child(6)",
   );
+  // 새로운 쿠키가 적용될 때 까지 대기
+  await setTimeout(1000);
 
   const cookies = await browser.cookies();
-
   const targetCookie = cookies.find((cookie) => cookie.name === "NID");
   if (!targetCookie) {
+    console.error("targetCookie not found! >>>>>", targetCookie);
     return;
   }
 
+  console.debug("get new google cookie! >>>>>", targetCookie);
   await page.close();
 
   await db("setting").update({ cookie: JSON.stringify(targetCookie.value) });

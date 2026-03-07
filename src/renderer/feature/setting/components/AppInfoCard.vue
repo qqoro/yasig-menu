@@ -33,7 +33,7 @@ const copyAppVersion = async () => {
       <div class="text-lg">앱 정보</div>
     </CardHeader>
     <CardContent class="flex flex-col gap-2 text-sm">
-      <button class="inline w-fit hover:bg-slate-200" @click="copyAppVersion">
+      <button class="inline w-fit hover:bg-slate-200 dark:hover:bg-slate-700 px-1 rounded" @click="copyAppVersion">
         앱 버전 : {{ props.appVersion }}
       </button>
     </CardContent>
