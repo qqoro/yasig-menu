@@ -3,6 +3,11 @@
 [![GitHub Release](https://img.shields.io/github/v/release/qqoro/yasig-menu?style=flat)](https://github.com/qqoro/yasig-menu/releases/latest)
 ![GitHub Downloads](https://img.shields.io/github/downloads/qqoro/yasig-menu/total)
 
+> ⚠️ **프로젝트 종료 안내**
+>
+> 이 프로젝트는 더 이상 업데이트되지 않습니다.
+> 후속 프로젝트인 [yasig-menu-plus](https://github.com/qqoro/yasig-menu-plus)를 이용해주세요.
+
 ![앱 메인 화면](./screenshot/main.png)
 
 **야식 메뉴판**은 게임을 효율적으로 관리하고 실행할 수 있는 현대적인 데스크톱 애플리케이션입니다. Vue 3와 Electron을 기반으로 개발되었으며, 게임 라이브러리를 직관적으로 정리하고 접근할 수 있는 다양한 기능을 제공합니다.
